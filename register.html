@@ -6,7 +6,7 @@
   <title>Registration | Kursus Public Speaking Dialogika</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS Files (Tidak ada perubahan di bagian atas head) -->
+  <!-- CSS Resources -->
   <link href="assets/img/favicon.webp" rel="icon">
   <link href="assets/img/apple-touch-icon.webp" rel="apple-touch-icon">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -14,21 +14,18 @@
   <link href="assets/css/style.css" rel="stylesheet" />
   
   <style>
-      /* CSS ANDA YANG SUDAH BAGUS TETAP DISINI */
       body { background: #f1f7fd; font-family: 'Poppins', sans-serif; min-height: 100vh; padding: 20px 0; }
       .main-layout { display: flex; flex-direction: column; align-items: center; gap: 30px; }
       
-      /* ... (Seluruh CSS Card dan Form Anda tetap sama, saya persingkat untuk fokus ke logika) ... */
-      
+      /* CARD STYLES */
       .card-wrapper { perspective: 1000px; width: 100%; max-width: 420px; height: 260px; cursor: pointer; margin: 0 auto; }
       .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; }
       .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
       .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); overflow: hidden; color: white; }
       
-      /* FRONT SIDE */
+      /* Front */
       .card-front { background-image: url('assets/img/card-front.jpg'); background-color: #07276B; background-size: cover; background-position: center; padding: 25px; display: flex; flex-direction: column; }
-      
-      /* BACK SIDE */
+      /* Back */
       .card-back { transform: rotateY(180deg); background: linear-gradient(135deg, #07276B 0%, #1E81D0 100%); }
       .card-back::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: url("https://www.transparenttextures.com/patterns/cubes.png"); opacity: 0.15; mix-blend-mode: overlay; }
 
@@ -54,7 +51,7 @@
       .visa-logo-back { position: absolute; bottom: 20px; right: 25px; }
       .back-details { position: absolute; bottom: 20px; left: 20px; text-align: left; font-size: 10px; opacity: 0.8; line-height: 1.6; }
 
-      /* Form & Upload */
+      /* Form Elements */
       .form-box { background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 30px; width: 100%; max-width: 600px; }
       .upload-area { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 180px; background-color: #f0f7ff; border: 2px dashed #1E81D0; border-radius: 12px; cursor: pointer; text-align: center; padding: 20px; }
       .upload-area:hover { background-color: #e1efff; border-color: #07276B; }
@@ -66,10 +63,8 @@
 
 <body>
 
-  <!-- ======= Header ======= -->
   <main-header></main-header>
 
-  <!-- ======= Breadcrumbs ======= -->
   <section class="breadcrumbs" style="margin-top: 110px;">
     <div class="container">
       <div class="d-flex justify-content-between align-items-center" >
@@ -149,9 +144,9 @@
                   </div>
                   <div class="col-md-6 mb-3">
                       <label class="form-label">Position</label>
-                      <!-- Opsi di sini akan diisi otomatis oleh Javascript -->
+                      <!-- Dropdown akan diisi otomatis dari Spreadsheet -->
                       <select class="form-select" id="inputPos" required onchange="updateCard()">
-                          <option value="" disabled selected>Loading positions...</option>
+                          <option value="" disabled selected>Loading...</option>
                       </select>
                   </div>
               </div>
@@ -207,21 +202,21 @@
   </div>
 
   <script>
-      // === UPDATE URL INI SANGAT PENTING ===
+      // === UPDATE URL INI ===
       const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0slQZMIQsik2_WG9-Ff-IP1oIyIW-JoJxZaO0AuRdczjIn4cVMnKV6FxB3wgq93Hh/exec';
 
       const cardWrapper = document.getElementById('cardWrapper');
       const randomFirstFour = Math.floor(1000 + Math.random() * 9000);
       const hiddenMiddle = "#### ####";
 
-      // --- 1. FETCH POSITIONS DARI SPREADSHEET ---
+      // --- 1. FETCH POSITIONS ---
       document.addEventListener('DOMContentLoaded', function() {
           const selectPos = document.getElementById('inputPos');
           
           fetch(SCRIPT_URL + '?action=getPositions')
               .then(response => response.json())
               .then(data => {
-                  selectPos.innerHTML = '<option value="" disabled selected>Pilih Posisi</option>'; // Reset opsi
+                  selectPos.innerHTML = '<option value="" disabled selected>Pilih Posisi</option>'; 
                   if(Array.isArray(data) && data.length > 0) {
                       data.forEach(pos => {
                           const option = document.createElement('option');
@@ -363,7 +358,7 @@
                   }
               })
               .catch(err => {
-                  alert('Error jaringan atau Script URL belum diupdate.');
+                  alert('Error jaringan atau URL belum diupdate.');
                   console.error(err);
               })
               .finally(() => {
@@ -377,7 +372,6 @@
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Main JS (Header/Footer) -->
   <script src="assets/js/headerfooter.js"></script>
 
   </main>
