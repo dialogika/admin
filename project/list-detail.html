@@ -405,11 +405,18 @@
 
              tasks.forEach(task => {
                  const isDone = ['done', 'completed', 'true'].includes(String(task.status).toLowerCase());
+                 
                  const itemHtml = `
-                     <div class="todo-row ${isDone ? 'completed' : ''} d-flex align-items-start">
-                         <input type="checkbox" class="todo-check" ${isDone ? 'checked' : ''} onchange="alert('Fitur update status belum dibuat')">
+                     <div class="todo-row ${isDone ? 'completed' : ''} d-flex align-items-start" 
+                          onclick="goToTaskDetail('${task.id}')">
+                         
+                         <input type="checkbox" class="todo-check" ${isDone ? 'checked' : ''} 
+                                onclick="event.stopPropagation()" 
+                                onchange="handleStatusChange('${task.id}', this)">
+                         
                          <div class="w-100">
                              <div class="todo-text">${task.title}</div>
+                             <small class="text-muted" style="font-size:0.75rem">Click to see details</small>
                          </div>
                      </div>
                  `;
@@ -507,6 +514,45 @@
                  fetchDetailData();
                  hideDetailForm();
              });
+         }
+         
+         // Fungsi untuk Update Status ke Spreadsheet
+         function handleStatusChange(taskId, checkbox) {
+             const isChecked = checkbox.checked;
+             const newStatus = isChecked ? 'done' : 'open';
+             const rowElement = checkbox.closest('.todo-row');
+
+             // Beri efek visual instan (Optimistic UI)
+             if (isChecked) rowElement.classList.add('completed');
+             else rowElement.classList.remove('completed');
+
+             fetch(API_URL, {
+                 method: 'POST',
+                 body: JSON.stringify({
+                     action: 'updateTaskStatus',
+                     taskId: taskId,
+                     status: newStatus
+                 })
+             })
+             .then(res => res.json())
+             .then(resp => {
+                 if (resp.status !== 'success') {
+                     alert("Gagal memperbarui status: " + resp.message);
+                     // Kembalikan ke posisi semula jika gagal
+                     checkbox.checked = !isChecked;
+                     rowElement.classList.toggle('completed');
+                 }
+             })
+             .catch(err => {
+                 console.error("Update Error:", err);
+                 alert("Koneksi bermasalah.");
+             });
+         }
+
+         // Fungsi untuk Pindah ke Halaman Detail Task
+         function goToTaskDetail(taskId) {
+             // Membawa taskId dan projectId agar halaman detail tahu harus mengambil data apa
+             window.location.href = `item-details.html?taskId=${taskId}&projectId=${projectId}`;
          }
 
          function toggleSidebar() { document.getElementById('sidebarNav').classList.toggle('show'); }
