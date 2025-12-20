@@ -5,102 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Detail - Dialogika</title>
     
+    <!-- Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="../assets/css/style.css" rel="stylesheet" />
+
     <style>
-        body { background-color: #f3f4f6; font-family: 'Poppins', sans-serif; padding: 40px 20px; }
-        .detail-card {
-            margin-left: 290px;
-            width: calc(100% - 290px); background: white;
-            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            padding: 40px;
+        /* --- GLOBAL STYLES --- */
+        body { background-color: #e5e7eb; }
+
+        /* FIX: Main Content Margin */
+        .main-content {
+            margin-left: 290px; width: calc(100% - 290px); padding: 40px; min-height: 100vh;
         }
         @media (max-width: 991px) {
-            .detail-card { margin-left: 0; width: 100%; padding: 20px; }
+            .main-content { margin-left: 0; width: 100%; padding: 20px; }
         }
-        /* --- 1. PROJECT CONTEXT CARD (KARTU BELAKANG/ATAS) --- */
+
+        /* --- 1. PROJECT CONTEXT CARD (DARK NAVY) --- */
         .project-context-card {
-            max-width: 800px; /* LEBIH KECIL dari card list */
-            width: 90%;
-            background-color: #fff;
-            color: #1f2937; /* Dark Navy */
-            margin: 20px auto -20px auto; /* Margin bottom negatif agar tertiban card bawah */
-            padding: 15px 25px 35px 25px; /* Padding bawah lebih besar untuk area tiban */
-            border-radius: 16px 16px 0 0; /* Rounded atas */
-            position: relative;
-            z-index: 1; /* Layer bawah */
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            max-width: 800px; width: 90%; margin: 20px auto -20px auto;
+            background-color: #1f2937; color: white;
+            padding: 20px 25px 40px 25px; border-radius: 16px 16px 0 0;
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
         }
-        /* Badge Sample Project */
+
+        /* Badge */
         .ph-badge {
-            background: #FDE047; /* Yellow */
-            color: #854D0E;
-            font-size: 0.7rem;
-            font-weight: 800;
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            margin-right: 15px;
-            letter-spacing: 0.5px;
-            position: absolute;
-            left: 30px;
-            top: 38%;
-            transform: translateY(-50%);
+            background: #FDE047; color: #854D0E; font-size: 0.7rem; font-weight: 800;
+            padding: 4px 8px; border-radius: 4px; text-transform: uppercase;
+            position: absolute; left: 30px; top: 40%; transform: translateY(-50%);
         }
 
-        /* Menu Trigger */
-        .ph-nav-group {
+        /* Breadcrumb Styles */
+        .ph-crumb-container {
             display: flex; align-items: center; gap: 10px;
-            background: #1f2937; padding: 6px 15px; border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1); padding: 8px 20px;
+            border-radius: 50px; font-size: 0.9rem;
+        }
+        .ph-crumb-link {
+            text-decoration: none; color: #d1d5db; font-weight: 500; transition: 0.2s;
+            display: flex; align-items: center;
+        }
+        .ph-crumb-link:hover { color: white; }
+        .ph-crumb-active {
+            color: white; font-weight: 700; border-bottom: 2px solid #FDE047;
+            max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .ph-sep { font-size: 0.7rem; color: #6b7280; }
+
+        /* --- 2. MAIN LIST CARD (WHITE) --- */
+        .main-list-card {
+            max-width: 1000px; width: 100%; margin: 0 auto 50px auto;
+            background: white; border-radius: 16px;
+            box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.1);
+            padding: 50px 60px; position: relative; z-index: 2;
+            border: 1px solid #d1d5db;
+        }
+
+        /* --- TASK SPECIFIC STYLES --- */
+        .task-checkbox-lg {
+            width: 45px; height: 45px; border: 3px solid #d1d5db; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; background: white;
+        }
+        .task-checkbox-lg:hover { border-color: var(--dlg-blue); }
+        .task-checkbox-lg.checked {
+            background-color: #10b981; border-color: #10b981; color: white;
+        }
+
+        /* Metadata Grid Basecamp Style */
+        .meta-label { font-weight: 700; color: #6b7280; text-align: right; padding-top: 2px;}
+        .meta-value {
+            border-bottom: 1px dashed #d1d5db; color: #374151; padding-bottom: 4px;
             cursor: pointer; transition: 0.2s;
         }
-        .ph-nav-group:hover { background: #0B2B6A; }
-        .ph-project-name { font-weight: 700; color: white; font-size: 1rem; }
-        .task-title { font-size: 2rem; font-weight: 700; color: #1f2937; margin-bottom: 5px; }
-        .meta-info { color: #6b7280; font-size: 0.9rem; margin-bottom: 30px; }
-        
-        .info-grid { display: grid; grid-template-columns: 150px 1fr; gap: 15px; margin-bottom: 30px; }
-        .label { font-weight: 600; color: #4b5563; text-align: right; padding-right: 20px; }
-        .value { color: #1f2937; border-bottom: 1px solid #f3f4f6; padding-bottom: 5px; }
+        .meta-value:hover { border-bottom-color: var(--dlg-blue); color: var(--dlg-blue); }
 
-        .comment-box {
-            border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-top: 20px;
+        /* Comment Box */
+        .comment-input-box {
+            border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;
         }
-        #commentInput {
-            min-height: 100px; padding: 15px; outline: none; font-size: 0.95rem;
+        .comment-input-area {
+            min-height: 80px; padding: 15px; outline: none; background: #f9fafb; color: #374151;
         }
-        .comment-footer {
-            background: #f9fafb; padding: 10px 15px; border-top: 1px solid #e5e7eb;
-            display: flex; justify-content: flex-end;
-        }
-        
-        .comment-item { display: flex; gap: 15px; margin-bottom: 20px; }
-        .avatar {
-            width: 40px; height: 40px; border-radius: 50%; background: #3b82f6;
-            color: white; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; flex-shrink: 0;
-        }
-        .comment-content {
-            background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px 15px;
-            border-radius: 0 12px 12px 12px; width: 100%;
-        }
+        .comment-input-area:focus { background: white; }
 
-        .todo-check-large {
-            width: 35px; height: 35px; border: 2px solid #d1d5db; border-radius: 8px;
-            margin-right: 20px; cursor: pointer;
+        @media (max-width: 768px) {
+            .ph-badge { display: none; }
+            .main-list-card { padding: 30px 20px; }
+            .ph-crumb-container { width: 100%; justify-content: center; font-size: 0.8rem; padding: 8px; }
+            .meta-label { text-align: left; margin-bottom: 5px; }
         }
-        
-        .breadcrumb-nav { font-size: 0.85rem; margin-bottom: 20px; }
-        .breadcrumb-nav a { text-decoration: none; color: #3b82f6; }
-        
     </style>
 </head>
 <body>
+
     <!-- 1. TOP BAR -->
     <nav class="top-bar">
         <div class="d-flex align-items-center">
@@ -114,252 +117,276 @@
 
     <div class="dashboard-container">
         
-        <!-- 2. SIDEBAR (Light, Smart Filters, Pending Widget) -->
+        <!-- 2. SIDEBAR -->
         <aside class="sidebar" id="sidebarNav">
-            
-            <!-- WRAPPER UNTUK AREA YANG BISA DI-SCROLL -->
             <div class="sidebar-scroll-wrapper">
-                
-                <!-- Smart Filters (4 Kotak Besar) -->
-                <div class="smart-filters-grid">
-                    <a href="#" class="filter-card">
-                        <div class="filter-top"><div class="filter-icon bg-icon-dark"><i class="bi bi-archive-fill"></i></div><div class="filter-count">429</div></div>
-                        <div class="filter-label">All Tasks</div>
-                    </a>
-                    <a href="#" class="filter-card">
-                        <div class="filter-top"><div class="filter-icon bg-icon-blue"><i class="bi bi-calendar-event-fill"></i></div><div class="filter-count">25</div></div>
-                        <div class="filter-label">Today</div>
-                    </a>
-                    <a href="#" class="filter-card">
-                        <div class="filter-top"><div class="filter-icon bg-icon-orange"><i class="bi bi-flag-fill"></i></div><div class="filter-count">21</div></div>
-                        <div class="filter-label">Urgent</div>
-                    </a>
-                    <a href="#" class="filter-card">
-                        <div class="filter-top"><div class="filter-icon bg-icon-red"><i class="bi bi-calendar-check-fill"></i></div><div class="filter-count">30</div></div>
-                        <div class="filter-label">Assigned</div>
-                    </a>
-                </div>
-
-                <!-- Navigation Links -->
                 <div class="nav-category">Main Navigation</div>
-                <a href="#" class="sidebar-link active"><i class="bi bi-columns-gap"></i> Dashboard</a>
-                <a href="#" class="sidebar-link"><i class="bi bi-list-columns-reverse"></i> Lineup <span class="sidebar-badge">4</span></a>
-                <a href="#" class="sidebar-link"><i class="bi bi-chat-dots"></i> Pings</a>
-                <a href="#" class="sidebar-link"><i class="bi bi-bell"></i> Hey!</a>
-                <a href="#" class="sidebar-link"><i class="bi bi-activity"></i> Activity</a>
-                <a href="#" class="sidebar-link"><i class="bi bi-person-circle"></i> My Stuff</a>
-
-                <div class="nav-category mt-4">System</div>
-                <a href="#" class="sidebar-link"><i class="bi bi-gear"></i> Settings</a>
-                <a href="#" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
-
-            </div> <!-- End Scroll Wrapper -->
-
-            <!-- PENDING WIDGET (Pinned di Bawah, di luar scroll wrapper) -->
-            <div class="pending-widget">
-                <div class="fire-icon-wrapper"><i class="bi bi-fire fire-icon"></i></div>
-                <h6 class="fw-bold" style="color:#0B2B6A; margin-bottom: 5px;">Pending Tasks</h6>
-                <p class="small text-muted mb-3">You have 5 approvals waiting.</p>
-                <button class="btn-review">Review Now</button>
-                
-                <!-- COPYRIGHT (Muncul hanya saat scroll mentok bawah) -->
-                <div class="sidebar-copyright">
-                    &copy; 2025 PT Dialogika Persona Indonesia
-                </div>
+                <a href="../home.html" class="sidebar-link active"><i class="bi bi-columns-gap"></i> Dashboard</a>
+                <a href="#" class="sidebar-link"><i class="bi bi-list-columns-reverse"></i> Lineup</a>
+                <div class="sidebar-copyright">&copy; 2025 PT Dialogika Persona Indonesia</div>
             </div>
-
         </aside>
 
-        <div class="detail-card" style="width:100%;">
+        <!-- 3. MAIN CONTENT -->
+        <main class="main-content">
+            
+            <!-- A. KARTU BELAKANG (BREADCRUMB NAV) -->
+            <div class="project-context-card">
+                <!-- Badge -->
+                <div class="ph-badge" id="projectBadge">Loading...</div>
 
-            <!-- Task Header -->
-            <div class="d-flex align-items-start">
-                <input type="checkbox" id="taskCheckbox" class="todo-check-large" onchange="updateStatus()">
-                <div>
-                    <h1 id="taskTitle" class="task-title">Loading...</h1>
-                    <div class="meta-info">Added by <span id="creatorName">User Demo</span></div>
+                <!-- Breadcrumb Navigation -->
+                <div class="ph-crumb-container">
+                    <a href="../home.html" class="ph-crumb-link" title="Dashboard">
+                        <i class="bi bi-house-door-fill"></i>
+                    </a>
+                    
+                    <i class="bi bi-chevron-right ph-sep"></i>
+                    <a href="#" id="breadProjectLink" class="ph-crumb-link">...</a>
+
+                    <i class="bi bi-chevron-right ph-sep"></i>
+                    <a href="#" id="breadListLink" class="ph-crumb-link">...</a>
+
+                    <i class="bi bi-chevron-right ph-sep"></i>
+                    <span class="ph-crumb-active" id="breadTaskTitle">Loading...</span>
+                </div>
+
+                <!-- Right Option -->
+                <div class="position-absolute end-0 me-3">
+                    <button class="btn btn-link text-white text-opacity-50"><i class="bi bi-three-dots"></i></button>
                 </div>
             </div>
 
-            <!-- Info Grid -->
-            <div class="info-grid mt-4">
-                <div class="label">Assigned to</div>
-                <div class="value" id="assignedTo">Unassigned</div>
+            <!-- B. KARTU DEPAN (TASK DETAIL) -->
+            <div class="main-list-card">
                 
-                <div class="label">Notes</div>
-                <div class="value text-muted" id="taskNotes">No additional notes.</div>
-            </div>
+                <!-- TASK HEADER -->
+                <div class="d-flex align-items-start gap-4 mb-5">
+                    <!-- Big Checkbox -->
+                    <div id="bigCheckbox" class="task-checkbox-lg flex-shrink-0" onclick="toggleTaskStatus()">
+                        <i class="bi bi-check-lg fs-3 d-none" id="checkIcon"></i>
+                    </div>
+                    <div>
+                        <h1 class="fw-bold mb-1 display-6" id="taskTitleDisplay" style="color:#111;">Loading Task...</h1>
+                        <p class="text-muted small">Added by <span class="fw-bold text-dark">User Demo</span></p>
+                    </div>
+                </div>
 
-            <hr class="my-5">
+                <!-- METADATA FORM (Grid System) -->
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-3 meta-label">Assigned to</div>
+                    <div class="col-md-9"><div class="meta-value">Type names to assign...</div></div>
+                </div>
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-3 meta-label">Due on</div>
+                    <div class="col-md-9"><div class="meta-value">Select a date...</div></div>
+                </div>
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-3 meta-label">When done, notify</div>
+                    <div class="col-md-9"><div class="meta-value">Type names to notify...</div></div>
+                </div>
+                <div class="row mb-5 align-items-start">
+                    <div class="col-md-3 meta-label pt-1">Notes</div>
+                    <div class="col-md-9"><div class="meta-value">Add extra details or attach a file...</div></div>
+                </div>
 
-            <!-- Comments Section -->
-            <div id="commentsWrapper">
-                <!-- Komentar akan di-load di sini -->
-            </div>
+                <hr class="opacity-10 my-5">
 
-            <!-- Comment Form -->
-            <div class="comment-item mt-4">
-                <div class="avatar">RA</div>
-                <div class="w-100">
-                    <div class="comment-box">
-                        <div id="commentInput" contenteditable="true" class="text-muted">Add a comment here...</div>
-                        <div class="comment-footer">
-                            <button class="btn btn-success rounded-pill px-4 btn-sm fw-bold" onclick="postComment()">Comment</button>
+                <!-- COMMENT SECTION -->
+                <div id="commentsWrapper" class="d-flex flex-column gap-4 mb-5">
+                    <!-- Comments injected via JS -->
+                </div>
+
+                <!-- COMMENT EDITOR -->
+                <div class="d-flex gap-3">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:45px; height:45px;">RA</div>
+                    <div class="w-100 comment-input-box">
+                        <div id="taskCommentInput" class="comment-input-area" contenteditable="true">Add a comment here...</div>
+                        <div class="p-2 bg-white border-top text-end">
+                            <button class="btn btn-success rounded-pill px-4 btn-sm fw-bold" onclick="postTaskComment()">Comment</button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Subscribers Section -->
-            <div class="mt-5">
-                <h6 class="fw-bold">Subscribers</h6>
-                <small class="text-muted d-block mb-3">People notified on this task.</small>
-                <div class="d-flex align-items-center gap-2" id="subsContainer">
-                    <!-- Subscriber Avatars -->
+                <!-- SUBSCRIBERS -->
+                <div class="mt-5 pt-4 border-top">
+                    <h6 class="fw-bold text-dark">Subscribers</h6>
+                    <p class="small text-muted mb-3">People listed below will be notified.</p>
+                    
+                    <div class="d-flex align-items-center gap-2 flex-wrap" id="subsContainer">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:30px; height:30px; font-size:0.7rem;">RA</div>
+                        <button class="btn btn-light border rounded-pill px-3 py-1 btn-sm text-muted small">Add/remove people...</button>
+                    </div>
+                    
+                    <div class="mt-3 p-2 bg-light rounded-pill d-inline-block border">
+                        <small class="text-dark fw-bold px-2">You’re subscribed</small>
+                        <button class="btn btn-sm btn-link text-muted text-decoration-none p-0" style="font-size:0.8rem;">Unsubscribe me</button>
+                    </div>
                 </div>
+
             </div>
-        </div>
-    
+        </main>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // --- 1. CONFIG ---
+        // GANTI DENGAN URL APPS SCRIPT TERBARU ANDA
         const API_URL = 'https://script.google.com/macros/s/AKfycbzsRHbU5WcucXdIhQeOFBaWQFvqO1kwGk72dHIfYWKtNcQF7ds5tTOyZNAmEWCQX_M/exec';
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('taskId');
         const projectId = urlParams.get('projectId');
+        
+        // --- 2. ELEMENTS ---
+        const taskTitleEl = document.getElementById('taskTitleDisplay');
+        const badgeEl = document.getElementById('projectBadge');
+        const breadProject = document.getElementById('breadProjectLink');
+        const breadList = document.getElementById('breadListLink');
+        const breadTask = document.getElementById('breadTaskTitle');
+        const checkbox = document.getElementById('bigCheckbox');
+        const checkIcon = document.getElementById('checkIcon');
 
         document.addEventListener("DOMContentLoaded", function() {
             if(!taskId || !projectId) {
-                alert("Missing ID parameters");
+                alert("Error: Parameter URL tidak lengkap.");
                 return;
             }
 
-            // UI Logic for placeholder
-            const input = document.getElementById('commentInput');
+            // UI Placeholder logic
+            const input = document.getElementById('taskCommentInput');
             input.addEventListener('focus', () => { if(input.innerText === 'Add a comment here...') input.innerText = ''; });
             input.addEventListener('blur', () => { if(input.innerText.trim() === '') input.innerText = 'Add a comment here...'; });
 
-            loadData();
+            fetchTaskData();
         });
 
-        function loadData() {
+        function fetchTaskData() {
             fetch(`${API_URL}?action=getProjectData&id=${projectId}`)
             .then(res => res.json())
             .then(response => {
                 if(response.status === 'success') {
                     const data = response.data;
                     
-                    // 1. Cari Task di dalam Lists
-                    let targetTask = null;
+                    // 1. Info Project
+                    if(data.project) {
+                        badgeEl.innerText = data.project.department || 'Project';
+                        breadProject.innerText = data.project.name;
+                        breadProject.href = `../project/project.html?id=${projectId}`;
+                    }
+
+                    // 2. Cari Task dan List Induknya
+                    let foundTask = null;
+                    let parentList = null;
+
                     data.lists.forEach(list => {
-                        const found = list.tasks.find(t => t.id === taskId);
-                        if(found) targetTask = found;
+                        const t = list.tasks.find(x => x.id === taskId);
+                        if(t) {
+                            foundTask = t;
+                            parentList = list;
+                        }
                     });
 
-                    if(targetTask) {
-                        renderTask(targetTask, data.project);
+                    if(foundTask && parentList) {
+                        // Render Info Task
+                        taskTitleEl.innerText = foundTask.title;
+                        breadTask.innerText = foundTask.title;
                         
-                        // 2. Filter & Render Komentar khusus Task ini
-                        const taskComments = data.comments.filter(c => c.contextId === taskId);
-                        renderComments(taskComments);
+                        // Render Info List (Breadcrumb)
+                        breadList.innerText = parentList.name;
+                        breadList.href = `list-detail.html?listId=${parentList.id}&projectId=${projectId}`;
 
-                        // 3. Render Subscribers
-                        const taskSubs = data.subscribers.filter(s => s.contextId === taskId);
-                        renderSubscribers(taskSubs);
+                        // Checkbox Status
+                        const isDone = ['done', 'true', 'completed'].includes(String(foundTask.status).toLowerCase());
+                        if(isDone) {
+                            checkbox.classList.add('checked');
+                            checkIcon.classList.remove('d-none');
+                        } else {
+                            checkbox.classList.remove('checked');
+                            checkIcon.classList.add('d-none');
+                        }
+
+                        // Render Comments (Filter by Task ID)
+                        // Data comments harus sudah tersedia dari Apps Script (sesuai update terakhir)
+                        const tComments = data.comments ? data.comments.filter(c => c.taskId === taskId) : [];
+                        renderComments(tComments);
+
                     } else {
-                        document.getElementById('taskTitle').innerText = "Task Not Found";
+                        taskTitleEl.innerText = "Task Not Found";
                     }
                 }
-            });
-        }
-
-        function renderTask(task, project) {
-            document.getElementById('taskTitle').innerText = task.title;
-            document.getElementById('taskCheckbox').checked = ['done', 'completed'].includes(task.status.toLowerCase());
-            document.getElementById('assignedTo').innerText = task.assignedTo || 'Unassigned';
-            document.getElementById('breadProject').innerText = project.name;
-            document.getElementById('breadProject').href = `../project/project.html?id=${projectId}`;
+            })
+            .catch(err => console.error(err));
         }
 
         function renderComments(comments) {
-            const wrapper = document.getElementById('commentsWrapper');
-            wrapper.innerHTML = '';
+            const container = document.getElementById('commentsWrapper');
+            container.innerHTML = '';
             
+            if(comments.length === 0) return;
+
             comments.forEach(c => {
-                const initial = c.userId ? c.userId.substring(0,2).toUpperCase() : 'U';
-                const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '';
-                
+                const date = c.date ? new Date(c.date).toLocaleDateString() : 'Just now';
                 const html = `
-                    <div class="comment-item">
-                        <div class="avatar bg-secondary">${initial}</div>
-                        <div class="comment-content">
+                    <div class="d-flex gap-3">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:40px; height:40px;">U</div>
+                        <div class="bg-white border rounded p-3 w-100 shadow-sm">
                             <div class="d-flex justify-content-between mb-1">
-                                <strong class="small">${c.userId}</strong>
+                                <strong class="small text-dark">User Demo</strong>
                                 <small class="text-muted" style="font-size:0.7rem">${date}</small>
                             </div>
-                            <div class="small">${c.text}</div>
+                            <div class="text-dark small">${c.text}</div>
                         </div>
                     </div>
                 `;
-                wrapper.insertAdjacentHTML('beforeend', html);
+                container.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        function renderSubscribers(subs) {
-            const container = document.getElementById('subsContainer');
-            container.innerHTML = '';
-            subs.forEach(s => {
-                const initial = s.userId ? s.userId.substring(0,2).toUpperCase() : 'U';
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="avatar" style="width:30px; height:30px; font-size:0.7rem;">${initial}</div>
-                `);
-            });
-            container.insertAdjacentHTML('beforeend', `<button class="btn btn-light border rounded-pill px-3 py-1 btn-sm text-muted small" style="font-size:0.7rem">Add/remove people...</button>`);
-        }
-
-        function postComment() {
-            const input = document.getElementById('commentInput');
+        function postTaskComment() {
+            const input = document.getElementById('taskCommentInput');
             const text = input.innerText.trim();
             if(!text || text === 'Add a comment here...') return;
 
             const btn = event.target;
+            const originalText = btn.innerText;
             btn.innerText = 'Posting...';
             btn.disabled = true;
+
+            // Kita perlu mengambil List ID lagi untuk data lengkap (opsional tapi baik)
+            // Namun fetchTaskData sudah berjalan, kita bisa ambil dari breadcrumb href kalau mau cepat,
+            // atau biarkan listId kosong di backend tidak masalah jika backend handle optional.
+            // Di sini saya kirim projectId & taskId.
 
             fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify({
                     action: 'createComment',
-                    contextType: 'task',
-                    contextId: taskId,
                     projectId: projectId,
-                    text: text,
-                    userId: 'RA' // Hardcoded demo user
+                    taskId: taskId,
+                    text: text
                 })
             })
             .then(res => res.json())
             .then(resp => {
                 input.innerText = 'Add a comment here...';
-                loadData(); // Refresh
+                fetchTaskData(); // Refresh comments
             })
             .finally(() => {
-                btn.innerText = 'Comment';
+                btn.innerText = originalText;
                 btn.disabled = false;
             });
         }
 
-        function updateStatus() {
-            const isChecked = document.getElementById('taskCheckbox').checked;
-            fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'updateTaskStatus',
-                    taskId: taskId,
-                    status: isChecked ? 'done' : 'open'
-                })
-            });
+        function toggleTaskStatus() {
+            // Visual toggle only. Backend update belum diimplementasikan di Apps Script 'createTask' section (perlu updateTaskStatus)
+            // Tapi UI sudah siap.
+            checkbox.classList.toggle('checked');
+            checkIcon.classList.toggle('d-none');
         }
+
+        function toggleSidebar() { document.getElementById('sidebarNav').classList.toggle('show'); }
     </script>
 </body>
 </html>
