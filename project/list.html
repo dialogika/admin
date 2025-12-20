@@ -85,6 +85,48 @@
         .tag-remove { cursor: pointer; opacity: 0.6; } .tag-remove:hover { opacity: 1; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        /* HEADER LAYOUT */
+                .list-header-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 3rem; /* Jarak ke bawah (list item) */
+                    position: relative;
+                }
+
+                /* TOMBOL NEW LIST */
+                .btn-new-list {
+                    background-color: #0B2B6A; /* Warna Dialogika Blue */
+                    color: white;
+                    border-radius: 50px; /* Rounded Pill */
+                    padding: 10px 24px;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    border: none;
+                    transition: all 0.2s ease;
+                    white-space: nowrap; /* Agar teks tidak turun baris */
+                    box-shadow: 0 4px 6px rgba(11, 43, 106, 0.2); /* Shadow halus */
+                    
+                    /* Hapus posisi absolute lama */
+                    position: static;
+                }
+
+                .btn-new-list:hover {
+                    background-color: #08204e; /* Warna lebih gelap saat hover */
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(11, 43, 106, 0.3);
+                }
+
+                /* Responsive di HP */
+                @media (max-width: 768px) {
+                    .list-header-container {
+                        flex-direction: column;
+                        gap: 20px;
+                    }
+                    .btn-new-list {
+                        width: 100%; /* Full width di HP */
+                    }
+                }
     </style>
 </head>
 <body>
@@ -124,7 +166,25 @@
 
             <div class="main-list-card">
                 <button class="btn-new-list btn-dlg-blue" onclick="toggleNewListForm()"><i class="bi bi-plus-lg me-1"></i> New List</button>
-                <div class="text-center mb-5"><h1 class="fw-bold display-5 mb-1" style="color:#111;">All List</h1><p class="text-muted">Manage your tasks efficiently.</p></div>
+                <!-- HEADER SECTION (FLEXBOX) -->
+                <div class="list-header-container">
+                    <!-- Spacer kosong di kiri (agar judul benar-benar di tengah) -->
+                    <div style="flex: 1;"></div>
+
+                    <!-- Judul di Tengah -->
+                    <div class="text-center" style="flex: 2;">
+                        <h1 class="fw-bold display-5 mb-1" style="color:#111;">All List</h1>
+                        <p class="text-muted mb-0">Manage your tasks efficiently.</p>
+                    </div>
+
+                    <!-- Tombol di Kanan -->
+                    <div style="flex: 1; text-align: right;">
+                        <!-- Perhatikan: Class 'btn-dlg-blue' DIHAPUS agar tidak konflik -->
+                        <button class="btn-new-list" onclick="toggleNewListForm()">
+                            <i class="bi bi-plus-lg me-1"></i> New List
+                        </button>
+                    </div>
+                </div>
 
                 <!-- LIST FORM -->
                 <div id="newListForm" class="new-list-form-wrapper" style="display:none;">
