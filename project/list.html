@@ -47,7 +47,7 @@
             border: 1px solid #d1d5db; min-height: 400px;
         }
         .list-header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; position: relative; }
-        .btn-new-list { background-color: #0B2B6A; color: white; border-radius: 50px; padding: 10px 24px; font-weight: 600; font-size: 0.95rem; border: none; transition: 0.2s; white-space: nowrap; box-shadow: 0 4px 6px rgba(11, 43, 106, 0.2); }
+        .btn-new-list { background-color: #0B2B6A; color: white; border-radius: 50px; padding: 10px 24px; font-weight: 600; font-size: 0.95rem; border: none; transition: 0.2s; white-space: nowrap;  }
         .btn-new-list:hover { background-color: #08204e; transform: translateY(-2px); color: white; }
 
         /* --- STATUS BADGE SYSTEM (List View) --- */
@@ -144,17 +144,42 @@
             font-size: 1rem;
         }
 
-        /* --- TAG SYSTEM ENHANCEMENT --- */
-        .tag-dropdown {
-            position: absolute; top: 100%; left: 0; width: 280px;
-            background: white; border: 1px solid #e2e8f0; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000;
-            display: none; padding: 10px;
-        }
-        .tag-search-header { border-bottom: 1px solid #f1f5f9; margin-bottom: 8px; padding-bottom: 8px; }
-        .tag-option-item { padding: 8px 12px; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
-        .tag-option-item:hover { background: #f8fafc; }
-        .create-tag-btn { color: #64748b; font-size: 0.9rem; padding: 10px; cursor: pointer; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+        /* --- ENHANCED TAG SYSTEM --- */ 
+        .tag-dropdown { 
+            position: absolute; top: 100%; left: 0; width: 300px; 
+            background: white; border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 2000; 
+            display: none; padding: 12px; border: 1px solid #e2e8f0; 
+        } 
+        
+        .tag-list-scroll { max-height: 250px; overflow-y: auto; margin-top: 10px; } 
+        
+        .tag-option-item { 
+            padding: 8px 10px; cursor: pointer; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: space-between; 
+            transition: 0.2s; margin-bottom: 2px; 
+        } 
+        .tag-option-item:hover { background: #f1f5f9; } 
+        
+        /* Create Tag Style */ 
+        .create-tag-prompt { 
+            display: flex; align-items: center; gap: 10px; padding: 10px; 
+            color: #64748b; font-size: 0.9rem; border-top: 1px solid #f1f5f9; cursor: pointer; 
+        } 
+        
+        /* Edit Tag UI */ 
+        .tag-edit-container { padding: 10px; display: none; } 
+        .color-mini-grid { 
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 12px 0; 
+        } 
+        .btn-delete-tag { 
+            color: #ef4444; background: none; border: none; font-size: 0.85rem; 
+            display: flex; align-items: center; gap: 6px; padding: 5px; width: 100%; 
+        } 
+        .btn-delete-tag:hover { background: #fef2f2; border-radius: 6px; } 
+        
+        /* Notes Editor */ 
+        .notes-label { font-weight: 600; color: #64748b; font-size: 0.85rem; margin-bottom: 8px; }
 
         /* Color Picker Grid */
         .color-picker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 8px; }
@@ -356,6 +381,52 @@
     .color-circle { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
     .color-circle:hover { transform: scale(1.2); }
     .color-circle.active { border-color: #000; }
+
+    /* --- TASK ROW STYLING --- */ 
+    .todo-row { 
+        transition: background-color 0.2s; 
+        border-bottom: 1px solid #f1f5f9 !important; 
+    } 
+    
+    /* Checkbox Bulat */ 
+    .task-checkbox { 
+        width: 20px !important; 
+        height: 20px !important; 
+        border-radius: 50% !important; /* Membuat bulat */ 
+        border: 2px solid #cbd5e1 !important; 
+        cursor: pointer; 
+        flex-shrink: 0; 
+    } 
+    
+    .task-checkbox:checked { 
+        background-color: #0d6efd; 
+        border-color: #0d6efd; 
+    } 
+    
+    /* Gaya Tulisan Selesai (Strikeout & Abu-abu) */ 
+    .task-row-done .task-text-content { 
+        text-decoration: line-through; 
+        color: #94a3b8 !important; /* Warna abu-abu */ 
+    } 
+    
+    /* Hover Effect: Munculkan tulisan New Tab */ 
+    .new-tab-hint { 
+        opacity: 0; 
+        font-size: 0.7rem; 
+        color: #0B2B6A; 
+        font-weight: 700; 
+        margin-left: 10px; 
+        transition: opacity 0.2s; 
+        text-transform: uppercase; 
+    } 
+    
+    .todo-row:hover .new-tab-hint { 
+        opacity: 1; 
+    } 
+    
+    .todo-row:hover { 
+        background-color: #f8fafc; 
+    }
     </style>
 
 </head>
@@ -477,8 +548,7 @@
                         <button class="btn btn-light border rounded-pill px-4" onclick="toggleNewListForm()">Cancel</button>
                     </div>
                 </div>
-                
-
+            
                 <div id="loadingState" class="text-center py-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Loading lists...</p></div>
                 <div id="listsContainer"></div>
                 <div id="emptyState" class="text-center text-muted py-5" style="display:none;">No lists yet.</div>
@@ -638,6 +708,7 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0 justify-content-between">
+                    &nbsp;
                     <button class="btn btn-dlg-blue rounded-pill px-4 fw-bold" onclick="syncStatusesToDB()" style="border:none">Apply changes</button>
                 </div>
             </div>
@@ -661,11 +732,175 @@
         const projectId = new URLSearchParams(window.location.search).get('id');
         const dialogikaColors = ['#0B2B6A', '#F9C72E', '#231f20', '#7204cf', '#006a4e', '#e7181a', '#f7b12c', '#0163ea', '#1c84e3', '#444444', '#011548'];
         const tagPalette = ['#D3E5EF', '#D3DFFB', '#E7E2F9', '#F1DDF3', '#F9DEDC', '#FDECC8', '#E2F2D1', '#7204cf', '#0163ea', '#1c84e3', '#006a4e', '#0B2B6A', '#F9C72E', '#e7181a'];
+        const tagPaletteColors = ['#D3E5EF', '#D3DFFB', '#E7E2F9', '#F1DDF3', '#F9DEDC', '#FDECC8', '#E2F2D1', '#7204cf', '#0163ea', '#1c84e3', '#006a4e', '#0B2B6A', '#F9C72E', '#e7181a']; 
 
         let globalTags = [];
         let globalUsers = []; // Simpan data user global
         let lastFetchedLists = []; // Simpan data lists global
         let selectedTags = [];
+
+        // --- TAG SYSTEM LOGIC ---
+        function handleTagSearch(input, lid) { 
+            event.stopPropagation(); 
+            const query = input.value.trim().toLowerCase(); 
+            const dropdown = document.getElementById(`tag-dropdown-${lid}`); 
+            const resultsContainer = document.getElementById(`tag-list-results-${lid}`); 
+            const createSuggestion = document.getElementById(`tag-create-suggestion-${lid}`); 
+            
+            dropdown.style.display = 'block'; 
+            document.getElementById(`tag-search-view-${lid}`).style.display = 'block'; 
+            document.getElementById(`tag-edit-view-${lid}`).style.display = 'none'; 
+        
+            // 1. Filter existing tags 
+            const filtered = globalTags.filter(t => t.name.toLowerCase().includes(query)); 
+            resultsContainer.innerHTML = filtered.map(t => ` 
+                <div class="tag-option-item"> 
+                    <div class="d-flex align-items-center flex-grow-1" onclick="selectExistingTag(${JSON.stringify(t).replace(/"/g, '&quot;')}, '${lid}')"> 
+                        <span class="tag-pill" style="background:${t.color}">${t.name}</span> 
+                    </div> 
+                    <i class="bi bi-pencil-square text-muted ms-2 px-1" onclick="openEditTagUI('${lid}', ${JSON.stringify(t).replace(/"/g, '&quot;')})"></i> 
+                </div> 
+            `).join(''); 
+        
+            // 2. Show create suggestion if no exact match 
+            const exactMatch = globalTags.find(t => t.name.toLowerCase() === query); 
+            if (query && !exactMatch) { 
+                // Rekomendasi warna otomatis (acak dari palette) 
+                const randomColor = tagPaletteColors[Math.floor(Math.random() * tagPaletteColors.length)]; 
+                createSuggestion.innerHTML = ` 
+                    <div class="create-tag-prompt" onclick="createNewTagAct('${query}', '${randomColor}', '${lid}')"> 
+                        <span>Create</span> 
+                        <span class="tag-pill" style="background:${randomColor}">${query}</span> 
+                        <i class="bi bi-arrow-return-left ms-auto"></i> 
+                    </div> 
+                `; 
+            } else { 
+                createSuggestion.innerHTML = ''; 
+            } 
+        } 
+        
+        // FUNGSI CREATE TAG BARU 
+        function createNewTagAct(name, color, lid) { 
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'createTag', projectId: projectId, tagName: name, color: color }) 
+            }) 
+            .then(r => r.json()) 
+            .then(res => { 
+                if(res.status === 'success') { 
+                    const newTag = { id: res.tagId, name: res.name, color: res.color }; 
+                    globalTags.push(newTag); // Update cache 
+                    selectExistingTag(newTag, lid); 
+                    document.querySelector(`#form-add-${lid} input[placeholder*="tags"]`).value = ''; 
+                    // Refresh search view to show new tag
+                    handleTagSearch(document.querySelector(`#form-add-${lid} input[placeholder*="tags"]`), lid);
+                } 
+            }); 
+        } 
+        
+        // FUNGSI SELECT TAG (Add to selection)
+        function selectExistingTag(tag, lid) {
+            // Cek apakah sudah dipilih
+            if (selectedTags.find(t => t.id === tag.id)) return;
+            selectedTags.push(tag);
+            renderSelectedTags(lid);
+            document.getElementById(`tag-dropdown-${lid}`).style.display = 'none';
+        }
+
+        function renderSelectedTags(lid) {
+            const container = document.getElementById(`selected-tags-${lid}`);
+            if (!container) return;
+            container.innerHTML = selectedTags.map(t => `
+                <span class="tag-pill d-flex align-items-center gap-1" style="background:${t.color}; font-size: 0.8rem;">
+                    ${t.name} <i class="bi bi-x cursor-pointer" onclick="removeSelectedTag('${t.id}', '${lid}')"></i>
+                </span>
+            `).join('');
+        }
+
+        function removeSelectedTag(tid, lid) {
+            selectedTags = selectedTags.filter(t => t.id !== tid);
+            renderSelectedTags(lid);
+        }
+
+        // FUNGSI EDIT TAG UI 
+        function openEditTagUI(lid, tag) { 
+            event.stopPropagation();
+            document.getElementById(`tag-search-view-${lid}`).style.display = 'none'; 
+            const editView = document.getElementById(`tag-edit-view-${lid}`); 
+            editView.style.display = 'block'; 
+        
+            const nameInput = document.getElementById(`edit-tag-name-${lid}`); 
+            nameInput.value = tag.name; 
+            
+            // Render Color Palette 
+            const colorGrid = document.getElementById(`edit-tag-colors-${lid}`); 
+            colorGrid.innerHTML = tagPaletteColors.map(c => ` 
+                <div class="color-circle" style="background:${c}; ${c === tag.color ? 'border: 2px solid black;' : ''}" 
+                     onclick="updateTagColor('${lid}', '${tag.id}', '${c}')"></div> 
+            `).join(''); 
+        
+            // Delete Button Act 
+            document.getElementById(`btn-delete-tag-act-${lid}`).onclick = () => deleteTagAct(tag.id, lid); 
+            
+            // Handle rename on enter 
+            nameInput.onkeypress = (e) => { 
+                if(e.key === 'Enter') updateTagName(lid, tag.id, nameInput.value); 
+            } 
+        } 
+        
+        function backToTagSearch(lid) { 
+            document.getElementById(`tag-edit-view-${lid}`).style.display = 'none'; 
+            document.getElementById(`tag-search-view-${lid}`).style.display = 'block'; 
+        } 
+        
+        // FUNGSI UPDATE/DELETE DI DATABASE (backend) 
+        function updateTagColor(lid, tid, newColor) { 
+            // Optimistic Update
+            const tag = globalTags.find(t => t.id === tid);
+            if(tag) tag.color = newColor;
+            
+            // Re-render UI
+            openEditTagUI(lid, tag); 
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateTag', tagId: tid, color: newColor })
+            });
+        } 
+
+        function updateTagName(lid, tid, newName) {
+            const tag = globalTags.find(t => t.id === tid);
+            if(tag) tag.name = newName;
+            
+            backToTagSearch(lid);
+            // Re-trigger search to update list
+            const input = document.querySelector(`#form-add-${lid} input[placeholder*="tags"]`);
+            handleTagSearch(input, lid);
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'updateTag', tagId: tid, tagName: newName })
+            });
+        }
+        
+        function deleteTagAct(tid, lid) { 
+            if(!confirm("Delete this tag globally?")) return; 
+            
+            // Optimistic remove
+            globalTags = globalTags.filter(t => t.id !== tid); 
+            selectedTags = selectedTags.filter(t => t.id !== tid); // Remove from selection too
+            renderSelectedTags(lid);
+            
+            backToTagSearch(lid); 
+            // Re-trigger search
+            const input = document.querySelector(`#form-add-${lid} input[placeholder*="tags"]`);
+            handleTagSearch(input, lid);
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deleteTag', tagId: tid })
+            });
+        }
 
         let selectedFile = null;
 
@@ -750,7 +985,7 @@
             document.getElementById('emptyState').style.display = 'none';
 
             lists.forEach(list => {
-                // Logika Status Badge dengan separator >
+                // Render Status (Panah >)
                 let statusesHtml = '';
                 if (list.statuses && list.statuses.length > 0) {
                     const sorted = list.statuses.sort((a,b) => a.position - b.position);
@@ -761,34 +996,164 @@
                     }).join('');
                 }
 
-                const html = `
-                <div class="list-card-container shadow-sm">
-                    <h2 class="list-card-title">${list.name}</h2>
-                    <div class="list-card-desc">${list.description || 'No description provided.'}</div>
+                // --- RENDER TASK ITEM ---
+                const tasksHtml = (list.tasks || []).map(t => {
+                    // Logika Status Selesai
+                    const isDone = ['done', 'true', 'completed'].includes(t.status?.toLowerCase());
                     
-                    <div class="status-flow">
+                    // Logika Deteksi Deskripsi/Notes (asumsi t.description ada di data)
+                    const hasContent = (t.description && t.description.trim() !== "" && t.description !== "<br>");
+
+                    return `
+                        <div class="todo-row p-2 d-flex align-items-center cursor-pointer ${isDone ? 'task-row-done' : ''}"
+                             onclick="window.open('item-details.html?taskId=${t.id}&projectId=${projectId}', '_blank')">
+                            
+                            <!-- Checkbox Bulat -->
+                            <input type="checkbox" class="form-check-input task-checkbox me-3" ${isDone ? 'checked' : ''}
+                                   onclick="event.stopPropagation(); updateTaskQuickStatus('${t.id}', this.checked)">
+                            
+                            <div class="flex-grow-1 d-flex align-items-center">
+                                <span class="task-text-content fw-medium">${t.title}</span>
+                                
+                                <!-- Icon Description jika ada isi -->
+                                ${hasContent ? '<i class="bi bi-filter-left text-muted ms-2" style="font-size: 1.1rem;"></i>' : ''}
+                                
+                                <!-- Hint New Tab saat Hover -->
+                                <span class="new-tab-hint"><i class="bi bi-box-arrow-up-right me-1"></i> New Tab</span>
+                            </div>
+
+                            <!-- Label Status di sebelah kanan -->
+                            <span class="badge bg-light text-dark border ms-2 small" style="font-size:0.65rem; text-transform: uppercase;">
+                                ${t.status || 'OPEN'}
+                            </span>
+                        </div>`;
+                }).join('');
+
+                const html = `
+                <div class="list-card-container shadow-sm mb-5 bg-white p-4 rounded-4 border">
+                    <h2 class="list-card-title h4 fw-bold">${list.name}</h2>
+                    <div class="list-card-desc mb-3 small text-muted">${list.description || ''}</div>
+                    
+                    <div class="status-flow mb-4">
                         ${statusesHtml}
-                        <button class="btn-add-status" onclick="promptNewStatus('${list.id}')">
+                        <button class="btn-add-status ms-2" onclick="promptNewStatus('${list.id}')">
                             <i class="bi bi-plus-lg"></i>
                         </button>
                     </div>
 
                     <div class="todo-list-items mb-3">
-                        ${(list.tasks || []).map(t => `
-                            <div class="d-flex align-items-center p-2 border-bottom small">
-                                <input type="checkbox" class="form-check-input me-2">
-                                <span>${t.title}</span>
-                            </div>
-                        `).join('')}
+                        ${tasksHtml}
                     </div>
 
-                    <button class="btn-add-todo-pill" onclick="showTaskForm('${list.id}')">
+                    <button class="btn-add-todo-pill mt-2" onclick="showTaskForm('${list.id}')">
                         <i class="bi bi-plus"></i> Add a to-do
                     </button>
                     
-                    <!-- (Form Task Create Panel disembunyikan di sini, tetap gunakan logic sebelumnya) -->
                     <div id="form-add-${list.id}" class="task-create-panel" style="display:none">
-                        <!-- ... existing task form code ... -->
+                        <input type="text" id="task-title-${list.id}" class="task-title-large" placeholder="What needs to be done?">
+                        
+                        <div class="meta-grid-container">
+                            <!-- Priority -->
+                            <div class="meta-row">
+                                <div class="meta-icon"><i class="bi bi-flag"></i></div>
+                                <div class="meta-label">Priority</div>
+                                <div class="meta-value">
+                                    <div class="priority-dropdown" id="priority-wrapper-${list.id}">
+                                        <div class="priority-trigger" onclick="togglePriorityMenu('${list.id}')" id="priority-trigger-${list.id}">
+                                            <i class="bi bi-flag text-muted"></i> <span class="text-muted">Normal</span>
+                                        </div>
+                                        <div class="priority-menu" id="priority-menu-${list.id}">
+                                            <div class="priority-item" onclick="selectPriority('${list.id}', 'urgent')"><i class="bi bi-flag-fill text-danger"></i> Urgent</div>
+                                            <div class="priority-item" onclick="selectPriority('${list.id}', 'high')"><i class="bi bi-flag-fill text-warning"></i> High</div>
+                                            <div class="priority-item" onclick="selectPriority('${list.id}', 'normal')"><i class="bi bi-flag-fill text-primary"></i> Normal</div>
+                                            <div class="priority-item" onclick="selectPriority('${list.id}', 'low')"><i class="bi bi-flag-fill text-secondary"></i> Low</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Due Date -->
+                            <div class="meta-row">
+                                <div class="meta-icon"><i class="bi bi-calendar"></i></div>
+                                <div class="meta-label">Due Date</div>
+                                <div class="meta-value">
+                                    <input type="date" id="task-due-${list.id}" class="ghost-input" style="width:auto">
+                                </div>
+                            </div>
+
+                            <!-- Assignee -->
+                            <div class="meta-row">
+                                <div class="meta-icon"><i class="bi bi-person"></i></div>
+                                <div class="meta-label">Assignee</div>
+                                <div class="meta-value">
+                                    <div class="user-dropdown-container">
+                                        <div class="user-trigger" onclick="toggleUserMenu('${list.id}')" id="user-trigger-${list.id}">
+                                            <i class="bi bi-person-circle text-muted"></i> <span class="text-muted">Unassigned</span>
+                                        </div>
+                                        <div class="user-menu-dark" id="user-menu-${list.id}">
+                                            <div class="user-search-box">
+                                                <i class="bi bi-search"></i>
+                                                <input type="text" placeholder="Search people..." oninput="filterUsers(this.value, '${list.id}')">
+                                            </div>
+                                            <div class="user-list-scroll" id="user-list-${list.id}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAGS (NEW) -->
+                            <div class="meta-row"> 
+                                <div class="meta-icon"><i class="bi bi-tags"></i></div> 
+                                <div class="meta-label">Tags</div> 
+                                <div class="meta-value position-relative"> 
+                                    <div id="selected-tags-${list.id}" class="d-flex flex-wrap gap-1 mb-1"></div> 
+                                    <input type="text" class="ghost-input w-100" placeholder="Search or add tags..." 
+                                           onfocus="handleTagSearch(this, '${list.id}')" 
+                                           oninput="handleTagSearch(this, '${list.id}')"> 
+                                    
+                                    <!-- TAG DROPDOWN --> 
+                                    <div id="tag-dropdown-${list.id}" class="tag-dropdown" onclick="event.stopPropagation()"> 
+                                        <!-- Search State --> 
+                                        <div id="tag-search-view-${list.id}"> 
+                                            <div class="tag-list-scroll" id="tag-list-results-${list.id}"></div> 
+                                            <div id="tag-create-suggestion-${list.id}"></div> 
+                                        </div> 
+                                        
+                                        <!-- Edit State --> 
+                                        <div id="tag-edit-view-${list.id}" class="tag-edit-container"> 
+                                            <div class="d-flex align-items-center gap-2 mb-3"> 
+                                                <i class="bi bi-chevron-left cursor-pointer" onclick="backToTagSearch('${list.id}')"></i> 
+                                                <input type="text" id="edit-tag-name-${list.id}" class="form-control form-control-sm fw-bold"> 
+                                            </div> 
+                                            <div class="color-mini-grid" id="edit-tag-colors-${list.id}"></div> 
+                                            <hr class="my-2 opacity-50"> 
+                                            <button class="btn-delete-tag" id="btn-delete-tag-act-${list.id}"> 
+                                                <i class="bi bi-trash"></i> Delete 
+                                            </button> 
+                                        </div> 
+                                    </div> 
+                                </div> 
+                            </div>
+                        </div>
+
+                        <!-- NOTES (NEW) -->
+                        <div class="mt-4"> 
+                            <div class="notes-label">Notes</div> 
+                            <div class="rich-editor-box"> 
+                                <div class="rich-editor-toolbar border-bottom bg-light d-flex gap-1 p-1"> 
+                                    <button class="editor-btn btn-sm" onclick="execEdit('bold')"><i class="bi bi-type-bold"></i></button> 
+                                    <button class="editor-btn btn-sm" onclick="execEdit('italic')"><i class="bi bi-type-italic"></i></button> 
+                                    <button class="editor-btn btn-sm" onclick="execEdit('insertUnorderedList')"><i class="bi bi-list-ul"></i></button> 
+                                    <button class="editor-btn btn-sm" onclick="addCustomLink()"><i class="bi bi-link-45deg"></i></button> 
+                                </div> 
+                                <div id="task-desc-${list.id}" class="rich-editor-content p-3" contenteditable="true" data-placeholder="Add notes here..."></div> 
+                            </div> 
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4 justify-content-end">
+                            <button class="btn btn-light border px-4 rounded-pill" onclick="showTaskForm('${list.id}')">Cancel</button>
+                            <button class="btn btn-dlg-blue px-4 rounded-pill fw-bold" onclick="saveNewTask('${list.id}')">Create Task</button>
+                        </div>
                     </div>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', html);
