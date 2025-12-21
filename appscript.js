@@ -58,144 +58,158 @@ function doPost(e) {
   }
 }
 
-/**
- * FUNGSI UTAMA: GET DATA LENGKAP
- */
-function getProjectCompleteData(targetId) {
+/** 
+ * FUNGSI: MEMBUAT MASTER TAG BARU 
+ */ 
+function createTag(data) { 
+  const ss = SpreadsheetApp.openById(TAG_SHEET_ID).getSheets()[0]; 
+  const tid = Utilities.getUuid(); 
+  // Kolom: tag_id, tag_name, color 
+  ss.appendRow([tid, data.tagName, data.color]); 
+  return responseJSON({ status: 'success', tagId: tid, name: data.tagName, color: data.color }); 
+} 
+
+/** 
+ * FUNGSI: MENGAMBIL SEMUA DATA (PROJECT, LIST, STATUS, TAG, USERS) 
+ */ 
+function getProjectCompleteData(targetId) { 
+  const targetIdStr = String(targetId).trim(); 
+  
+  // 1. Fetch Master Users (Tanpa Password) 
+  const uSheet = SpreadsheetApp.openById(USER_SHEET_ID).getSheets()[0]; 
+  const uData = uSheet.getDataRange().getDisplayValues(); 
+  let users = []; 
+  for(let i=1; i<uData.length; i++) { 
+    users.push({ id: uData[i][0], name: uData[i][1], email: uData[i][2], photo: formatDriveUrl(uData[i][4]), role: uData[i][5] }); 
+  } 
+
+  // 2. Fetch Master Tags 
+  const tagSheet = SpreadsheetApp.openById(TAG_SHEET_ID).getSheets()[0]; 
+  const tagRaw = tagSheet.getDataRange().getDisplayValues(); 
+  let tags = []; 
+  for(let i=1; i<tagRaw.length; i++) { 
+    tags.push({ id: tagRaw[i][0], name: tagRaw[i][1], color: tagRaw[i][2] }); 
+  } 
+
+  // 3. Fetch Statuses 
+  const sSheet = SpreadsheetApp.openById(STATUS_SHEET_ID).getSheets()[0]; 
+  const sRaw = sSheet.getDataRange().getDisplayValues(); 
+  let allStatuses = []; 
+  for(let i=1; i<sRaw.length; i++) { 
+    allStatuses.push({ 
+      id: sRaw[i][0], 
+      listId: sRaw[i][1], 
+      name: sRaw[i][3], 
+      type: sRaw[i][4], 
+      color: sRaw[i][5], 
+      position: sRaw[i][6] 
+    }); 
+  } 
+
+  // ... (Logika Fetch Project, List, dan Task sama seperti sebelumnya, namun difilter berdasarkan project ID) 
+  // [Kode fetching project & list disingkat, diasumsikan Anda sudah memiliki logikanya]
+  
+  // RE-USE EXISTING LOGIC FOR PROJECT, LISTS, TASKS
+  
+  let allRelevantIds = [targetIdStr];
+
+  // 4. GET PROJECT
+  const pSheet = SpreadsheetApp.openById(PROJECT_SHEET_ID).getSheets()[0];
+  const pData = pSheet.getDataRange().getDisplayValues();
+  let project = null;
+  for(let i=1; i<pData.length; i++) {
+    if(String(pData[i][0]).trim() === targetIdStr) {
+      project = { id: pData[i][0], name: pData[i][1], desc: pData[i][2], department: pData[i][9] };
+      break;
+    }
+  }
+  if(!project) return responseJSON({ status: 'error', message: 'Project not found' });
+
+  // 5. GET LISTS
+  const lSheet = SpreadsheetApp.openById(LIST_SHEET_ID).getSheets()[0];
+  const lData = lSheet.getDataRange().getDisplayValues();
+  let lists = [], listIds = [];
+  for(let i=1; i<lData.length; i++) {
+    if(String(lData[i][1]).trim() === targetIdStr) {
+      const lid = String(lData[i][0]).trim();
+      lists.push({ id: lid, name: lData[i][2], desc: lData[i][3], tasks: [], statuses: [] });
+      listIds.push(lid);
+      allRelevantIds.push(lid);
+    }
+  }
+
+  // 6. MAPPING STATUSES TO LISTS
+  // allStatuses sudah diambil di atas (step 3)
+  allStatuses.forEach(s => {
+    let l = lists.find(x => String(x.id) === String(s.listId));
+    if(l) {
+        l.statuses.push({
+            id: s.id, name: s.name, type: s.type, color: s.color, position: parseInt(s.position) || 0
+        });
+    }
+  });
+
+  // 7. GET TASKS
+  const tSheet = SpreadsheetApp.openById(TASK_SHEET_ID).getSheets()[0];
+  const tData = tSheet.getDataRange().getDisplayValues();
+  for(let i=1; i<tData.length; i++) {
+    let tListId = String(tData[i][1]).trim();
+    if(listIds.includes(tListId)) {
+      let tid = tData[i][0]; 
+      allRelevantIds.push(tid);
+      let l = lists.find(x => x.id === tListId);
+      if(l) l.tasks.push({ 
+        id: tid, 
+        title: tData[i][3], 
+        description: tData[i][4],
+        status: String(tData[i][5]),
+        priority: tData[i][6],
+        points: tData[i][16],
+        assignedTo: tData[i][18], 
+        notifyTo: tData[i][19]    
+      });
+    }
+  }
+
+  // 8. GET COMMENTS
+  let comments = [];
   try {
-    const targetIdStr = String(targetId).trim();
-    let allRelevantIds = [targetIdStr];
-
-    // 1. GET PROJECT
-    const pSheet = SpreadsheetApp.openById(PROJECT_SHEET_ID).getSheets()[0];
-    const pData = pSheet.getDataRange().getDisplayValues();
-    let project = null;
-    for(let i=1; i<pData.length; i++) {
-      if(String(pData[i][0]).trim() === targetIdStr) {
-        project = { id: pData[i][0], name: pData[i][1], desc: pData[i][2], department: pData[i][9] };
-        break;
-      }
-    }
-    if(!project) return responseJSON({ status: 'error', message: 'Project not found' });
-
-    // 2. GET LISTS
-    const lSheet = SpreadsheetApp.openById(LIST_SHEET_ID).getSheets()[0];
-    const lData = lSheet.getDataRange().getDisplayValues();
-    let lists = [], listIds = [];
-    for(let i=1; i<lData.length; i++) {
-      if(String(lData[i][1]).trim() === targetIdStr) {
-        const lid = String(lData[i][0]).trim();
-        lists.push({ id: lid, name: lData[i][2], desc: lData[i][3], tasks: [], statuses: [] });
-        listIds.push(lid);
-        allRelevantIds.push(lid);
-      }
-    }
-
-    // 3. GET STATUSES
-    try {
-      const stSheet = SpreadsheetApp.openById(STATUS_SHEET_ID).getSheets()[0];
-      const stData = stSheet.getDataRange().getDisplayValues();
-      for(let i=1; i<stData.length; i++) {
-        let sListId = String(stData[i][1]).trim();
-        if(listIds.includes(sListId)) {
-          let l = lists.find(x => x.id === sListId);
-          if(l) l.statuses.push({
-            id: stData[i][0], name: stData[i][3], type: stData[i][4], color: stData[i][5], position: parseInt(stData[i][6]) || 0
-          });
-        }
-      }
-    } catch(e) { console.warn("Status load error"); }
-
-    // 4. GET TASKS
-    const tSheet = SpreadsheetApp.openById(TASK_SHEET_ID).getSheets()[0];
-    const tData = tSheet.getDataRange().getDisplayValues();
-    for(let i=1; i<tData.length; i++) {
-      let tListId = String(tData[i][1]).trim();
-      if(listIds.includes(tListId)) {
-        let tid = tData[i][0]; 
-        allRelevantIds.push(tid);
-        let l = lists.find(x => x.id === tListId);
-        if(l) l.tasks.push({ 
-          id: tid, 
-          title: tData[i][3], 
-          description: tData[i][4],
-          status: String(tData[i][5]),
-          priority: tData[i][6],
-          points: tData[i][16],
-          assignedTo: tData[i][18], 
-          notifyTo: tData[i][19]    
+    const cSheet = SpreadsheetApp.openById(COMMENT_SHEET_ID).getSheets()[0];
+    const cData = cSheet.getDataRange().getDisplayValues();
+    for(let i=1; i<cData.length; i++) {
+      if(allRelevantIds.includes(String(cData[i][2]).trim())) {
+        comments.push({
+          id: cData[i][0], contextId: cData[i][2], userId: cData[i][4],
+          text: cData[i][5], date: cData[i][6], attachment: cData[i][7] || ""
         });
       }
     }
+  } catch(e) {}
 
-    // 5. GET COMMENTS
-    let comments = [];
-    try {
-      const cSheet = SpreadsheetApp.openById(COMMENT_SHEET_ID).getSheets()[0];
-      const cData = cSheet.getDataRange().getDisplayValues();
-      for(let i=1; i<cData.length; i++) {
-        if(allRelevantIds.includes(String(cData[i][2]).trim())) {
-          comments.push({
-            id: cData[i][0], contextId: cData[i][2], userId: cData[i][4],
-            text: cData[i][5], date: cData[i][6], attachment: cData[i][7] || ""
-          });
-        }
+  // 9. GET SUBSCRIBERS
+  let subscribers = [];
+  try {
+    const subSheet = SpreadsheetApp.openById(SUBS_SHEET_ID).getSheets()[0];
+    const subData = subSheet.getDataRange().getDisplayValues();
+    for(let i=1; i<subData.length; i++) {
+      if(String(subData[i][1]).trim() === targetIdStr) {
+        subscribers.push({ id: subData[i][0], userId: subData[i][2] });
       }
-    } catch(e) {}
-
-    // 6. GET SUBSCRIBERS
-    let subscribers = [];
-    try {
-      const sSheet = SpreadsheetApp.openById(SUBS_SHEET_ID).getSheets()[0];
-      const sData = sSheet.getDataRange().getDisplayValues();
-      for(let i=1; i<sData.length; i++) {
-        if(String(sData[i][1]).trim() === targetIdStr) {
-          subscribers.push({ id: sData[i][0], userId: sData[i][2] });
-        }
-      }
-    } catch(e) {}
-
-    // 7. GET MASTER TAGS
-    let tags = [];
-    try {
-      const tagSheet = SpreadsheetApp.openById(TAG_SHEET_ID).getSheets()[0];
-      const tagData = tagSheet.getDataRange().getDisplayValues();
-      for(let i=1; i<tagData.length; i++) {
-        tags.push({ id: tagData[i][0], name: tagData[i][1], color: tagData[i][2] });
-      }
-    } catch(e) {}
-
-    // 8. GET USERS DENGAN FORMAT DIRECT PHOTO LINK
-    let users = [];
-    try {
-      const uSheet = SpreadsheetApp.openById(USER_SHEET_ID).getSheets()[0];
-      const uData = uSheet.getDataRange().getDisplayValues();
-      for(let i=1; i<uData.length; i++) {
-        if(uData[i][0]) {
-          users.push({
-            id: uData[i][0],
-            name: uData[i][1],
-            email: uData[i][2],
-            photo: formatDriveUrl(uData[i][4]), // Menggunakan fungsi pembantu
-            role: uData[i][5]
-          });
-        }
-      }
-    } catch(e) { console.warn("User load error: " + e); }
-
-    return responseJSON({ 
-      status: 'success', 
-      data: { 
-        project: project, 
-        lists: lists, 
-        comments: comments, 
-        subscribers: subscribers, 
-        tags: tags,
-        users: users 
-      } 
-    });
-
-  } catch (e) { return responseJSON({ status: 'error', message: e.toString() }); }
+    }
+  } catch(e) {}
+  
+  return responseJSON({ 
+    status: 'success', 
+    data: { 
+      project: project,
+      lists: lists,
+      users: users, 
+      tags: tags, 
+      statuses: allStatuses, 
+      comments: comments,
+      subscribers: subscribers
+    } 
+  }); 
 }
 
 /**
@@ -254,59 +268,69 @@ function createList(data) {
   }
 }
 
-/**
- * CREATE TASK
- */
-function createTask(data) {
-  const ss = SpreadsheetApp.openById(TASK_SHEET_ID).getSheets()[0];
-  const tid = Utilities.getUuid();
-  const now = new Date();
-  const statusVal = data.status || "OPEN";
+/** 
+ * FUNGSI: MEMBUAT TASK (Lengkap dengan Status, User Asli, dan Tags) 
+ */ 
+function createTask(data) { 
+  const ss = SpreadsheetApp.openById(TASK_SHEET_ID).getSheets()[0]; 
+  const tid = Utilities.getUuid(); 
+  const now = new Date(); 
 
-  const assignedTo = Array.isArray(data.assignTo) ? data.assignTo.join(',') : (data.assignTo || "");
-  const notifyTo = Array.isArray(data.notifyTo) ? data.notifyTo.join(',') : (data.notifyTo || "");
+  // Mapping kolom sesuai permintaan: 
+  // 1:task_id, 2:list_id, 3:parent, 4:title, 5:desc, 6:status, 7:priority, 8:start, 9:due... 
+  // 13:created_by_user_id 
+  const row = [ 
+    tid,                          // 1: task_id 
+    data.listId,                  // 2: list_id 
+    "",                           // 3: parent_task_id 
+    data.title,                   // 4: task_title 
+    data.description || "",       // 5: task_description 
+    data.status || "OPEN",        // 6: status 
+    data.priority || "normal",    // 7: priority 
+    data.startDate || "",         // 8: start_date 
+    data.dueDate || "",           // 9: due_date 
+    "", "", "",                   // 10,11,12: occurrence, recurring, duplicated 
+    data.userId,                  // 13: created_by_user_id (ID DARI FRONTEND) 
+    now,                          // 14: created_at 
+    now,                          // 15: updated_at 
+    "",                           // 16: completed_at 
+    data.points || 0,             // 17: point_available 
+    "pts",                        // 18: point_type 
+    data.assignTo || "",          // 19: assigned_to_user_ids 
+    data.notifyTo || "",          // 20: notify_user_ids 
+    0                             // 21: position 
+  ]; 
+  ss.appendRow(row); 
 
-  const row = [
-    tid,                          // 1: task_id
-    data.listId,                  // 2: list_id
-    "",                           // 3: parent_task_id
-    data.title,                   // 4: task_title
-    data.description || "",       // 5: task_description
-    statusVal,                    // 6: status
-    data.priority || "normal",    // 7: priority
-    data.startDate || "",         // 8: start_date
-    data.dueDate || "",           // 9: due_date
-    "",                           // 10: occurrence_date
-    "",                           // 11: recurring_rule_id
-    "",                           // 12: duplicated_from_task_id
-    "USER-DEMO",                  // 13: created_by_user_id
-    now,                          // 14: created_at
-    now,                          // 15: updated_at
-    "",                           // 16: completed_at
-    data.points || 0,             // 17: point_available
-    "pts",                        // 18: point_type
-    assignedTo,                   // 19: assigned_to_user_ids
-    notifyTo,                     // 20: notify_user_ids
-    0                             // 21: position
-  ];
-  
-  ss.appendRow(row);
-  
-  if (data.tagIds && data.tagIds.length > 0) {
-    const tsSS = SpreadsheetApp.openById(TASK_TAG_SHEET_ID).getSheets()[0];
-    data.tagIds.forEach(tagId => {
-      tsSS.appendRow([tid, tagId]);
-    });
-  }
-  
-  return responseJSON({ status: 'success', taskId: tid });
-}
+  // SIMPAN KE SHEET JUNCTION TASK_TAG (task_id, tag_id) 
+  if (data.tagIds && data.tagIds.length > 0) { 
+    const junctionSheet = SpreadsheetApp.openById(TASK_TAG_SHEET_ID).getSheets()[0]; 
+    data.tagIds.forEach(tagId => { 
+      junctionSheet.appendRow([tid, tagId]); 
+    }); 
+  } 
 
-function createStatus(data) {
-  const ss = SpreadsheetApp.openById(STATUS_SHEET_ID).getSheets()[0];
-  const sid = Utilities.getUuid();
-  ss.appendRow([sid, data.listId, "", data.name, data.type || "custom", data.color, data.position || 0]);
-  return responseJSON({ status: 'success', statusId: sid });
+  return responseJSON({ status: 'success', taskId: tid }); 
+} 
+
+/** 
+ * FUNGSI: MEMBUAT STATUS BARU 
+ */ 
+function createStatus(data) { 
+  const ss = SpreadsheetApp.openById(STATUS_SHEET_ID).getSheets()[0]; 
+  const sid = Utilities.getUuid(); 
+  
+  // Kolom: status_id, list_id, task_id, status_name, status_type, color, position 
+  ss.appendRow([ 
+    sid, 
+    data.listId, 
+    "", // task_id biasanya kosong jika status level list 
+    data.statusName, 
+    data.statusType || "active", 
+    data.color || "#64748b", 
+    data.position || 0 
+  ]); 
+  return responseJSON({ status: 'success', statusId: sid }); 
 }
 
 function syncStatuses(data) {
@@ -341,18 +365,7 @@ function syncStatuses(data) {
   }
 }
 
-function createTag(data) {
-  const ss = SpreadsheetApp.openById(TAG_SHEET_ID).getSheets()[0];
-  const tid = Utilities.getUuid();
-  // Spreadsheet: Column A: tag_id, B: tag_name, C: color
-  ss.appendRow([tid, data.tagName, data.color]);
-  return responseJSON({
-    status: 'success',
-    tagId: tid,
-    name: data.tagName,
-    color: data.color
-  });
-}
+
 
 function uploadFileToDrive(data) {
   try {

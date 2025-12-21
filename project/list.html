@@ -145,28 +145,55 @@
         }
 
         /* --- ENHANCED TAG SYSTEM --- */ 
+        /* Container Dropdown Tag */ 
         .tag-dropdown { 
-            position: absolute; top: 100%; left: 0; width: 300px; 
-            background: white; border-radius: 12px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 2000; 
-            display: none; padding: 12px; border: 1px solid #e2e8f0; 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            width: 100%; 
+            max-height: 300px; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            z-index: 1000; 
+            display: none; 
+            overflow-y: auto; 
+            padding: 8px 0; 
+            border: 1px solid #e2e8f0; 
         } 
         
-        .tag-list-scroll { max-height: 250px; overflow-y: auto; margin-top: 10px; } 
-        
+        /* Style Item Tag (Gambar 1) */ 
         .tag-option-item { 
-            padding: 8px 10px; cursor: pointer; border-radius: 8px; 
-            display: flex; align-items: center; justify-content: space-between; 
-            transition: 0.2s; margin-bottom: 2px; 
+            padding: 8px 16px; 
+            display: flex; 
+            align-items: center; 
+            cursor: pointer; 
+            transition: background 0.2s; 
         } 
-        .tag-option-item:hover { background: #f1f5f9; } 
+        .tag-option-item:hover { background: #f8fafc; } 
         
-        /* Create Tag Style */ 
-        .create-tag-prompt { 
-            display: flex; align-items: center; gap: 10px; padding: 10px; 
-            color: #64748b; font-size: 0.9rem; border-top: 1px solid #f1f5f9; cursor: pointer; 
+        /* Style Create Tag (Gambar 2) */ 
+        .tag-create-prompt { 
+            padding: 12px 16px; 
+            border-top: 1px solid #f1f5f9; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            cursor: pointer; 
+            color: #64748b; 
+            font-size: 0.9rem; 
         } 
+        .tag-create-prompt:hover { background: #f0f9ff; color: #0369a1; } 
         
+        .create-badge { 
+            background: #fef3c7; 
+            color: #92400e; 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            font-weight: 600; 
+            margin-left: 8px; 
+        }
+
         /* Edit Tag UI */ 
         .tag-edit-container { padding: 10px; display: none; } 
         .color-mini-grid { 
@@ -745,116 +772,103 @@
  
         // --- TAG SYSTEM LOGIC (ROBUST) ---
         function handleTagSearch(input, lid) { 
-            event.stopPropagation(); 
-            const query = input.value.trim(); 
+            const query = input.value.trim().toLowerCase(); 
             const dropdown = document.getElementById(`tag-dropdown-${lid}`); 
-            const resultsContainer = document.getElementById(`tag-list-results-${lid}`); 
-            const createSuggestion = document.getElementById(`tag-create-suggestion-${lid}`); 
+            // const resultsContainer = document.getElementById(`tag-list-results-${lid}`); 
+            // const createSuggestion = document.getElementById(`tag-create-suggestion-${lid}`); 
             
-            // Tampilkan dropdown 
             dropdown.style.display = 'block'; 
-            document.getElementById(`tag-search-view-${lid}`).style.display = 'block'; 
-            document.getElementById(`tag-edit-view-${lid}`).style.display = 'none'; 
         
-            // 1. Filter existing tags dari globalTags 
-            const filtered = globalTags.filter(t => t.name.toLowerCase().includes(query.toLowerCase())); 
-            
+            // 1. Filter tag yang sudah ada di database (globalTags diambil saat fetchData) 
+            const filtered = globalTags.filter(t => t.name.toLowerCase().includes(query)); 
+        
+            // Render Gambar 1: List Tag 
             if (filtered.length > 0) { 
-                resultsContainer.innerHTML = filtered.map(t => ` 
-                    <div class="tag-option-item"> 
-                        <div class="d-flex align-items-center flex-grow-1 cursor-pointer" onclick="selectExistingTag('${lid}', '${t.id}')"> 
-                            <span class="tag-pill" style="background:${t.color}">${t.name}</span> 
-                        </div> 
-                        <i class="bi bi-pencil-square text-muted ms-2 px-1 cursor-pointer" onclick="openEditTagUI('${lid}', '${t.id}')"></i> 
+                dropdown.innerHTML = filtered.map(t => ` 
+                    <div class="tag-option-item" onclick="selectExistingTag('${lid}', '${t.id}')"> 
+                        <span class="tag-pill" style="background:${t.color}; color: #333; padding: 4px 10px; border-radius: 6px; font-weight: 500;"> 
+                            ${t.name} 
+                        </span> 
                     </div> 
                 `).join(''); 
             } else { 
-                resultsContainer.innerHTML = '<div class="p-3 text-center text-muted small">No tags found</div>'; 
+                dropdown.innerHTML = '<div class="p-3 text-center text-muted small">No tags found</div>'; 
             } 
         
-            // 2. Logic Tombol Plus (Create Suggestion) 
-            const exactMatch = globalTags.find(t => t.name.toLowerCase() === query.toLowerCase()); 
+            // 2. Render Gambar 2: Suggestion Create jika tidak ada exact match 
+            const exactMatch = globalTags.find(t => t.name.toLowerCase() === query); 
             if (query && !exactMatch) { 
-                createSuggestion.style.display = 'block'; 
-                createSuggestion.querySelector('.new-tag-name-preview').innerText = query; 
-            } else { 
-                createSuggestion.style.display = 'none'; 
+                dropdown.insertAdjacentHTML('beforeend', ` 
+                    <div class="tag-create-prompt" onclick="createNewTagAct('${lid}')"> 
+                        <div class="d-flex align-items-center"> 
+                            <span>Create</span> 
+                            <span class="create-badge">${query}</span> 
+                        </div> 
+                        <i class="bi bi-arrow-return-left"></i> 
+                    </div> 
+                `); 
             } 
         } 
         
-        // FUNGSI CREATE TAG BARU (SINKRON KE DATABASE) 
-        function createNewTagAct(lid) { 
+        // Fungsi saat klik "Create" (Gambar 2) 
+        async function createNewTagAct(lid) { 
             const input = document.getElementById(`tag-input-${lid}`); 
-            const name = input.value.trim(); 
-            if(!name) return; 
+            const tagName = input.value.trim(); 
+            if (!tagName) return; 
         
-            // Rekomendasi warna otomatis 
+            // Pilih warna random dari palet Dialogika 
             const randomColor = tagPaletteColors[Math.floor(Math.random() * tagPaletteColors.length)]; 
-            
-            const btn = event.currentTarget; 
-            const originalContent = btn.innerHTML; 
-            btn.disabled = true; 
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creating...'; 
         
-            fetch(API_URL, { 
+            // Kirim ke database (Master Tag Sheet) 
+            const res = await fetch(API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
                     action: 'createTag', 
-                    projectId: projectId, 
-                    tagName: name, 
+                    tagName: tagName, 
                     color: randomColor 
                 }) 
-            }) 
-            .then(r => r.json()) 
-            .then(res => { 
-                if(res.status === 'success') { 
-                    const newTag = { id: res.tagId, name: res.name, color: res.color }; 
-                    globalTags.push(newTag); // Tambah ke memori lokal browser 
-                    
-                    // Masukkan ke seleksi task 
-                    selectExistingTag(lid, newTag.id);
-                    
-                    input.value = ''; 
-                    document.getElementById(`tag-dropdown-${lid}`).style.display = 'none'; 
-                } 
-            }) 
-            .finally(() => { 
-                btn.disabled = false; 
-                btn.innerHTML = originalContent; 
-            }); 
+            }).then(r => r.json()); 
+        
+            if (res.status === 'success') { 
+                const newTag = { id: res.tagId, name: res.name, color: res.color }; 
+                globalTags.push(newTag); // Update cache lokal 
+                selectExistingTag(lid, newTag.id); // Pilih tag tersebut 
+                input.value = ''; 
+                document.getElementById(`tag-dropdown-${lid}`).style.display = 'none'; 
+            } 
         } 
         
         function selectExistingTag(lid, tid) { 
             const tag = globalTags.find(t => String(t.id) === String(tid)); 
             if (!tag) return; 
         
-            if(!selectedTagsByList[lid]) selectedTagsByList[lid] = []; 
+            if (!selectedTagsByList[lid]) selectedTagsByList[lid] = []; 
             
-            // Cek apakah sudah ada 
-            if (selectedTagsByList[lid].find(t => String(t.id) === String(tid))) { 
-                document.getElementById(`tag-dropdown-${lid}`).style.display = 'none'; 
-                return; 
+            // Cek agar tidak duplikat di list yang sama 
+            if (!selectedTagsByList[lid].find(t => t.id === tid)) { 
+                selectedTagsByList[lid].push(tag); 
+                renderSelectedTagsUI(lid); 
             } 
-        
-            selectedTagsByList[lid].push(tag); 
-            renderSelectedTagsUI(lid); 
+            
             document.getElementById(`tag-dropdown-${lid}`).style.display = 'none'; 
-            document.getElementById(`tag-input-${lid}`).value = ''; 
         } 
         
+        function removeSelectedTag(lid, tid) {
+            if (!selectedTagsByList[lid]) return;
+            selectedTagsByList[lid] = selectedTagsByList[lid].filter(t => String(t.id) !== String(tid));
+            renderSelectedTagsUI(lid);
+        }
+
         function renderSelectedTagsUI(lid) { 
             const container = document.getElementById(`selected-tags-${lid}`); 
             const selected = selectedTagsByList[lid] || []; 
             container.innerHTML = selected.map(t => ` 
-                <span class="tag-pill d-flex align-items-center gap-1 shadow-sm" style="background:${t.color}; font-size: 0.75rem; padding: 4px 10px;"> 
-                    ${t.name} <i class="bi bi-x-lg ms-1 cursor-pointer" style="font-size:0.6rem" onclick="removeSelectedTag('${lid}', '${t.id}')"></i> 
+                <span class="tag-pill d-flex align-items-center gap-1 shadow-sm" 
+                      style="background:${t.color}; color:#333; font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; font-weight: 600;"> 
+                    ${t.name} 
+                    <i class="bi bi-x-lg cursor-pointer" style="font-size:0.6rem" onclick="removeSelectedTag('${lid}', '${t.id}')"></i> 
                 </span> 
             `).join(''); 
-        } 
-        
-        function removeSelectedTag(lid, tid) { 
-            selectedTagsByList[lid] = (selectedTagsByList[lid] || []).filter(t => String(t.id) !== String(tid)); 
-            renderSelectedTagsUI(lid); 
         }
 
         // FUNGSI EDIT TAG UI 
@@ -1796,10 +1810,13 @@
                                 <div class="meta-row">
                                     <div class="meta-icon"><i class="bi bi-tags"></i></div>
                                     <div class="meta-label">Tags</div>
-                                    <div class="meta-value position-relative">
-                                        <div id="selected-tags-${list.id}" class="d-flex flex-wrap gap-1 mb-1"></div>
-                                        <input type="text" class="ghost-input w-100" placeholder="Search or add tags..." oninput="handleTagSearch(this, '${list.id}')">
-                                        <div id="tag-dropdown-${list.id}" class="tag-dropdown"></div>
+                                    <div class="meta-value position-relative"> 
+                                        <div id="selected-tags-${list.id}" class="d-flex flex-wrap gap-1 mb-1"></div> 
+                                        <input type="text" id="tag-input-${list.id}" class="ghost-input w-100" 
+                                                placeholder="Search or add tags..." 
+                                                oninput="handleTagSearch(this, '${list.id}')" 
+                                                onfocus="handleTagSearch(this, '${list.id}')"> 
+                                        <div id="tag-dropdown-${list.id}" class="tag-dropdown"></div> 
                                     </div>
                                 </div>
                             </div>
@@ -1922,15 +1939,20 @@
             const btn = event.target; 
             btn.disabled = true; 
             btn.innerText = "Saving..."; 
+
+            const user = JSON.parse(localStorage.getItem('userData')) || {};
         
             const payload = { 
                 action: 'createTask', 
                 listId: lid, 
+                userId: user.id || '',
                 title: title, 
-                dueDate: document.getElementById(`task-due-${lid}`).value, 
                 description: document.getElementById(`task-desc-${lid}`).innerHTML, 
-                priority: document.getElementById(`task-priority-${lid}`)?.value || 'normal', 
-                assignTo: document.getElementById(`task-assign-${lid}`)?.value || '', 
+                status: document.getElementById(`task-status-${lid}`).value, 
+                priority: document.getElementById(`task-priority-${lid}`).value, 
+                dueDate: document.getElementById(`task-due-${lid}`).value, 
+                assignTo: document.getElementById(`task-assign-${lid}`).value, 
+                // AMBIL ARRAY ID TAG YANG DIPILIH 
                 tagIds: (selectedTagsByList[lid] || []).map(t => t.id) 
             }; 
         
@@ -1941,8 +1963,8 @@
             .then(r => r.json()) 
             .then(res => { 
                 if(res.status === 'success') { 
-                    selectedTagsByList[lid] = []; 
-                    fetchData(); 
+                    selectedTagsByList[lid] = []; // Reset pilihan tag 
+                    fetchData(); // Refresh list 
                     hideTaskForm(lid); 
                 } 
             }) 
