@@ -1562,12 +1562,15 @@
                if(!wrapper) return;
 
                wrapper.innerHTML = comments.map(c => {
-                   // Gunakan == agar ID 1 (number) cocok dengan "1" (string)
-                   const sender = globalUsers.find(u => u.id == c.userId) || { name: 'System User', photo: '' };
+                   // PERBAIKAN DI SINI: Gunakan String() dan .trim() untuk memastikan kecocokan 
+                   const sender = globalUsers.find(u => 
+                       String(u.id).trim() === String(c.userId).trim() 
+                   ) || { name: 'System User', photo: '' }; 
+
                    const senderPhoto = sender.photo ? formatDriveUrl(sender.photo) : `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.name)}`;
            
                    return `
-                       <div class="d-flex gap-3 p-3 border rounded-4 bg-light shadow-sm">
+                       <div class="d-flex gap-3 p-3 border rounded-4 bg-light shadow-sm mb-3">
                            <img src="${senderPhoto}" class="rounded-circle border" style="width:35px; height:35px; object-fit:cover;">
                            <div class="flex-grow-1">
                                <div class="d-flex justify-content-between mb-1">
@@ -1665,6 +1668,15 @@
                const text = document.getElementById('richCommentInput').innerHTML;
                const btn = document.getElementById('postBtn');
                if (!text || text === '<br>') return alert("Comment cannot be empty");
+
+               // Ambil data user terbaru dari localStorage
+               const userLocal = JSON.parse(localStorage.getItem('userData')) || {};
+               const activeUserId = userLocal.id || CURRENT_USER_ID;
+
+               if (!activeUserId) {
+                   alert("User ID tidak ditemukan, silakan login ulang.");
+                   return;
+               }
            
                btn.disabled = true;
                btn.innerText = "Posting...";
@@ -1681,7 +1693,7 @@
                        action: 'createComment',
                        projectId: projectId,
                        contextId: projectId,
-                       userId: CURRENT_USER_ID, // MENGIRIM ID USER YANG LOGIN
+                       userId: activeUserId, // Pastikan ini terisi ID asli
                        text: text,
                        attachmentUrl: attachmentUrl
                    })
