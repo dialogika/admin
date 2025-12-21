@@ -102,11 +102,11 @@
         <!-- Right: Profile -->
         <div class="d-flex align-items-center gap-3">
             <div class="text-end d-none d-lg-block lh-1">
-                <span class="d-block fw-bold small text-dark">Rizky A.</span>
-                <small class="text-muted" style="font-size:0.7rem">Super Admin</small>
+                <span id="user-name-display" class="d-block fw-bold small text-dark">Loading...</span>
+                <small id="user-role-display" class="text-muted" style="font-size:0.7rem">User</small>
             </div>
             <div class="profile-img-container">
-                <img src="https://i.pravatar.cc/300?img=11" alt="Profile" class="profile-img">
+                <img id="user-photo-display" src="https://i.pravatar.cc/300" alt="Profile" class="profile-img">
             </div>
         </div>
     </nav>
@@ -638,9 +638,6 @@
             });
         }
 
-        function toggleSidebar() { document.getElementById('sidebarNav').classList.toggle('show'); }
-    </script>
-    <script>
         // Toggle Mobile Sidebar
         function toggleSidebar() {
             document.getElementById('sidebarNav').classList.toggle('show');
@@ -702,6 +699,51 @@
             const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
             const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
         });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Ambil data dari localStorage
+            const data = localStorage.getItem('userData');
+            
+            if (!data) {
+                // Jika tidak ada data login, tendang balik ke login page
+                window.location.href = "index.html";
+                return;
+            }
+
+            const user = JSON.parse(data);
+
+            // 2. Fungsi untuk konversi link Google Drive ke Direct Image Link
+            function getDirectLink(url) {
+                if (!url) return "https://i.pravatar.cc/300";
+                if (url.includes('drive.google.com')) {
+                    let id = "";
+                    if (url.includes('id=')) {
+                        id = url.split('id=')[1].split('&')[0];
+                    } else {
+                        id = url.split('/d/')[1].split('/')[0];
+                    }
+                    return `https://lh3.googleusercontent.com/u/0/d/${id}`;
+                }
+                return url;
+            }
+
+            // 3. Update Tampilan Navbar
+            document.getElementById('user-name-display').innerText = user.name;
+            document.getElementById('user-photo-display').src = getDirectLink(user.photo);
+            // Posisi bisa disesuaikan jika ada di spreadsheet
+            document.getElementById('user-role-display').innerText = "Dialogika Member";
+            
+            // Update juga pesan selamat datang jika perlu
+            const welcomeMsg = document.querySelector('h4.fw-bold');
+            if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${user.name.split(' ')[0]}!`;
+        });
+
+        // Fungsi Logout
+        function logout() {
+            localStorage.removeItem('userData');
+            window.location.href = "index.html";
+        }
     </script>
 </body>
 </html>

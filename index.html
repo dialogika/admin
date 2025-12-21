@@ -316,7 +316,6 @@
     </footer>
 
     <script>
-        // SCRIPT SAMA SEPERTI SEBELUMNYA
         const scriptURL = 'https://script.google.com/macros/s/AKfycbz1h7DiUj5SVYaWQ89dxOiMFMmTdyHwLOFkMtZonXcZDa-nhO3OWinogcHzhbqgwNc/exec';
 
         const form = document.getElementById('loginForm');
@@ -333,7 +332,6 @@
 
             // Mengambil data form
             const formData = new FormData(form);
-            
             const data = new URLSearchParams();
             for (const pair of formData) {
                 data.append(pair[0], pair[1]);
@@ -345,14 +343,21 @@
             })
             .then(response => response.json())
             .then(result => {
+                // --- BAGIAN YANG DIUBAH DI SINI ---
                 if (result.status === 'sukses') {
+                    // 1. Simpan data user (nama, foto, dll) yang dikirim dari AppScript ke browser
+                    localStorage.setItem('userData', JSON.stringify(result.user));
+                    
                     submitBtn.innerHTML = "Login Berhasil!";
+                    
+                    // 2. Redirect ke home.html (bukan dashboard.html lagi)
                     setTimeout(() => {
-                        window.location.href = "dashboard.html";
+                        window.location.href = "home.html";
                     }, 500);
                 } else {
                     throw new Error(result.message || "Email atau Password salah.");
                 }
+                // --- SELESAI PERUBAHAN ---
             })
             .catch(error => {
                 console.error('Error:', error);
