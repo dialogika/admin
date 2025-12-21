@@ -284,36 +284,79 @@
         }
     </style>
     <!-- Tambahkan di HEAD -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-<!-- Tambahkan di STYLE -->
-<style>
-    /* --- STATUS MANAGER MODAL --- */
+    <!-- Tambahkan di STYLE -->
+    <style>
+        /* --- STATUS MANAGER MODAL --- */
     .status-group-label { font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+
+    /* Pastikan kontainer bisa menerima drop meskipun kosong */ 
+    .status-drag-container { 
+        min-height: 20px; /* Sangat penting */ 
+        padding-bottom: 10px; 
+    } 
+
     .status-item-row { 
-        display: flex; align-items: center; gap: 12px; background: white; 
-        border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 15px; margin-bottom: 8px;
-        transition: 0.2s; cursor: default;
-    }
-    .status-item-row:hover { border-color: #0B2B6A; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .drag-handle { cursor: grab; color: #cbd5e1; font-size: 1.2rem; }
-    .status-dot-btn { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; cursor: pointer; flex-shrink: 0; }
-    .status-input-inline { border: none; outline: none; font-weight: 600; color: #1f2937; flex-grow: 1; font-size: 0.95rem; }
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        background: white; 
+        border: 1px solid #e2e8f0; 
+        border-radius: 10px; 
+        padding: 10px 15px; 
+        margin-bottom: 8px; 
+        transition: 0.2s; 
+        cursor: default; 
+        user-select: none; 
+    } 
+
+    .status-item-row:hover { border-color: #0B2B6A; } 
+
+    .drag-handle { 
+        cursor: grab; 
+        color: #cbd5e1; 
+        padding: 0 5px; 
+    } 
+
+    .status-dot-btn { 
+        width: 16px; 
+        height: 16px; 
+        border-radius: 50%; 
+        cursor: pointer; 
+        flex-shrink: 0; 
+        border: 1px solid rgba(0,0,0,0.1); 
+    } 
+
+    .status-input-inline { 
+        border: none; 
+        outline: none; 
+        font-weight: 600; 
+        color: #1f2937; 
+        flex-grow: 1; 
+        background: transparent; 
+    } 
     
     /* New Status Input Card */
     .new-status-card { border: 2px solid #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
     .btn-save-inline { background: #0084ff; color: white; border: none; border-radius: 6px; padding: 4px 12px; font-weight: 600; font-size: 0.85rem; }
 
-    /* Color Palette Popup */
-    .color-palette-popup {
-        position: absolute; z-index: 2050; background: white; border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 20px; width: 280px; display: none;
-    }
-    .color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-    .color-circle { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+    /* Floating Color Picker */ 
+    .color-palette-popup { 
+        position: absolute; 
+        z-index: 3000; 
+        background: white; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+        padding: 15px; 
+        width: 250px; 
+        display: none; 
+    } 
+    .color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; } 
+    .color-circle { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
     .color-circle:hover { transform: scale(1.2); }
     .color-circle.active { border-color: #000; }
-</style>
+    </style>
 
 </head>
 <body>
@@ -816,156 +859,172 @@
             });
         }
 
-           // --- STATUS MANAGER LOGIC ---
-           let localStatuses = []; // State sementara di modal 
+           // --- STATUS MANAGER LOGIC (FIXED) --- 
+           let localStatuses = []; 
            const statusCategories = ['not_started', 'active', 'done', 'closed']; 
-           const customPalette = [ 
-               '#6b46e5', '#3f51b5', '#2196f3', '#009688', '#10b981', '#4caf50', '#ffc107', 
-               '#f44336', '#e91e63', '#9c27b0', '#795548', '#607d8b', '#9e9e9e', '#000000' 
-           ]; 
+           const customPalette = ['#6b46e5', '#3f51b5', '#2196f3', '#009688', '#10b981', '#4caf50', '#ffc107', '#f44336', '#e91e63', '#9c27b0', '#795548', '#607d8b', '#9e9e9e', '#000000']; 
            
-           // 1. Fungsi Buka Modal & Load Data 
            function promptNewStatus(listId) { 
                document.getElementById('currentManagingListId').value = listId; 
                
-               // Ambil data status dari globalLists (yang sudah di-fetch saat fetchData) 
-               const list = lastFetchedLists.find(l => l.id === listId); 
-               localStatuses = list.statuses ? [...list.statuses] : []; 
+               // Pastikan mencari di lastFetchedLists 
+               const list = lastFetchedLists.find(l => String(l.id) === String(listId)); 
+               if (!list) return alert("List data not found"); 
+           
+               // Copy data agar tidak merusak data utama sebelum di-save 
+               localStatuses = list.statuses ? JSON.parse(JSON.stringify(list.statuses)) : []; 
                
                renderStatusManagerUI(); 
-               const modal = new bootstrap.Modal(document.getElementById('manageStatusModal')); 
-               modal.show(); 
                
-               // Inisialisasi Drag & Drop untuk setiap grup 
-               statusCategories.forEach(cat => { 
-                   const el = document.getElementById(`group-${cat}`);
-                   if (el) {
-                       new Sortable(el, { 
-                           group: 'statuses', 
-                           animation: 150, 
-                           handle: '.drag-handle', 
-                           onEnd: () => updateLocalPositions() 
-                       }); 
-                   }
-               }); 
+               const modalEl = document.getElementById('manageStatusModal'); 
+               const modal = new bootstrap.Modal(modalEl); 
+               modal.show(); 
+           
+               // Inisialisasi Sortable setelah modal muncul 
+               modalEl.addEventListener('shown.bs.modal', function () { 
+                   statusCategories.forEach(cat => { 
+                       const el = document.getElementById(`group-${cat}`); 
+                       if (el) { 
+                           // Hapus instance lama jika ada 
+                           if (Sortable.get(el)) Sortable.get(el).destroy(); 
+                           
+                           new Sortable(el, { 
+                               group: 'statuses', 
+                               animation: 150, 
+                               handle: '.drag-handle', 
+                               ghostClass: 'bg-light', 
+                               onEnd: function() { 
+                                   updateLocalPositions(); 
+                               } 
+                           }); 
+                       } 
+                   }); 
+               }, { once: true }); 
            } 
            
-           // 2. Render UI Modal 
            function renderStatusManagerUI() { 
                statusCategories.forEach(cat => { 
                    const container = document.getElementById(`group-${cat}`); 
-                   if (!container) return;
-                   const filtered = localStatuses.filter(s => s.type === cat || (!s.type && cat === 'not_started')); 
+                   if (!container) return; 
+           
+                   // Filter status berdasarkan type (pastikan lowercase untuk keamanan) 
+                   const filtered = localStatuses.filter(s => { 
+                       const sType = (s.type || 'not_started').toLowerCase(); 
+                       return sType === cat; 
+                   }); 
                    
                    container.innerHTML = filtered.sort((a,b) => a.position - b.position).map(s => ` 
-                       <div class="status-item-row" data-id="${s.id}" data-type="${cat}"> 
+                       <div class="status-item-row" data-id="${s.id}"> 
                            <div class="drag-handle"><i class="bi bi-grid-3x2-vertical"></i></div> 
-                           <div class="status-dot-btn" style="background-color: ${s.color}; border-color: ${s.color}" onclick="openColorPicker(event, '${s.id}')"></div> 
+                           <div class="status-dot-btn" style="background-color: ${s.color || '#64748b'}" onclick="openColorPicker(event, '${s.id}')"></div> 
                            <input type="text" class="status-input-inline" value="${s.name}" onchange="updateLocalStatusName('${s.id}', this.value)"> 
                            <i class="bi bi-three-dots text-muted cursor-pointer"></i> 
                        </div> 
                    `).join(''); 
                }); 
-           }
+           } 
            
-           function updateLocalStatusName(id, newName) {
-               const status = localStatuses.find(s => s.id === id);
-               if (status) status.name = newName;
-           }
+           function updateLocalStatusName(id, newName) { 
+               const status = localStatuses.find(s => String(s.id) === String(id)); 
+               if (status) status.name = newName; 
+           } 
            
-           // 3. Tambah Status Baru (Inline) 
            function showInlineInput(cat) { 
                const wrap = document.getElementById(`input-wrap-${cat}`); 
                wrap.style.display = 'block'; 
                wrap.innerHTML = ` 
-                   <div class="status-item-row new-status-card"> 
-                       <div class="status-dot-btn" id="new-status-dot-${cat}" style="background:#cbd5e1" onclick="openColorPicker(event, 'new-${cat}')"></div> 
+                   <div class="status-item-row border-primary shadow-sm mt-2"> 
+                       <div class="status-dot-btn" id="new-status-dot-${cat}" style="background-color: #64748b" onclick="openColorPicker(event, 'new-${cat}')"></div> 
                        <input type="text" id="new-input-${cat}" class="status-input-inline" placeholder="Status name..." autofocus> 
-                       <button class="btn-save-inline" onclick="saveNewStatusLocally('${cat}')">Save <i class="bi bi-arrow-return-left"></i></button> 
+                       <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="saveNewStatusLocally('${cat}')">Save</button> 
                    </div> 
                `; 
            } 
            
-           let tempNewColor = "#64748b"; 
-           
            function saveNewStatusLocally(cat) { 
-               const nameInput = document.getElementById(`new-input-${cat}`);
-               const name = nameInput.value; 
+               const input = document.getElementById(`new-input-${cat}`); 
+               const name = input.value.trim(); 
                if (!name) return; 
            
                const newObj = { 
                    id: 'temp-' + Date.now(), 
                    name: name, 
-                   color: tempNewColor, 
+                   color: tempNewColor || '#64748b', 
                    type: cat, 
                    position: localStatuses.length 
                }; 
                
                localStatuses.push(newObj); 
                document.getElementById(`input-wrap-${cat}`).style.display = 'none'; 
+               tempNewColor = "#64748b"; // reset 
                renderStatusManagerUI(); 
            } 
            
-           // 4. Color Picker Logic 
-           function openColorPicker(event, id) { 
+           function openColorPicker(event, targetId) { 
                event.stopPropagation(); 
                const picker = document.getElementById('statusColorPicker'); 
                const rect = event.target.getBoundingClientRect(); 
                
-               picker.style.top = (rect.bottom + window.scrollY) + 'px'; 
-               picker.style.left = rect.left + 'px'; 
+               picker.style.top = (rect.bottom + window.scrollY + 5) + 'px'; 
+               picker.style.left = (rect.left + window.scrollX) + 'px'; 
                picker.style.display = 'block'; 
                
                const grid = picker.querySelector('.color-grid'); 
                grid.innerHTML = customPalette.map(c => ` 
-                   <div class="color-circle" style="background:${c}" onclick="applyColor('${id}', '${c}')"></div> 
+                   <div class="color-circle" style="background:${c}" onclick="applyColor('${targetId}', '${c}')"></div> 
                `).join(''); 
            } 
            
-           function applyColor(id, color) { 
-               if (id.startsWith('new-')) { 
+           let tempNewColor = "#64748b"; 
+           function applyColor(targetId, color) { 
+               if (targetId.startsWith('new-')) { 
                    tempNewColor = color; 
-                   const cat = id.split('-')[1]; 
-                   document.getElementById(`new-status-dot-${cat}`).style.background = color; 
+                   const cat = targetId.replace('new-', ''); 
+                   const dot = document.getElementById(`new-status-dot-${cat}`); 
+                   if(dot) dot.style.backgroundColor = color; 
                } else { 
-                   const status = localStatuses.find(s => s.id === id); 
-                   if (status) status.color = color; 
-                   renderStatusManagerUI(); 
+                   const status = localStatuses.find(s => String(s.id) === String(targetId)); 
+                   if (status) { 
+                       status.color = color; 
+                       renderStatusManagerUI(); 
+                   } 
                } 
-               closeColorPicker(); 
+               pickerClose(); 
            } 
            
-           function closeColorPicker() { document.getElementById('statusColorPicker').style.display = 'none'; } 
+           function pickerClose() { 
+               document.getElementById('statusColorPicker').style.display = 'none'; 
+           } 
            
-           // 5. Update State & Sync ke Google Sheets 
            function updateLocalPositions() { 
-               // Membaca urutan dari DOM setelah drag 
                const newState = []; 
-               let pos = 0; 
+               let currentPos = 0; 
+               
                statusCategories.forEach(cat => { 
-                   const group = document.getElementById(`group-${cat}`);
-                   if(!group) return;
-                   const items = group.querySelectorAll('.status-item-row'); 
-                   items.forEach(el => { 
-                       const id = el.getAttribute('data-id'); 
-                       const found = localStatuses.find(s => s.id === id); 
-                       if (found) { 
-                           found.type = cat; // Jika pindah grup 
-                           found.position = pos++; 
-                           newState.push(found); 
+                   const groupEl = document.getElementById(`group-${cat}`); 
+                   const rows = groupEl.querySelectorAll('.status-item-row'); 
+                   
+                   rows.forEach(row => { 
+                       const id = row.getAttribute('data-id'); 
+                       const statusObj = localStatuses.find(s => String(s.id) === String(id)); 
+                       if (statusObj) { 
+                           statusObj.type = cat; // Update kategori jika dipindah antar grup 
+                           statusObj.position = currentPos++; 
+                           newState.push(statusObj); 
                        } 
                    }); 
                }); 
+               // Simpan hasil drag ke state local 
                localStatuses = newState; 
            } 
            
            function syncStatusesToDB() { 
                const listId = document.getElementById('currentManagingListId').value; 
-               updateLocalPositions(); // Pastikan posisi terbaru 
+               updateLocalPositions(); // Final re-check urutan 
            
                const btn = event.target; 
                btn.disabled = true; 
-               btn.innerText = "Saving..."; 
+               btn.innerText = "Syncing..."; 
            
                fetch(API_URL, { 
                    method: 'POST', 
@@ -978,17 +1037,27 @@
                .then(r => r.json()) 
                .then(res => { 
                    if(res.status === 'success') { 
-                       const modalEl = document.getElementById('manageStatusModal');
-                       const modal = bootstrap.Modal.getInstance(modalEl);
-                       modal.hide(); 
-                       fetchData(); // Refresh list utama 
+                       const modalEl = document.getElementById('manageStatusModal'); 
+                       bootstrap.Modal.getInstance(modalEl).hide(); 
+                       fetchData(); // Refresh tampilan list 
+                   } else { 
+                       alert("Error: " + res.message); 
                    } 
                }) 
+               .catch(err => alert("Connection error")) 
                .finally(() => { 
                    btn.disabled = false; 
                    btn.innerText = "Apply changes"; 
                }); 
-           }
+           } 
+           
+           // Close color picker if clicking outside 
+           document.addEventListener('mousedown', function(e) { 
+               const picker = document.getElementById('statusColorPicker'); 
+               if (picker.style.display === 'block' && !picker.contains(e.target)) { 
+                   pickerClose(); 
+               } 
+           });
 
            // --- FUNGSI COMMENTS ---
            function renderComments(comments) {
