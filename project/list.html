@@ -282,9 +282,39 @@
             border: none;
             background-color: #f9fafb;
         }
-        
-        
     </style>
+    <!-- Tambahkan di HEAD -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<!-- Tambahkan di STYLE -->
+<style>
+    /* --- STATUS MANAGER MODAL --- */
+    .status-group-label { font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+    .status-item-row { 
+        display: flex; align-items: center; gap: 12px; background: white; 
+        border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 15px; margin-bottom: 8px;
+        transition: 0.2s; cursor: default;
+    }
+    .status-item-row:hover { border-color: #0B2B6A; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .drag-handle { cursor: grab; color: #cbd5e1; font-size: 1.2rem; }
+    .status-dot-btn { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; cursor: pointer; flex-shrink: 0; }
+    .status-input-inline { border: none; outline: none; font-weight: 600; color: #1f2937; flex-grow: 1; font-size: 0.95rem; }
+    
+    /* New Status Input Card */
+    .new-status-card { border: 2px solid #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .btn-save-inline { background: #0084ff; color: white; border: none; border-radius: 6px; padding: 4px 12px; font-weight: 600; font-size: 0.85rem; }
+
+    /* Color Palette Popup */
+    .color-palette-popup {
+        position: absolute; z-index: 2050; background: white; border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 20px; width: 280px; display: none;
+    }
+    .color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+    .color-circle { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+    .color-circle:hover { transform: scale(1.2); }
+    .color-circle.active { border-color: #000; }
+</style>
+
 </head>
 <body>
 
@@ -526,6 +556,62 @@
             </div>
         </div>
     </div>
+    <!-- MODAL MANAGE STATUS -->
+    <div class="modal fade" id="manageStatusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-0 p-4 pb-0">
+                    <h5 class="fw-bold m-0">Manage Statuses</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="currentManagingListId">
+                    
+                    <!-- Kelompok: NOT STARTED -->
+                    <div class="mb-4">
+                        <div class="status-group-label">Not started <i class="bi bi-info-circle"></i> <i class="bi bi-plus ms-auto cursor-pointer" onclick="showInlineInput('not_started')"></i></div>
+                        <div id="group-not_started" class="status-drag-container"></div>
+                        <div id="input-wrap-not_started" style="display:none"></div>
+                    </div>
+
+                    <!-- Kelompok: ACTIVE -->
+                    <div class="mb-4">
+                        <div class="status-group-label">Active <i class="bi bi-info-circle"></i> <i class="bi bi-plus ms-auto cursor-pointer" onclick="showInlineInput('active')"></i></div>
+                        <div id="group-active" class="status-drag-container"></div>
+                        <div id="input-wrap-active" style="display:none"></div>
+                    </div>
+
+                    <!-- Kelompok: DONE -->
+                    <div class="mb-4">
+                        <div class="status-group-label">Done <i class="bi bi-info-circle"></i> <i class="bi bi-plus ms-auto cursor-pointer" onclick="showInlineInput('done')"></i></div>
+                        <div id="group-done" class="status-drag-container"></div>
+                        <div id="input-wrap-done" style="display:none"></div>
+                    </div>
+
+                    <!-- Kelompok: CLOSED -->
+                    <div class="mb-4">
+                        <div class="status-group-label">Closed <i class="bi bi-info-circle"></i></div>
+                        <div id="group-closed" class="status-drag-container"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0 justify-content-between">
+                    <button class="btn btn-light rounded-pill px-4 fw-bold border">Save as template</button>
+                    <button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="syncStatusesToDB()" style="background:#4da3ff; border:none">Apply changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING COLOR PICKER -->
+    <div id="statusColorPicker" class="color-palette-popup">
+        <div class="d-flex justify-content-between mb-3 align-items-center">
+            <span class="small fw-bold text-muted">Color</span>
+            <i class="bi bi-x cursor-pointer" onclick="closeColorPicker()"></i>
+        </div>
+        <div class="color-grid">
+            <!-- Generat via JS -->
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -536,7 +622,9 @@
 
         let globalTags = [];
         let globalUsers = []; // Simpan data user global
+        let lastFetchedLists = []; // Simpan data lists global
         let selectedTags = [];
+
         let selectedFile = null;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -556,9 +644,10 @@
                         document.getElementById('projectBadge').innerText = (data.project?.department || "Project");
                         
                         globalTags = data.tags || [];
-                        globalUsers = data.users || []; // Simpan data user dari API
+                        globalUsers = data.users || []; 
+                        lastFetchedLists = data.lists || [];
 
-                        renderLists(data.lists || []);
+                        renderLists(lastFetchedLists);
                         renderComments(data.comments || []);
                         
                         const projectSubs = (data.subscribers || []).filter(s => s.projectId === projectId || s.id === projectId);
@@ -727,27 +816,178 @@
             });
         }
 
-           // --- FUNGSI NEW STATUS ---
-           function promptNewStatus(listId) {
-               const statusName = prompt("Enter new status name (e.g. TESTING, REVIEW):");
-               if (!statusName) return;
+           // --- STATUS MANAGER LOGIC ---
+           let localStatuses = []; // State sementara di modal 
+           const statusCategories = ['not_started', 'active', 'done', 'closed']; 
+           const customPalette = [ 
+               '#6b46e5', '#3f51b5', '#2196f3', '#009688', '#10b981', '#4caf50', '#ffc107', 
+               '#f44336', '#e91e63', '#9c27b0', '#795548', '#607d8b', '#9e9e9e', '#000000' 
+           ]; 
+           
+           // 1. Fungsi Buka Modal & Load Data 
+           function promptNewStatus(listId) { 
+               document.getElementById('currentManagingListId').value = listId; 
                
-               const color = prompt("Enter hex color (e.g. #ff0000):", "#64748b");
+               // Ambil data status dari globalLists (yang sudah di-fetch saat fetchData) 
+               const list = lastFetchedLists.find(l => l.id === listId); 
+               localStatuses = list.statuses ? [...list.statuses] : []; 
                
-               fetch(API_URL, {
-                   method: 'POST',
-                   body: JSON.stringify({
-                       action: 'createStatus',
-                       listId: listId,
-                       name: statusName,
-                       color: color || '#64748b',
-                       type: 'custom'
-                   })
-               })
-               .then(r => r.json())
-               .then(res => {
-                   if(res.status === 'success') fetchData();
-               });
+               renderStatusManagerUI(); 
+               const modal = new bootstrap.Modal(document.getElementById('manageStatusModal')); 
+               modal.show(); 
+               
+               // Inisialisasi Drag & Drop untuk setiap grup 
+               statusCategories.forEach(cat => { 
+                   const el = document.getElementById(`group-${cat}`);
+                   if (el) {
+                       new Sortable(el, { 
+                           group: 'statuses', 
+                           animation: 150, 
+                           handle: '.drag-handle', 
+                           onEnd: () => updateLocalPositions() 
+                       }); 
+                   }
+               }); 
+           } 
+           
+           // 2. Render UI Modal 
+           function renderStatusManagerUI() { 
+               statusCategories.forEach(cat => { 
+                   const container = document.getElementById(`group-${cat}`); 
+                   if (!container) return;
+                   const filtered = localStatuses.filter(s => s.type === cat || (!s.type && cat === 'not_started')); 
+                   
+                   container.innerHTML = filtered.sort((a,b) => a.position - b.position).map(s => ` 
+                       <div class="status-item-row" data-id="${s.id}" data-type="${cat}"> 
+                           <div class="drag-handle"><i class="bi bi-grid-3x2-vertical"></i></div> 
+                           <div class="status-dot-btn" style="background-color: ${s.color}; border-color: ${s.color}" onclick="openColorPicker(event, '${s.id}')"></div> 
+                           <input type="text" class="status-input-inline" value="${s.name}" onchange="updateLocalStatusName('${s.id}', this.value)"> 
+                           <i class="bi bi-three-dots text-muted cursor-pointer"></i> 
+                       </div> 
+                   `).join(''); 
+               }); 
+           }
+           
+           function updateLocalStatusName(id, newName) {
+               const status = localStatuses.find(s => s.id === id);
+               if (status) status.name = newName;
+           }
+           
+           // 3. Tambah Status Baru (Inline) 
+           function showInlineInput(cat) { 
+               const wrap = document.getElementById(`input-wrap-${cat}`); 
+               wrap.style.display = 'block'; 
+               wrap.innerHTML = ` 
+                   <div class="status-item-row new-status-card"> 
+                       <div class="status-dot-btn" id="new-status-dot-${cat}" style="background:#cbd5e1" onclick="openColorPicker(event, 'new-${cat}')"></div> 
+                       <input type="text" id="new-input-${cat}" class="status-input-inline" placeholder="Status name..." autofocus> 
+                       <button class="btn-save-inline" onclick="saveNewStatusLocally('${cat}')">Save <i class="bi bi-arrow-return-left"></i></button> 
+                   </div> 
+               `; 
+           } 
+           
+           let tempNewColor = "#64748b"; 
+           
+           function saveNewStatusLocally(cat) { 
+               const nameInput = document.getElementById(`new-input-${cat}`);
+               const name = nameInput.value; 
+               if (!name) return; 
+           
+               const newObj = { 
+                   id: 'temp-' + Date.now(), 
+                   name: name, 
+                   color: tempNewColor, 
+                   type: cat, 
+                   position: localStatuses.length 
+               }; 
+               
+               localStatuses.push(newObj); 
+               document.getElementById(`input-wrap-${cat}`).style.display = 'none'; 
+               renderStatusManagerUI(); 
+           } 
+           
+           // 4. Color Picker Logic 
+           function openColorPicker(event, id) { 
+               event.stopPropagation(); 
+               const picker = document.getElementById('statusColorPicker'); 
+               const rect = event.target.getBoundingClientRect(); 
+               
+               picker.style.top = (rect.bottom + window.scrollY) + 'px'; 
+               picker.style.left = rect.left + 'px'; 
+               picker.style.display = 'block'; 
+               
+               const grid = picker.querySelector('.color-grid'); 
+               grid.innerHTML = customPalette.map(c => ` 
+                   <div class="color-circle" style="background:${c}" onclick="applyColor('${id}', '${c}')"></div> 
+               `).join(''); 
+           } 
+           
+           function applyColor(id, color) { 
+               if (id.startsWith('new-')) { 
+                   tempNewColor = color; 
+                   const cat = id.split('-')[1]; 
+                   document.getElementById(`new-status-dot-${cat}`).style.background = color; 
+               } else { 
+                   const status = localStatuses.find(s => s.id === id); 
+                   if (status) status.color = color; 
+                   renderStatusManagerUI(); 
+               } 
+               closeColorPicker(); 
+           } 
+           
+           function closeColorPicker() { document.getElementById('statusColorPicker').style.display = 'none'; } 
+           
+           // 5. Update State & Sync ke Google Sheets 
+           function updateLocalPositions() { 
+               // Membaca urutan dari DOM setelah drag 
+               const newState = []; 
+               let pos = 0; 
+               statusCategories.forEach(cat => { 
+                   const group = document.getElementById(`group-${cat}`);
+                   if(!group) return;
+                   const items = group.querySelectorAll('.status-item-row'); 
+                   items.forEach(el => { 
+                       const id = el.getAttribute('data-id'); 
+                       const found = localStatuses.find(s => s.id === id); 
+                       if (found) { 
+                           found.type = cat; // Jika pindah grup 
+                           found.position = pos++; 
+                           newState.push(found); 
+                       } 
+                   }); 
+               }); 
+               localStatuses = newState; 
+           } 
+           
+           function syncStatusesToDB() { 
+               const listId = document.getElementById('currentManagingListId').value; 
+               updateLocalPositions(); // Pastikan posisi terbaru 
+           
+               const btn = event.target; 
+               btn.disabled = true; 
+               btn.innerText = "Saving..."; 
+           
+               fetch(API_URL, { 
+                   method: 'POST', 
+                   body: JSON.stringify({ 
+                       action: 'syncStatuses', 
+                       listId: listId, 
+                       statuses: localStatuses 
+                   }) 
+               }) 
+               .then(r => r.json()) 
+               .then(res => { 
+                   if(res.status === 'success') { 
+                       const modalEl = document.getElementById('manageStatusModal');
+                       const modal = bootstrap.Modal.getInstance(modalEl);
+                       modal.hide(); 
+                       fetchData(); // Refresh list utama 
+                   } 
+               }) 
+               .finally(() => { 
+                   btn.disabled = false; 
+                   btn.innerText = "Apply changes"; 
+               }); 
            }
 
            // --- FUNGSI COMMENTS ---
