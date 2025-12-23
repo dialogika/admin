@@ -794,37 +794,43 @@
             return url;
         }
 
-        function setupUserUI() { 
-            if (!userData) { 
-                window.location.href = "../index.html"; 
-                return; 
-            } 
-
-            const imgEl = document.getElementById('currentUserCommentPhoto'); 
-            const initialEl = document.getElementById('currentUserCommentInitial'); 
-            
-            // Update Navbar & Welcome Msg 
-            if(document.getElementById('user-name-display')) document.getElementById('user-name-display').innerText = userData.name; 
-            if(document.getElementById('user-photo-display')) document.getElementById('user-photo-display').src = formatDriveUrl(userData.photo); 
-            
-            const welcomeMsg = document.querySelector('h4.fw-bold'); 
-            if(welcomeMsg && userData.name) welcomeMsg.innerText = `Good Morning, ${userData.name.split(' ')[0]}!`; 
-
-            // FIX LINGKARAN BIRU: 
-            // Jika ada foto, tampilkan foto dan SEMBUNYIKAN initial sama sekali. 
-            if (userData.photo && userData.photo !== "" && userData.photo !== "undefined") { 
-                imgEl.src = formatDriveUrl(userData.photo); 
-                imgEl.style.display = 'block'; 
-                if(initialEl) initialEl.style.display = 'none'; 
-            } else { 
-                // Jika tidak ada foto, tampilkan initial dan SEMBUNYIKAN elemen foto. 
-                if(initialEl) { 
-                    initialEl.innerText = userData.name ? userData.name.substring(0, 2).toUpperCase() : 'US'; 
-                    initialEl.style.display = 'flex'; 
-                } 
-                imgEl.style.display = 'none'; 
-            } 
-        } 
+ // --- 1. SETUP UI USER (Top Bar & Role) --- 
+ function setupUserUI() { 
+     if (!userData) { 
+         window.location.href = "../index.html"; 
+         return; 
+     } 
+ 
+     const nameDisplay = document.getElementById('user-name-display'); 
+     const photoDisplay = document.getElementById('user-photo-display'); 
+     const roleDisplay = document.getElementById('user-role-display'); // Sekarang kita panggil ini 
+ 
+     // Gunakan pengecekan case-insensitive untuk data localStorage 
+     const name = userData.Name || userData.name || "User"; 
+     const role = userData.Role || userData.role || "Dialogika Member"; 
+     const photo = userData.Photo || userData.photo || ""; 
+ 
+     if (nameDisplay) nameDisplay.innerText = name; 
+     if (photoDisplay) photoDisplay.src = formatDriveUrl(photo); 
+     if (roleDisplay) roleDisplay.innerText = role; // Menampilkan Role dari Spreadsheet 
+ 
+     const welcomeMsg = document.querySelector('h4.fw-bold'); 
+     if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${name.split(' ')[0]}!`; 
+ 
+     const imgEl = document.getElementById('currentUserCommentPhoto'); 
+     const initialEl = document.getElementById('currentUserCommentInitial'); 
+ 
+     if (photo && photo !== "" && photo !== "undefined") { 
+         if(imgEl) { imgEl.src = formatDriveUrl(photo); imgEl.style.display = 'block'; } 
+         if(initialEl) initialEl.style.display = 'none'; 
+     } else { 
+         if(initialEl) { 
+             initialEl.innerText = name.substring(0, 2).toUpperCase(); 
+             initialEl.style.display = 'flex'; 
+         } 
+         if(imgEl) imgEl.style.display = 'none'; 
+     } 
+ } 
  
         // --- TAG SYSTEM LOGIC (ROBUST) ---
         function handleTagSearch(input, lid) { 
@@ -1054,9 +1060,9 @@
                         renderComments(data.comments || []);
                         updateModalLinks(projectId);
                         
-                        const projectSubs = (data.subscribers || []).filter(s => s.projectId === projectId || s.id === projectId);
-                                renderSubscribers(projectSubs);
-                                checkSubscriptionStatus(projectSubs);
+                        window.currentSubscribers = data.subscribers || []; 
+                        renderSubscribers(window.currentSubscribers);
+                        checkSubscriptionStatus(window.currentSubscribers);
                         
                     }
                 })
@@ -1564,42 +1570,43 @@
            });
 
            // --- FUNGSI COMMENTS ---
-        function renderComments(comments) { 
-            const wrapper = document.getElementById('commentsWrapper'); 
-            if(!wrapper) return; 
-        
-            wrapper.innerHTML = comments.map(c => { 
-                // Cari user pengirim berdasarkan userId dari spreadsheet 
-                const sender = globalUsers.find(u => String(u.id).trim() == String(c.userId).trim()) || { name: 'Unknown User', photo: '' }; 
-                const senderPhoto = sender.photo ? formatDriveUrl(sender.photo) : `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.name)}`; 
-        
-                return ` 
-                    <div class="d-flex gap-3 p-3 border rounded-4 bg-light shadow-sm mb-3"> 
-                        <img src="${senderPhoto}" class="rounded-circle border" style="width:35px; height:35px; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=U'"> 
-                        <div class="flex-grow-1"> 
-                            <div class="d-flex justify-content-between mb-1"> 
-                                <span class="fw-bold small text-dark">${sender.name}</span> 
-                                <span class="text-muted" style="font-size:0.7rem">${c.date}</span> 
-                            </div> 
-                            <div class="small text-dark">${c.text}</div> 
-                            ${c.attachment ? `<div class="mt-2"><a href="${c.attachment}" target="_blank" class="btn btn-sm btn-white border small py-0"><i class="bi bi-paperclip"></i> View File</a></div>` : ''} 
-                        </div> 
-                    </div> 
-                `; 
-            }).join(''); 
-        }
+ // --- 2. RENDER COMMENTS (Fix Unknown User) --- 
+ function renderComments(comments) { 
+     const wrapper = document.getElementById('commentsWrapper'); 
+     if(!wrapper) return; 
+ 
+     wrapper.innerHTML = comments.map(c => { 
+         // Gunakan pembanding == (loose equality) dan pastikan ID user ditemukan 
+         const sender = globalUsers.find(u => String(u.id).trim() == String(c.userId).trim()) || { name: 'Unknown User', photo: '' }; 
+         const senderPhoto = sender.photo ? formatDriveUrl(sender.photo) : `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.name)}`; 
+ 
+         return ` 
+             <div class="d-flex gap-3 p-3 border rounded-4 bg-light shadow-sm mb-3"> 
+                 <img src="${senderPhoto}" class="rounded-circle border" style="width:35px; height:35px; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=U'"> 
+                 <div class="flex-grow-1"> 
+                     <div class="d-flex justify-content-between mb-1"> 
+                         <span class="fw-bold small text-dark">${sender.name}</span> 
+                         <span class="text-muted" style="font-size:0.7rem">${c.date}</span> 
+                     </div> 
+                     <div class="small text-dark">${c.text}</div> 
+                     ${c.attachment ? `<div class="mt-2"><a href="${c.attachment}" target="_blank" class="btn btn-sm btn-white border small py-0"><i class="bi bi-paperclip"></i> View File</a></div>` : ''} 
+                 </div> 
+             </div> 
+         `; 
+     }).join(''); 
+ }
         
         function renderSubscribers(subs) { 
+            window.currentSubscribers = subs || [];
             const subsContainer = document.getElementById('subsContainer'); 
             if(!subsContainer) return; 
             
-            subsContainer.innerHTML = ''; // Menghapus "RA" statis 
+            subsContainer.innerHTML = ''; 
             
             if(!subs || subs.length === 0) { 
                 subsContainer.innerHTML = '<span class="text-muted small">No subscribers</span>'; 
             } else { 
                 subs.forEach(s => { 
-                    // PERBAIKAN: Pembandingan s.userId == user.id 
                     const u = globalUsers.find(user => user.id == s.userId); 
                     if(u) { 
                         const photo = u.photo ? formatDriveUrl(u.photo) : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}`; 
@@ -1614,9 +1621,66 @@
                 }); 
             } 
             
-            const btnAddHtml = `<button class="btn btn-light border rounded-pill px-3 py-1 btn-sm text-muted small ms-2" onclick="alert('Feature coming soon')">Add/remove people...</button>`; 
+            const btnAddHtml = `<button class="btn btn-light border rounded-pill px-3 py-1 btn-sm text-muted small" onclick="openSubscriberModal()">Add/remove people...</button>`; 
             subsContainer.insertAdjacentHTML('beforeend', btnAddHtml); 
         }
+
+ // --- 4. MANAGE SUBSCRIBERS (New Feature) --- 
+ function openSubscriberModal() { 
+     const modal = new bootstrap.Modal(document.getElementById('manageSubscribersModal')); 
+     renderManageSubscriberList(); 
+     modal.show(); 
+ } 
+ 
+ function renderManageSubscriberList(query = "") { 
+     const container = document.getElementById('subscriberListScroll'); 
+     const projectSubs = lastFetchedLists ? lastFetchedLists.subscribers || [] : []; // Sesuaikan dengan data yang di-fetch 
+     
+     // Gunakan globalUsers yang sudah di-fetch di fetchData() 
+     const filteredUsers = globalUsers.filter(u => u.name.toLowerCase().includes(query.toLowerCase())); 
+ 
+     container.innerHTML = filteredUsers.map(u => { 
+         // Cek apakah user ini sudah subscribe 
+         // Kita butuh variabel subs lokal yang di-update saat fetchData() 
+         const isSubbed = (window.currentSubscribers || []).some(s => String(s.userId) == String(u.id)); 
+ 
+         return ` 
+             <div class="d-flex align-items-center justify-content-between p-2 hover-bg-light rounded-3"> 
+                 <div class="d-flex align-items-center gap-3"> 
+                     <img src="${formatDriveUrl(u.photo)}" class="rounded-circle border" style="width:35px; height:35px; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${u.name}'"> 
+                     <div> 
+                         <div class="fw-bold small">${u.name}</div> 
+                         <div class="text-muted" style="font-size:0.7rem">${u.role}</div> 
+                     </div> 
+                 </div> 
+                 <button class="btn btn-sm ${isSubbed ? 'btn-light border text-danger' : 'btn-dlg-blue'}" 
+                         onclick="toggleOtherUserSub('${u.id}')"> 
+                     ${isSubbed ? 'Remove' : 'Add'} 
+                 </button> 
+             </div> 
+         `; 
+     }).join(''); 
+ } 
+ 
+ function filterSubscribers(val) {
+    renderManageSubscriberList(val);
+ }
+
+ async function toggleOtherUserSub(targetUserId) { 
+     // Fungsi ini memanggil toggleSubscriber di backend tapi untuk userId tertentu 
+     fetch(API_URL, { 
+         method: 'POST', 
+         body: JSON.stringify({ 
+             action: 'toggleSubscriber', 
+             contextId: projectId, 
+             userId: targetUserId 
+         }) 
+     }).then(() => { 
+         fetchData(); // Refresh data utama 
+         // Beri jeda sedikit agar fetchData selesai baru re-render modal 
+         setTimeout(() => renderManageSubscriberList(), 1000); 
+     }); 
+ }
 
             // 3. Fungsi Cek Status Tombol Subscribe
             function checkSubscriptionStatus(subs) {
@@ -1668,54 +1732,55 @@
                 });
             }
 
-        // 2. Perbaiki fungsi postComment agar tidak menganggap session habis 
-        async function postComment() { 
-            const text = document.getElementById('richCommentInput').innerHTML; 
-            const btn = document.getElementById('postBtn'); 
-            
-            if (!text || text === '<br>' || text.trim() === "") return alert("Comment cannot be empty"); 
-        
-            // Gunakan CURRENT_USER_ID yang sudah kita ambil di awal 
-            if (!CURRENT_USER_ID || CURRENT_USER_ID === "null") { 
-                alert("Session anda tidak valid. Harap login kembali."); 
-                window.location.href = "../index.html"; 
-                return; 
-            } 
-        
-            btn.disabled = true; 
-            btn.innerText = "Posting..."; 
-        
-            let attachmentUrl = ""; 
-            if (selectedFile) { 
-                const fileRes = await uploadFile(); 
-                if (fileRes.status === 'success') attachmentUrl = fileRes.fileUrl; 
-            } 
-        
-            fetch(API_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    action: 'createComment', 
-                    projectId: projectId, 
-                    contextId: projectId,  
-                    contextType: 'project', 
-                    userId: CURRENT_USER_ID, // ID sudah pasti terdeteksi sekarang 
-                    text: text,            
-                    attachmentUrl: attachmentUrl 
-                }) 
-            }) 
-            .then(r => r.json()) 
-            .then(res => { 
-                if (res.status === 'success') { 
-                    document.getElementById('richCommentInput').innerHTML = ''; 
-                    clearFile(); 
-                    fetchData(); 
-                } 
-            }) 
-            .finally(() => { 
-                btn.disabled = false; 
-                btn.innerText = "Post comment"; 
-            }); 
-        }
+ // --- 3. POST COMMENT (Fix User ID Missing) --- 
+ async function postComment() { 
+     const text = document.getElementById('richCommentInput').innerHTML; 
+     const btn = document.getElementById('postBtn'); 
+     
+     if (!text || text === '<br>' || text.trim() === "") return alert("Comment cannot be empty"); 
+ 
+     // Ambil ID yang benar (Case Sensitive Id atau id) 
+     const activeUserId = userData.Id || userData.id; 
+ 
+     if (!activeUserId) { 
+         alert("Session expired. Please login again."); 
+         return; 
+     } 
+ 
+     btn.disabled = true; 
+     btn.innerText = "Posting..."; 
+ 
+     let attachmentUrl = ""; 
+     if (selectedFile) { 
+         const fileRes = await uploadFile(); 
+         if (fileRes.status === 'success') attachmentUrl = fileRes.fileUrl; 
+     } 
+ 
+     fetch(API_URL, { 
+         method: 'POST', 
+         body: JSON.stringify({ 
+             action: 'createComment', 
+             projectId: projectId, 
+             contextId: projectId,  
+             contextType: 'project', 
+             userId: activeUserId, // MENGIRIM ID DARI SPREADSHEET USER 
+             text: text,            
+             attachmentUrl: attachmentUrl 
+         }) 
+     }) 
+     .then(r => r.json()) 
+     .then(res => { 
+         if (res.status === 'success') { 
+             document.getElementById('richCommentInput').innerHTML = ''; 
+             clearFile(); 
+             fetchData(); 
+         } 
+     }) 
+     .finally(() => { 
+         btn.disabled = false; 
+         btn.innerText = "Post comment"; 
+     }); 
+ }
 
            // --- FUNGSI TEXT EDITOR & FILE ---
            function execCmd(command) {
@@ -2090,5 +2155,26 @@
             window.location.href = "index.html";
         }
     </script>
+<!-- MODAL MANAGE SUBSCRIBERS --> 
+ <div class="modal fade" id="manageSubscribersModal" tabindex="-1" aria-hidden="true"> 
+     <div class="modal-dialog modal-dialog-centered"> 
+         <div class="modal-content rounded-4 border-0"> 
+             <div class="modal-header border-0 p-4 pb-0"> 
+                 <h5 class="fw-bold">Manage Subscribers</h5> 
+                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button> 
+             </div> 
+             <div class="modal-body p-4"> 
+                 <div class="input-group mb-3 bg-light rounded-pill px-2"> 
+                     <span class="input-group-text bg-transparent border-0"><i class="bi bi-search"></i></span> 
+                     <input type="text" class="form-control bg-transparent border-0 shadow-none" placeholder="Search people..." oninput="filterSubscribers(this.value)"> 
+                 </div> 
+                 <div id="subscriberListScroll" style="max-height: 400px; overflow-y: auto;"> 
+                     <!-- Diisi via JS --> 
+                 </div> 
+             </div> 
+         </div> 
+     </div> 
+ </div>
+
 </body>
 </html>

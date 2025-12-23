@@ -189,10 +189,10 @@ function getProjectCompleteData(targetId) {
           id: cData[i][0], 
           contextType: cData[i][1], 
           contextId: cData[i][2], 
-          userId: cData[i][3], // Indeks diperbaiki ke 3 (user_id) 
-          text: cData[i][4],   // Indeks diperbaiki ke 4 (comment_text) 
-          date: cData[i][5],   // Indeks diperbaiki ke 5 (created_at) 
-          attachment: cData[i][6] || "" // Indeks diperbaiki ke 6 (attachment) 
+          userId: String(cData[i][3]).trim(), // user_id di kolom 4 (indeks 3) 
+          text: cData[i][4],   // comment_text
+          date: cData[i][5],   // created_at
+          attachment: cData[i][6] || "" // attachment
         });
       }
     }
@@ -409,7 +409,7 @@ function createComment(data) {
      cid,                       // comment_id 
      data.contextType || "project", // context_type (misal: project atau task) 
      data.contextId,            // context_id 
-     data.userId,               // user_id (PENTING: ID login Anda) 
+     String(data.userId),       // user_id (PENTING: ID login Anda) 
      data.text,                 // comment_text 
      new Date(),                // created_at 
      data.attachmentUrl || ""   // attachment_url 
