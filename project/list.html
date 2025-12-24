@@ -1751,25 +1751,43 @@
  
      // PERBAIKAN UTAMA: Ambil ulang userData langsung dari LocalStorage untuk memastikan data terbaru 
      const freshUserDataStr = localStorage.getItem('userData');
-     console.log("Raw LocalStorage userData:", freshUserDataStr); // Debugging 
      
      if (!freshUserDataStr) { 
          alert("Session data is missing. Please login again."); 
-         // window.location.href = "../index.html"; // Opsional: redirect otomatis 
          return; 
      }
  
      let activeUserId = null; 
+     let userEmail = null;
+     let freshUserData = {};
+     
      try { 
-         const freshUserData = JSON.parse(freshUserDataStr); 
+         freshUserData = JSON.parse(freshUserDataStr); 
          // Cek semua kemungkinan variasi penulisan ID 
          activeUserId = freshUserData.Id || freshUserData.id || freshUserData.ID || freshUserData.uuid || freshUserData._id; 
+         userEmail = freshUserData.Email || freshUserData.email || freshUserData.EMAIL;
      } catch (e) { 
          console.error("Error parsing userData:", e); 
      } 
  
+     // FALLBACK: Jika ID tidak ditemukan di localStorage, cari di globalUsers berdasarkan Email
+     if (!activeUserId && userEmail && globalUsers.length > 0) {
+         console.warn("User ID missing in localStorage. Attempting lookup by email:", userEmail);
+         const foundUser = globalUsers.find(u => u.email.toLowerCase().trim() === userEmail.toLowerCase().trim());
+         if (foundUser) {
+             activeUserId = foundUser.id;
+             console.log("User ID found via globalUsers lookup:", activeUserId);
+             
+             // Opsional: Update localStorage agar next time tidak perlu lookup lagi
+             freshUserData.id = activeUserId; // Simpan dengan key huruf kecil standar
+             localStorage.setItem('userData', JSON.stringify(freshUserData));
+         }
+     }
+ 
      if (!activeUserId) { 
-         alert("User ID not found in session. Please re-login."); 
+         // Tampilkan detail keys yang ada untuk debugging user
+         const availableKeys = Object.keys(freshUserData).join(", ");
+         alert(`User ID not found in session. Keys available: ${availableKeys}. Please re-login.`); 
          console.error("Active User ID is missing. UserData content:", freshUserDataStr); 
          return; 
      } 
