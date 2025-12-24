@@ -1698,46 +1698,120 @@
      }); 
  }
 
-            // 3. Fungsi Cek Status Tombol Subscribe
-            function checkSubscriptionStatus(subs) {
-                const isSubscribed = subs.some(s => s.userId === CURRENT_USER_ID);
-                const textEl = document.getElementById('subscriptionText');
-                const btnEl = document.getElementById('subscribeBtn');
-                
-                if (isSubscribed) {
-                    textEl.innerText = "You’re subscribed";
-                    btnEl.innerText = "Unsubscribe me";
-                    btnEl.classList.replace('text-primary', 'text-muted');
-                } else {
-                    textEl.innerText = "You’re not subscribed";
-                    btnEl.innerText = "Subscribe me";
-                    btnEl.classList.replace('text-muted', 'text-primary');
-                }
-            }
-
-            // 4. Fungsi Kirim Toggle ke Database
-            function toggleSubscription() {
-                const btn = document.getElementById('subscribeBtn');
-                btn.disabled = true;
-                btn.innerText = "Processing...";
-
-                fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'toggleSubscriber',
-                        contextId: projectId,
-                        userId: CURRENT_USER_ID
-                    })
-                })
-                .then(r => r.json())
-                .then(res => {
-                    if(res.status === 'success') {
-                        fetchData(); // Refresh data untuk melihat perubahan avatar dan teks
-                    }
-                })
-                .catch(err => alert("Error toggling subscription"))
-                .finally(() => btn.disabled = false);
-            }
+ // --- 1. RENDER FOTO SUBSCRIBER DI HALAMAN UTAMA --- 
+ function renderSubscribers(subs) { 
+     window.currentSubscribers = subs || []; 
+     const subsContainer = document.getElementById('subsContainer'); 
+     if (!subsContainer) return; 
+ 
+     // Bersihkan kontainer 
+     subsContainer.innerHTML = ''; 
+ 
+     // Update teks deskripsi jumlah subscriber 
+     const subCount = window.currentSubscribers.length; 
+     const subTextHeader = document.querySelector('.mt-5.pt-4.border-top p'); 
+     if (subTextHeader) { 
+         subTextHeader.innerText = `${subCount} ${subCount > 1 ? 'people' : 'person'} will be notified when someone comments on this to-do list.`; 
+     } 
+ 
+     if (window.currentSubscribers.length > 0) { 
+         window.currentSubscribers.forEach(s => { 
+             // Cari data user lengkap dari globalUsers berdasarkan ID 
+             const u = globalUsers.find(user => String(user.id) === String(s.userId)); 
+             if (u) { 
+                 const photo = u.photo ? formatDriveUrl(u.photo) : `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`; 
+                 const html = ` 
+                     <div class="position-relative" title="${u.name}"> 
+                         <img src="${photo}" class="rounded-circle border" 
+                              style="width:32px; height:32px; object-fit:cover; margin-right: -8px;" 
+                              onerror="this.src='https://ui-avatars.com/api/?name=U'"> 
+                     </div>`; 
+                 subsContainer.insertAdjacentHTML('beforeend', html); 
+             } 
+         }); 
+     } 
+ 
+     // Tambahkan tombol Add/Remove di akhir list foto 
+     const btnAddHtml = ` 
+         <button class="btn btn-light border rounded-pill px-3 py-1 btn-sm text-muted small ms-2" 
+                 onclick="openSubscriberModal()" style="font-size: 0.75rem; font-weight: 600;"> 
+             Add/remove people... 
+         </button>`; 
+     subsContainer.insertAdjacentHTML('beforeend', btnAddHtml); 
+ } 
+ 
+ // --- 2. RENDER LIST USER DI DALAM MODAL --- 
+ function renderManageSubscriberList(query = "") { 
+     const container = document.getElementById('subscriberListScroll'); 
+     if (!container) return; 
+ 
+     const filteredUsers = globalUsers.filter(u => 
+         u.name.toLowerCase().includes(query.toLowerCase()) || 
+         (u.email && u.email.toLowerCase().includes(query.toLowerCase())) 
+     ); 
+ 
+     container.innerHTML = filteredUsers.map(u => { 
+         // Cek apakah user ini sudah subscribe (ada di window.currentSubscribers) 
+         const isSubbed = window.currentSubscribers.some(s => String(s.userId) === String(u.id)); 
+ 
+         return ` 
+             <div class="d-flex align-items-center justify-content-between p-2 hover-bg-light rounded-3 mb-2" style="transition: 0.2s;"> 
+                 <div class="d-flex align-items-center gap-3"> 
+                     <img src="${formatDriveUrl(u.photo)}" class="rounded-circle border" 
+                          style="width:38px; height:38px; object-fit:cover;" 
+                          onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}'"> 
+                     <div> 
+                         <div class="fw-bold" style="font-size: 0.85rem; color: #1f2937;">${u.name}</div> 
+                         <div class="text-muted" style="font-size: 0.7rem;">${u.role || 'Member'}</div> 
+                     </div> 
+                 </div> 
+                 <button class="btn btn-sm ${isSubbed ? 'btn-outline-danger' : 'btn-primary'}" 
+                         style="border-radius: 20px; font-size: 0.75rem; min-width: 70px; font-weight: 600;" 
+                         onclick="toggleOtherUserSub('${u.id}', this)"> 
+                     ${isSubbed ? 'Remove' : 'Add'} 
+                 </button> 
+             </div> 
+         `; 
+     }).join(''); 
+ } 
+ 
+ // --- 3. FUNGSI TOGBOL ADD/REMOVE DI MODAL --- 
+ async function toggleOtherUserSub(targetUserId, btnElement) { 
+     // UI Feedback langsung 
+     const originalText = btnElement.innerText; 
+     btnElement.disabled = true; 
+     btnElement.innerText = "..."; 
+ 
+     try { 
+         const response = await fetch(API_URL, { 
+             method: 'POST', 
+             body: JSON.stringify({ 
+                 action: 'toggleSubscriber', 
+                 contextId: projectId, // ID Proyek saat ini 
+                 userId: targetUserId  // ID User yang diklik 
+             }) 
+         }); 
+         const res = await response.json(); 
+ 
+         if (res.status === 'success') { 
+             // Kita Fetch ulang data proyek untuk mendapatkan list subscriber terbaru dari server 
+             // Ini akan otomatis memicu renderSubscribers() dan update window.currentSubscribers 
+             await fetchData(); 
+             
+             // Re-render isi modal agar tombol berubah dari Add ke Remove atau sebaliknya 
+             renderManageSubscriberList(document.querySelector('#manageSubscribersModal input').value); 
+         } else { 
+             alert("Error: " + res.message); 
+             btnElement.disabled = false; 
+             btnElement.innerText = originalText; 
+         } 
+     } catch (err) { 
+         console.error("Subscriber Error:", err); 
+         alert("Failed to update subscriber. Check connection."); 
+         btnElement.disabled = false; 
+         btnElement.innerText = originalText; 
+     } 
+ }
             
             // Tambahkan di dalam script yang sudah ada
             function updateModalLinks(id) {
@@ -2188,25 +2262,25 @@
         }
     </script>
 <!-- MODAL MANAGE SUBSCRIBERS --> 
- <div class="modal fade" id="manageSubscribersModal" tabindex="-1" aria-hidden="true"> 
-     <div class="modal-dialog modal-dialog-centered"> 
-         <div class="modal-content rounded-4 border-0"> 
-             <div class="modal-header border-0 p-4 pb-0"> 
-                 <h5 class="fw-bold">Manage Subscribers</h5> 
-                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button> 
-             </div> 
-             <div class="modal-body p-4"> 
-                 <div class="input-group mb-3 bg-light rounded-pill px-2"> 
-                     <span class="input-group-text bg-transparent border-0"><i class="bi bi-search"></i></span> 
-                     <input type="text" class="form-control bg-transparent border-0 shadow-none" placeholder="Search people..." oninput="filterSubscribers(this.value)"> 
-                 </div> 
-                 <div id="subscriberListScroll" style="max-height: 400px; overflow-y: auto;"> 
-                     <!-- Diisi via JS --> 
-                 </div> 
-             </div> 
-         </div> 
-     </div> 
- </div>
+<div class="modal fade" id="manageSubscribersModal" tabindex="-1" aria-hidden="true"> 
+    <div class="modal-dialog modal-dialog-centered"> 
+        <div class="modal-content rounded-4 border-0"> 
+            <div class="modal-header border-0 p-4 pb-0"> 
+                <h5 class="fw-bold">Manage Subscribers</h5> 
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button> 
+            </div> 
+            <div class="modal-body p-4"> 
+                <div class="input-group mb-3 bg-light rounded-pill px-2"> 
+                    <span class="input-group-text bg-transparent border-0"><i class="bi bi-search"></i></span> 
+                    <input type="text" class="form-control bg-transparent border-0 shadow-none" placeholder="Search people..." oninput="renderManageSubscriberList(this.value)"> 
+                </div> 
+                <div id="subscriberListScroll" style="max-height: 400px; overflow-y: auto;"> 
+                    <!-- Diisi via JS --> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
+</div>
 
 </body>
 </html>

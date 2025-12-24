@@ -217,12 +217,12 @@ function getProjectCompleteData(targetId) {
     const subSheet = SpreadsheetApp.openById(SUBS_SHEET_ID).getSheets()[0];
     const subData = subSheet.getDataRange().getDisplayValues();
     for(let i=1; i<subData.length; i++) {
-      // Pastikan kolom 2 adalah projectId dan kolom 3 adalah userId
-      if(String(subData[i][1]).trim() === targetIdStr) {
+      // Perbaikan Index: Col 3 (Index 2) = context_id, Col 4 (Index 3) = user_id
+      if(String(subData[i][2]).trim() === targetIdStr) {
         subscribers.push({ 
           id: subData[i][0], 
-          projectId: subData[i][1], 
-          userId: subData[i][2] 
+          projectId: subData[i][2], // context_id
+          userId: subData[i][3]     // user_id
         });
       }
     }
@@ -447,29 +447,37 @@ function updateTaskStatus(data) {
   return responseJSON({status:'error', message: 'Task not found'});
 }
 
-/**
- * FUNGSI: TOGGLE SUBSCRIBER
- */
-function toggleSubscriber(data) {
-  const ss = SpreadsheetApp.openById(SUBS_SHEET_ID).getSheets()[0];
-  const allData = ss.getDataRange().getValues();
-  let foundRowIndex = -1;
+/** 
+ * FUNGSI: TOGGLE SUBSCRIBER (Revisi untuk 5 Kolom) 
+ */ 
+function toggleSubscriber(data) { 
+  const ss = SpreadsheetApp.openById(SUBS_SHEET_ID).getSheets()[0]; 
+  const allData = ss.getDataRange().getValues(); 
+  let foundRowIndex = -1; 
   
-  for (let i = 1; i < allData.length; i++) {
-    if (String(allData[i][1]) === String(data.contextId) && String(allData[i][2]) === String(data.userId)) {
-      foundRowIndex = i + 1;
-      break;
-    }
-  }
+  // Cari berdasarkan context_id (kolom 3/index 2) dan user_id (kolom 4/index 3) 
+  for (let i = 1; i < allData.length; i++) { 
+    if (String(allData[i][2]) === String(data.contextId) && String(allData[i][3]) === String(data.userId)) { 
+      foundRowIndex = i + 1; 
+      break; 
+    } 
+  } 
   
-  if (foundRowIndex !== -1) {
-    ss.deleteRow(foundRowIndex);
-    return responseJSON({ status: 'success', message: 'Unsubscribed' });
-  } else {
-    const sid = Utilities.getUuid();
-    ss.appendRow([sid, data.contextId, data.userId]);
-    return responseJSON({ status: 'success', message: 'Subscribed' });
-  }
+  if (foundRowIndex !== -1) { 
+    ss.deleteRow(foundRowIndex); 
+    return responseJSON({ status: 'success', message: 'Unsubscribed' }); 
+  } else { 
+    const sid = Utilities.getUuid(); 
+    // Kolom: subscription_id, context_type, context_id, user_id, created_at 
+    ss.appendRow([ 
+      sid, 
+      "project",      // context_type 
+      data.contextId, // context_id 
+      data.userId,    // user_id 
+      new Date()      // created_at 
+    ]); 
+    return responseJSON({ status: 'success', message: 'Subscribed' }); 
+  } 
 }
 
 function getAllProjectsData() {
