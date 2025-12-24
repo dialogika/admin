@@ -47,6 +47,8 @@ function doPost(e) {
     if (data.action === 'createStatus')       return createStatus(data);
     if (data.action === 'toggleSubscriber')   return toggleSubscriber(data);
     if (data.action === 'syncStatuses')       return syncStatuses(data);
+    if (data.action === 'updateList')         return updateList(data);
+    if (data.action === 'deleteList')         return deleteList(data);
 
 
     
@@ -488,6 +490,30 @@ function getAllProjectsData() {
     if(d[i][0]) p.push({id:d[i][0], name:d[i][1], desc:d[i][2], department:d[i][9], pinned:d[i][8]});
   }
   return responseJSON({status:'success', data:p});
+}
+
+function updateList(data) { 
+  const ss = SpreadsheetApp.openById(LIST_SHEET_ID).getSheets()[0]; 
+  const vals = ss.getDataRange().getValues(); 
+  for (let i = 1; i < vals.length; i++) { 
+    if (String(vals[i][0]) === String(data.listId)) { 
+      ss.getRange(i + 1, 3).setValue(data.name);         // list_name 
+      ss.getRange(i + 1, 4).setValue(data.description);  // description 
+      return responseJSON({ status: 'success' }); 
+    } 
+  } 
+} 
+
+function deleteList(data) { 
+  const ss = SpreadsheetApp.openById(LIST_SHEET_ID).getSheets()[0]; 
+  const vals = ss.getDataRange().getValues(); 
+  for (let i = 1; i < vals.length; i++) { 
+    if (String(vals[i][0]) === String(data.listId)) { 
+      ss.deleteRow(i + 1); 
+      // Opsional: Hapus juga task yang terkait dengan list_id ini di TASK_SHEET_ID 
+      return responseJSON({ status: 'success' }); 
+    } 
+  } 
 }
 
 function responseJSON(obj) { 

@@ -430,13 +430,17 @@
         border-color: #0d6efd; 
     } 
     
-    /* Gaya Tulisan Selesai (Strikeout & Abu-abu) */ 
+    /* Styling Coretan Task Selesai */ 
     .task-row-done .task-text-content { 
         text-decoration: line-through; 
-        color: #94a3b8 !important; /* Warna abu-abu */ 
+        color: #94a3b8 !important; 
     } 
     
-    /* Hover Effect: Munculkan tulisan New Tab */ 
+    /* Hover Hint: Open in New Tab */ 
+    .todo-row { 
+        position: relative; 
+        transition: all 0.2s; 
+    } 
     .new-tab-hint { 
         opacity: 0; 
         font-size: 0.7rem; 
@@ -445,12 +449,44 @@
         margin-left: 10px; 
         transition: opacity 0.2s; 
         text-transform: uppercase; 
+        white-space: nowrap; 
     } 
-    
     .todo-row:hover .new-tab-hint { 
         opacity: 1; 
     } 
     
+    /* Deskripsi List: Truncate & More */ 
+    .list-card-desc { 
+        font-size: 0.9rem; 
+        color: #64748b; 
+        line-height: 1.5; 
+        overflow: hidden; 
+        display: -webkit-box; 
+        -webkit-box-orient: vertical; 
+        -webkit-line-clamp: 2; /* Batas 2 baris */ 
+    } 
+    .list-card-desc.expanded { 
+        display: block; 
+        -webkit-line-clamp: unset; 
+    } 
+    .btn-more-desc { 
+        font-size: 0.8rem; 
+        font-weight: 600; 
+        color: #0B2B6A; 
+        text-decoration: none; 
+        cursor: pointer; 
+    } 
+    
+    /* Dropdown Triple Dot */ 
+    .list-menu-dropdown .dropdown-toggle::after { display: none; } 
+    .list-menu-btn { 
+        color: #94a3b8; 
+        padding: 5px; 
+        border-radius: 50%; 
+        transition: 0.2s; 
+    } 
+    .list-menu-btn:hover { background: #f1f5f9; color: #1f2937; }
+
     .todo-row:hover { 
         background-color: #f8fafc; 
     }
@@ -1123,82 +1159,97 @@
             document.getElementById('listFilePreview').style.display = 'none';
         }
 
-        // Render Lists (Tampilan seperti Gambar 2)
-        function renderLists(lists) {
-            const container = document.getElementById('listsContainer');
-            container.innerHTML = '';
-            if (lists.length === 0) {
-                document.getElementById('emptyState').style.display = 'block';
-                return;
-            }
-            document.getElementById('emptyState').style.display = 'none';
+function renderLists(lists) { 
+    const container = document.getElementById('listsContainer'); 
+    container.innerHTML = ''; 
+    if (lists.length === 0) { 
+        document.getElementById('emptyState').style.display = 'block'; 
+        return; 
+    } 
+    document.getElementById('emptyState').style.display = 'none'; 
 
-            lists.forEach(list => {
-                // Render Status (Panah >)
-                let statusesHtml = '';
-                if (list.statuses && list.statuses.length > 0) {
-                    const sorted = list.statuses.sort((a,b) => a.position - b.position);
-                    statusesHtml = sorted.map((s, index) => {
-                        const badge = `<div class="status-item" style="background:${s.color}">${s.name}</div>`;
-                        const sep = (index < sorted.length - 1) ? `<i class="bi bi-chevron-right flow-sep"></i>` : '';
-                        return badge + sep;
-                    }).join('');
-                }
+    lists.forEach(list => { 
+        // --- LOGIKA STATUS HEADER --- 
+        const statusBadgesHtml = (list.statuses || []).sort((a,b) => a.position - b.position).map(s => ` 
+            <div class="status-badge-main" style="background:${s.color || '#64748b'}">${s.name}</div> 
+        `).join('<i class="bi bi-chevron-right text-muted small mx-1"></i>'); 
 
-                // --- RENDER TASK ITEM ---
-                const tasksHtml = (list.tasks || []).map(t => {
-                    // Logika Status Selesai
-                    const isDone = ['done', 'true', 'completed'].includes(t.status?.toLowerCase());
+        // --- LOGIKA TASK ITEM --- 
+        const tasksHtml = (list.tasks || []).map(t => { 
+            const isDone = ['done', 'true', 'completed'].includes(t.status?.toLowerCase()); 
+            
+            // Logika Ikon Dinamis 
+            const hasDesc = (t.description && t.description.trim() !== "" && t.description !== "<br>"); 
+            const hasAttach = (t.attachment && t.attachment !== ""); 
+            
+            let taskIcon = ""; 
+            if (hasDesc && hasAttach) taskIcon = '<i class="bi bi-box2-fill text-primary ms-2" title="Notes & Attachment"></i>'; 
+            else if (hasDesc) taskIcon = '<i class="bi bi-filter-left text-muted ms-2" style="font-size:1.1rem" title="Has Notes"></i>'; 
+            else if (hasAttach) taskIcon = '<i class="bi bi-paperclip text-muted ms-2" title="Has Attachment"></i>'; 
+
+            return ` 
+                <div class="todo-row p-2 border-bottom d-flex align-items-center cursor-pointer ${isDone ? 'task-row-done' : ''}" 
+                     onclick="window.open('item-details.html?taskId=${t.id}&projectId=${projectId}', '_blank')"> 
                     
-                    // Logika Deteksi Deskripsi/Notes (asumsi t.description ada di data)
-                    const hasContent = (t.description && t.description.trim() !== "" && t.description !== "<br>");
-
-                    return `
-                        <div class="todo-row p-2 d-flex align-items-center cursor-pointer ${isDone ? 'task-row-done' : ''}"
-                             onclick="window.open('item-details.html?taskId=${t.id}&projectId=${projectId}', '_blank')">
-                            
-                            <!-- Checkbox Bulat -->
-                            <input type="checkbox" class="form-check-input task-checkbox me-3" ${isDone ? 'checked' : ''}
-                                   onclick="event.stopPropagation(); updateTaskQuickStatus('${t.id}', this.checked)">
-                            
-                            <div class="flex-grow-1 d-flex align-items-center">
-                                <span class="task-text-content fw-medium">${t.title}</span>
-                                
-                                <!-- Icon Description jika ada isi -->
-                                ${hasContent ? '<i class="bi bi-filter-left text-muted ms-2" style="font-size: 1.1rem;"></i>' : ''}
-                                
-                                <!-- Hint New Tab saat Hover -->
-                                <span class="new-tab-hint"><i class="bi bi-box-arrow-up-right me-1"></i> New Tab</span>
-                            </div>
-
-                            <!-- Label Status di sebelah kanan -->
-                            <span class="badge bg-light text-dark border ms-2 small" style="font-size:0.65rem; text-transform: uppercase;">
-                                ${t.status || 'OPEN'}
-                            </span>
-                        </div>`;
-                }).join('');
-
-                const html = `
-                <div class="list-card-container shadow-sm mb-5 bg-white p-4 rounded-4 border">
-                    <h2 class="list-card-title h4 fw-bold">${list.name}</h2>
-                    <div class="list-card-desc mb-3 small text-muted">${list.description || ''}</div>
+                    <input type="checkbox" class="form-check-input task-checkbox me-3" 
+                           ${isDone ? 'checked' : ''} 
+                           onclick="event.stopPropagation(); updateTaskQuickStatus('${t.id}', this.checked)"> 
                     
-                    <div class="status-flow mb-4">
-                        ${statusesHtml}
-                        <button class="btn-add-status ms-2" onclick="promptNewStatus('${list.id}')">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
-                    </div>
+                    <div class="flex-grow-1 d-flex align-items-center"> 
+                        <span class="task-text-content fw-medium">${t.title}</span> 
+                        ${taskIcon} 
+                        <span class="new-tab-hint"><i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab</span> 
+                    </div> 
 
-                    <div class="todo-list-items mb-3">
-                        ${tasksHtml}
-                    </div>
+                    <span class="badge bg-light text-dark border ms-2 small" style="font-size:0.65rem; text-transform:uppercase;"> 
+                        ${t.status || 'OPEN'} 
+                    </span> 
+                </div>`; 
+        }).join(''); 
 
-                    <button class="btn-add-todo-pill mt-2" onclick="showTaskForm('${list.id}')">
-                        <i class="bi bi-plus"></i> Add a to-do
-                    </button>
+        // --- RENDER CARD LIST --- 
+        const html = ` 
+        <div class="mb-5 bg-white p-4 rounded-4 border shadow-sm" id="card-list-${list.id}"> 
+            <div class="d-flex justify-content-between align-items-start mb-1"> 
+                <div class="flex-grow-1"> 
+                    <h2 class="h4 fw-bold mb-1">${list.name}</h2> 
                     
-                    <div id="form-add-${list.id}" class="task-create-panel" style="display:none">
+                    <!-- Deskripsi List dengan Logic More --> 
+                    <div id="desc-container-${list.id}"> 
+                        <div class="list-card-desc" id="desc-text-${list.id}">${list.description || ''}</div> 
+                        ${(list.description && list.description.length > 100) ? 
+                            `<a class="btn-more-desc" onclick="toggleListDesc('${list.id}')" id="btn-more-${list.id}">More</a>` : ''} 
+                    </div> 
+                </div> 
+
+                <!-- Menu Triple Dot --> 
+                <div class="dropdown list-menu-dropdown"> 
+                    <button class="btn list-menu-btn" data-bs-toggle="dropdown"> 
+                        <i class="bi bi-three-dots-vertical"></i> 
+                    </button> 
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3"> 
+                        <li><a class="dropdown-item py-2" onclick="openEditListModal('${list.id}', '${encodeURIComponent(list.name)}', '${encodeURIComponent(list.description || '')}')"><i class="bi bi-pencil me-2"></i> Edit List</a></li> 
+                        <li><hr class="dropdown-divider"></li> 
+                        <li><a class="dropdown-item py-2 text-danger" onclick="deleteListAct('${list.id}')"><i class="bi bi-trash me-2"></i> Delete List</a></li> 
+                    </ul> 
+                </div> 
+            </div> 
+            
+            <div class="status-pill-container d-flex align-items-center gap-1 mb-3 mt-2"> 
+                ${statusBadgesHtml} 
+                <button class="btn-add-status ms-2" onclick="promptNewStatus('${list.id}')"> 
+                    <i class="bi bi-plus-lg"></i> 
+                </button> 
+            </div> 
+
+            <div class="todo-list-items">${tasksHtml}</div> 
+            
+            <div class="mt-3"> 
+                <button id="btn-add-${list.id}" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" onclick="showTaskForm('${list.id}')"> 
+                    <i class="bi bi-plus"></i> Add a to-do 
+                </button> 
+                <!-- Task form (form-add-lid) tetap di sini --> 
+                <div id="form-add-${list.id}" class="task-create-panel" style="display:none"> 
                         <input type="text" id="task-title-${list.id}" class="task-title-large" placeholder="What needs to be done?">
                         
                         <div class="meta-grid-container">
@@ -1220,7 +1271,7 @@
                                     </div>
                                 </div>
                             </div>
-
+      
                             <!-- Due Date -->
                             <div class="meta-row">
                                 <div class="meta-icon"><i class="bi bi-calendar"></i></div>
@@ -1229,7 +1280,7 @@
                                     <input type="date" id="task-due-${list.id}" class="ghost-input" style="width:auto">
                                 </div>
                             </div>
-
+      
                             <!-- Assignee -->
                             <div class="meta-row">
                                 <div class="meta-icon"><i class="bi bi-person"></i></div>
@@ -1249,7 +1300,7 @@
                                     </div>
                                 </div>
                             </div>
-
+      
                             <!-- TAGS (NEW) -->
                             <div class="meta-row"> 
                                 <div class="meta-icon"><i class="bi bi-tags"></i></div> 
@@ -1297,7 +1348,7 @@
                                 </div> 
                             </div>
                         </div>
-
+      
                         <!-- NOTES (NEW) -->
                         <div class="mt-4"> 
                             <div class="notes-label">Notes</div> 
@@ -1311,16 +1362,17 @@
                                 <div id="task-desc-${list.id}" class="rich-editor-content p-3" contenteditable="true" data-placeholder="Add notes here..."></div> 
                             </div> 
                         </div>
-
+      
                         <div class="d-flex gap-2 mt-4 justify-content-end">
                             <button class="btn btn-light border px-4 rounded-pill" onclick="showTaskForm('${list.id}')">Cancel</button>
                             <button class="btn btn-dlg-blue px-4 rounded-pill fw-bold" onclick="saveNewTask('${list.id}')">Create Task</button>
                         </div>
-                    </div>
-                </div>`;
-                container.insertAdjacentHTML('beforeend', html);
-            });
-        }
+                </div> 
+            </div> 
+        </div>`; 
+        container.insertAdjacentHTML('beforeend', html); 
+    }); 
+}
 
 
         // Simpan List Baru
@@ -2253,6 +2305,71 @@
             document.getElementById(`btn-add-${lid}`).style.display = 'inline-block'; 
             document.getElementById(`form-add-${lid}`).style.display = 'none'; 
         }
+
+        // --- LIST DESCRIPTION & EDIT FUNCTIONS ---
+        // --- 1. TOGGLE DESKRIPSI MORE/LESS --- 
+        function toggleListDesc(lid) { 
+            const el = document.getElementById(`desc-text-${lid}`); 
+            const btn = document.getElementById(`btn-more-${lid}`); 
+            if (el.classList.contains('expanded')) { 
+                el.classList.remove('expanded'); 
+                btn.innerText = "More"; 
+            } else { 
+                el.classList.add('expanded'); 
+                btn.innerText = "Less"; 
+            } 
+        } 
+
+        // --- 2. UPDATE STATUS TASK (CHECKBOX) --- 
+        async function updateTaskQuickStatus(tid, isChecked) { 
+            const statusLabel = isChecked ? "DONE" : "OPEN"; 
+            
+            // Optimistic UI Update 
+            fetchData(); // Refresh data untuk update coretan (atau manipulasi DOM langsung) 
+        
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'updateTaskStatus', 
+                    taskId: tid, 
+                    status: statusLabel 
+                }) 
+            }); 
+        } 
+
+        // --- 3. EDIT & DELETE LIST --- 
+        function openEditListModal(lid) { 
+            const list = lastFetchedLists.find(l => String(l.id) === String(lid)); 
+            if(!list) return; 
+        
+            const newName = prompt("Edit List Name:", list.name); 
+            if (newName === null) return; 
+        
+            const newDesc = prompt("Edit List Description:", list.description); 
+            
+            // Kirim update ke backend 
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'updateList', 
+                    listId: lid, 
+                    name: newName, 
+                    description: newDesc 
+                }) 
+            }).then(() => fetchData()); 
+        } 
+        
+        async function deleteListAct(lid) { 
+            if (!confirm("Are you sure you want to delete this list and all its tasks?")) return; 
+        
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'deleteList', 
+                    listId: lid 
+                }) 
+            }).then(() => fetchData()); 
+        }
     </script>
     <script>
         // Fungsi Logout
@@ -2261,6 +2378,35 @@
             window.location.href = "index.html";
         }
     </script>
+<!-- MODAL EDIT LIST -->
+<div class="modal fade" id="editListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h5 class="fw-bold">Edit List</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="editListId">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">LIST NAME</label>
+                    <input type="text" class="form-control" id="editListTitle" placeholder="e.g. Marketing Campaign">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">DESCRIPTION</label>
+                    <textarea class="form-control" id="editListDesc" rows="3" placeholder="Optional description..."></textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <button type="button" class="btn btn-outline-danger border-0" onclick="deleteListAct()">
+                        <i class="bi bi-trash me-2"></i>Delete List
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 rounded-pill" onclick="saveListChanges()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL MANAGE SUBSCRIBERS --> 
 <div class="modal fade" id="manageSubscribersModal" tabindex="-1" aria-hidden="true"> 
     <div class="modal-dialog modal-dialog-centered"> 
