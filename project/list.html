@@ -905,22 +905,19 @@
                 return "https://ui-avatars.com/api/?background=random&color=fff&name=User"; 
             } 
 
-            if (url.includes("drive.google.com/uc") || url.includes("lh3.googleusercontent.com")) { 
-                return url; 
-            } 
+            if (url.includes("lh3.googleusercontent.com")) return url; 
 
             try { 
                 let fileId = ""; 
-                if (url.includes("id=")) { 
-                    fileId = url.split("id=")[1].split("&")[0]; 
-                } else { 
-                    let parts = url.split("/"); 
-                    let dIndex = parts.indexOf("d"); 
-                    if (dIndex > -1 && parts[dIndex + 1]) { 
-                        fileId = parts[dIndex + 1]; 
+                if (url.includes("drive.google.com")) { 
+                    if (url.includes("id=")) { 
+                        fileId = url.split("id=")[1].split("&")[0]; 
+                    } else { 
+                        fileId = url.split("/d/")[1].split("/")[0]; 
                     } 
+                    return `https://lh3.googleusercontent.com/d/${fileId}`; 
                 } 
-                return fileId ? "https://drive.google.com/uc?export=view&id=" + fileId : url; 
+                return url; 
             } catch (e) { 
                 return url; 
             } 
@@ -938,29 +935,25 @@
 
     const name = userData.Name || userData.name || "User"; 
     const photo = userData.Photo || userData.photo || ""; 
-    // Ambil role dari localStorage jika sudah ada, jika tidak biarkan "Fetching..." 
-    const role = userData.role || userData.Role || "Fetching..."; 
+    const role = userData.Role || userData.role || "Dialogika Member"; 
 
     if (nameDisplay) nameDisplay.innerText = name; 
     if (photoDisplay) photoDisplay.src = formatDriveUrl(photo); 
     if (roleDisplay) roleDisplay.innerText = role; 
 
-    // --- Tambahan untuk menjaga UI yang ada ---
-    const welcomeMsg = document.querySelector('h4.fw-bold'); 
-    if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${name.split(' ')[0]}!`; 
-
     const imgEl = document.getElementById('currentUserCommentPhoto'); 
     const initialEl = document.getElementById('currentUserCommentInitial'); 
 
     if (photo && photo !== "" && photo !== "undefined") { 
-        if(imgEl) { imgEl.src = formatDriveUrl(photo); imgEl.style.display = 'block'; } 
-        if(initialEl) initialEl.style.display = 'none'; 
-    } else { 
-        if(initialEl) { 
-            initialEl.innerText = name.substring(0, 2).toUpperCase(); 
-            initialEl.style.display = 'flex'; 
+        if (imgEl) { 
+            imgEl.src = formatDriveUrl(photo); 
+            imgEl.style.display = 'block'; 
         } 
-        if(imgEl) imgEl.style.display = 'none'; 
+        if (initialEl) initialEl.style.display = 'none'; 
+    } else if (initialEl) { 
+        initialEl.innerText = name.substring(0, 2).toUpperCase(); 
+        initialEl.style.display = 'flex'; 
+        if (imgEl) imgEl.style.display = 'none'; 
     } 
 } 
  
@@ -1314,7 +1307,7 @@ function renderLists(lists) {
                         ${allDone ? '<span class="badge text-bg-success">All Task Done</span>' : ''} 
                     </div> 
                     <div id="desc-container-${list.id}"> 
-                        ${truncateDescription(list.desc, list.id)} 
+                        ${truncateDescription(list.description || list.desc, list.id)} 
                     </div> 
                 </div> 
                 <div class="dropdown list-menu-dropdown"> 
