@@ -389,361 +389,192 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // --- 1. KONFIGURASI API (WAJIB DIGANTI) ---
-        // Pastikan URL diakhiri dengan /exec
-        // Contoh: https://script.google.com/macros/s/AKfyc.../exec
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzsRHbU5WcucXdIhQeOFBaWQFvqO1kwGk72dHIfYWKtNcQF7ds5tTOyZNAmEWCQX_M/exec';
+    <!-- Firebase SDK Modular -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        document.addEventListener("DOMContentLoaded", function() {
-            // Cek apakah URL masih default/kosong
-            if (!API_URL || API_URL.includes('PASTE_URL') || API_URL.includes('GANTI_DENGAN')) {
-                alert("Harap masukkan URL Web App Google Script ke dalam file home.html baris API_URL.");
-                stopLoading("URL API Belum Dikonfigurasi.");
-                return;
+        // 1. Konfigurasi Firebase (PASTIKAN SAMA DENGAN LOGIN/REGISTER)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDyzzEYbJkkl-N8snrQf14qvj8De4YliV0",
+            authDomain: "pre-dialogika.firebaseapp.com",
+            projectId: "pre-dialogika",
+            storageBucket: "pre-dialogika.firebasestorage.app",
+            messagingSenderId: "343771410480",
+            appId: "1:343771410480:web:32881c9868522090237df5",
+            measurementId: "G-SXN811P3N0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // --- 2. PROTEKSI HALAMAN (Cek Login) ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Ambil data user dari LocalStorage (disimpan saat login)
+                const localData = JSON.parse(localStorage.getItem('userData'));
+                
+                // Update UI Sidebar/Navbar
+                document.getElementById('user-name-display').innerText = localData?.name || user.email;
+                document.getElementById('user-photo-display').src = localData?.photo || "https://i.pravatar.cc/300";
+                document.getElementById('user-role-display').innerText = localData?.position || "Staff";
+                
+                const welcomeMsg = document.querySelector('h4.fw-bold');
+                if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${localData?.name.split(' ')[0]}!`;
+
+                // Panggil fungsi untuk mengambil project
+                listenToProjects();
+            } else {
+                // Jika tidak login, lempar ke halaman login
+                window.location.href = "index.html";
             }
-
-            fetchProjects();
         });
 
-        function fetchProjects() {
+        // --- 3. AMBIL DATA PROJECT (Real-time) ---
+        function listenToProjects() {
             const pinnedContainer = document.getElementById('pinnedProjectsContainer');
             const otherContainer = document.getElementById('otherProjectsContainer');
 
-            console.log("Memulai fetch data dari:", API_URL);
+            // Query: Ambil semua project, urutkan berdasarkan waktu buat terbaru
+            const q = query(collection(db, "projects"), orderBy("created_at", "desc"));
 
-            fetch(API_URL)
-            .then(res => {
-                if (!res.ok) throw new Error("Gagal terhubung ke Google Script (" + res.status + ")");
-                return res.json();
-            })
-            .then(response => {
-                console.log("Data diterima:", response);
-
-                if(response.status === 'success') {
-                    renderProjects(response.data);
-                } else {
-                    console.error('API Backend Error:', response.message);
-                    // Tampilkan pesan error di layar menggantikan spinner
-                    pinnedContainer.innerHTML = `<div class="col-12 text-center text-danger py-5">Error: ${response.message}</div>`;
-                }
-            })
-            .catch(error => {
-                console.error('Fetch Error:', error);
-                // Tampilkan pesan error jika koneksi gagal
-                pinnedContainer.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <div class="text-danger fw-bold">Gagal memuat data project.</div>
-                        <small class="text-muted">Cek koneksi internet atau pastikan URL Script benar.</small>
-                        <br>
-                        <small class="text-muted fst-italic">${error.message}</small>
-                    </div>`;
+            // onSnapshot membuat data terupdate otomatis jika ada perubahan di database
+            onSnapshot(q, (snapshot) => {
+                let projects = [];
+                snapshot.forEach((doc) => {
+                    projects.push({ id: doc.id, ...doc.data() });
+                });
+                renderProjects(projects);
             });
         }
 
-        // Fungsi Helper untuk mematikan loading manual
-        function stopLoading(msg) {
-            const pinnedContainer = document.getElementById('pinnedProjectsContainer');
-            if(pinnedContainer) {
-                pinnedContainer.innerHTML = `<div class="col-12 text-center text-warning py-5">${msg}</div>`;
-            }
-        }
-
-        function truncateText(text, wordLimit) {
-            if (!text) return '';
-            const words = text.split(" ");
-            if (words.length > wordLimit) return words.slice(0, wordLimit).join(" ") + "...";
-            return text;
-        }
-
+        // --- 4. RENDER PROJECT KE HTML ---
         function renderProjects(projects) {
             const pinnedContainer = document.getElementById('pinnedProjectsContainer');
             const otherContainer = document.getElementById('otherProjectsContainer');
             
-            // BERSIHKAN LOADING
             pinnedContainer.innerHTML = '';
             otherContainer.innerHTML = '';
 
-            // Cek jika data kosong
-            if (!projects || projects.length === 0) {
-                pinnedContainer.innerHTML = `
-                    <div class="col-12 text-center py-5 text-muted">
-                        <i class="bi bi-folder-x display-4"></i>
-                        <p class="mt-2">Belum ada project.</p>
+            // Tombol "New Project" (Selalu ada di awal)
+            const newProjectBtn = `
+                <div class="col-md-6 col-lg-3">
+                    <div class="btn-new-project-placeholder" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                        <i class="bi bi-plus-circle-dotted new-proj-icon"></i>
+                        <span class="fw-bold">Create New Project</span>
+                        <small class="text-muted">Start something new</small>
                     </div>
-                    <!-- Tombol Create Tetap Muncul -->
-                    <div class="col-md-6 col-lg-3 mx-auto">
-                        <div class="btn-new-project-placeholder" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                            <i class="bi bi-plus-circle-dotted new-proj-icon"></i>
-                            <span class="fw-bold">Click for New Project</span>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
+                </div>
+            `;
 
-            // Pisahkan Pinned dan Unpinned
-            // Pastikan konversi ke string aman agar tidak error jika undefined
-            const allPinned = projects.filter(p => String(p.pinned).toLowerCase() === 'true');
-            const allHidden = projects.filter(p => String(p.pinned).toLowerCase() !== 'true');
+            // Pisahkan yang di-pin
+            const pinnedList = projects.filter(p => p.pinned === true);
+            const unpinnedList = projects.filter(p => p.pinned !== true);
 
-            const LIMIT_PINNED = 5;
-            const LIMIT_HIDDEN = 8;
-
-            const showPinned = allPinned.slice(0, LIMIT_PINNED);
-            const showHidden = allHidden.slice(0, LIMIT_HIDDEN);
-            
-            const remainingCount = (allPinned.length - showPinned.length) + (allHidden.length - showHidden.length);
-
-            // --- RENDER PINNED ---
-            if (showPinned.length > 0) {
-                // Kartu Pertama (Besar)
-                const main = showPinned[0];
-                const htmlMain = `
-                    <div class="col-lg-6 col-12">
-                        <a href="project/project.html?id=${main.id}" class="text-decoration-none">
-                            <div class="project-card priority">
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                        <span class="badge bg-white bg-opacity-25 text-white">${main.department || 'General'}</span>
-                                        <i class="bi bi-pin-angle-fill text-white"></i>
-                                    </div>
-                                    <h3 class="fw-bold mb-2 text-white">${main.name}</h3>
-                                    <p class="text-white-50 mb-0">${truncateText(main.desc, 5)}</p>
+            // Render Pinned
+            pinnedList.forEach((p, index) => {
+                const isFirst = index === 0;
+                const colClass = isFirst ? 'col-lg-6 col-12' : 'col-md-6 col-lg-3';
+                const cardClass = isFirst ? 'project-card priority' : 'project-card';
+                
+                const html = `
+                    <div class="${colClass}">
+                        <a href="project.html?id=${p.id}" class="text-decoration-none">
+                            <div class="${cardClass}">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span class="badge ${isFirst ? 'bg-white bg-opacity-25 text-white' : 'bg-light text-dark border'}">${p.department || 'General'}</span>
+                                    <i class="bi bi-pin-angle-fill ${isFirst ? 'text-white' : 'text-primary'}"></i>
                                 </div>
+                                <h5 class="fw-bold ${isFirst ? 'text-white' : 'text-dark'}">${p.name}</h5>
+                                <p class="${isFirst ? 'text-white-50' : 'text-muted'} small mb-0">${p.description.substring(0, 50)}...</p>
                                 <div class="mt-4">
-                                    <div class="d-flex justify-content-between text-white-50 small mb-1">
-                                        <span>Progress</span><span class="text-white">${main.progress}%</span>
-                                    </div>
-                                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.2);">
-                                        <div class="progress-bar" style="width: ${main.progress}%; background-color: var(--dlg-yellow-end);"></div>
+                                    <div class="progress" style="height: 4px; background: rgba(0,0,0,0.1);">
+                                        <div class="progress-bar bg-success" style="width: 0%"></div>
                                     </div>
                                 </div>
                             </div>
                         </a>
                     </div>
                 `;
-                pinnedContainer.insertAdjacentHTML('beforeend', htmlMain);
+                pinnedContainer.insertAdjacentHTML('beforeend', html);
+            });
 
-                // Kartu Pinned Sisanya
-                for (let i = 1; i < showPinned.length; i++) {
-                    const p = showPinned[i];
-                    const htmlSec = `
-                        <div class="col-md-6 col-lg-3">
-                            <a href="project/project.html?id=${p.id}" class="text-decoration-none">
-                                <div class="project-card">
-                                    <span class="badge bg-light text-dark border w-auto align-self-start mb-3">${p.department || 'General'}</span>
-                                    <h6 class="fw-bold text-dark">${p.name}</h6>
-                                    <div class="mt-auto text-muted small">
-                                        <i class="bi bi-list-check"></i> ${p.completedTasks}/${p.totalTasks} Tasks
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    `;
-                    pinnedContainer.insertAdjacentHTML('beforeend', htmlSec);
-                }
-            }
+            // Masukkan Tombol Tambah setelah daftar Pinned
+            pinnedContainer.insertAdjacentHTML('beforeend', newProjectBtn);
 
-            // --- TOMBOL NEW PROJECT (Selalu ada di Pinned Container) ---
-            const htmlNewBtn = `
-                <div class="col-md-6 col-lg-3">
-                    <div class="btn-new-project-placeholder" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                        <i class="bi bi-plus-circle-dotted new-proj-icon"></i>
-                        <span class="fw-bold">Click for New Project</span>
-                        <small class="text-muted">Start something new</small>
-                    </div>
-                </div>
-            `;
-            pinnedContainer.insertAdjacentHTML('beforeend', htmlNewBtn);
-
-            // --- RENDER HIDDEN ---
-            if (showHidden.length > 0) {
-                showHidden.forEach(p => {
-                    const htmlOther = `
-                        <div class="col-md-6 col-lg-3">
-                            <a href="project/project.html?id=${p.id}" class="text-decoration-none">
-                                <div class="project-card">
-                                    <span class="badge bg-light text-dark border w-auto align-self-start mb-3">${p.department || 'General'}</span>
-                                    <h6 class="fw-bold text-dark">${p.name}</h6>
-                                    <div class="mt-auto text-muted small">
-                                        <i class="bi bi-check2-circle"></i> ${p.completedTasks}/${p.totalTasks} Done
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    `;
-                    otherContainer.insertAdjacentHTML('beforeend', htmlOther);
-                });
-            }
-
-            if (remainingCount > 0) {
-                const htmlViewAll = `
-                    <div class="col-12 text-center mt-4">
-                        <a href="#" class="btn btn-outline-secondary rounded-pill px-4">
-                            View All Projects (+${remainingCount} more)
+            // Render Others (Hidden)
+            unpinnedList.forEach(p => {
+                const html = `
+                    <div class="col-md-6 col-lg-3">
+                        <a href="project.html?id=${p.id}" class="text-decoration-none">
+                            <div class="project-card">
+                                <span class="badge bg-light text-dark border mb-2">${p.department || 'General'}</span>
+                                <h6 class="fw-bold text-dark mb-1">${p.name}</h6>
+                                <small class="text-muted">No activities yet</small>
+                            </div>
                         </a>
                     </div>
                 `;
-                otherContainer.insertAdjacentHTML('beforeend', htmlViewAll);
-            } else if (showHidden.length === 0) {
-                otherContainer.innerHTML = '<p class="text-muted text-center w-100">No other projects.</p>';
-            }
+                otherContainer.insertAdjacentHTML('beforeend', html);
+            });
         }
-        
-        // --- FUNGSI CREATE PROJECT (Sama seperti sebelumnya) ---
-        function saveProject() {
+
+        // --- 5. INPUT PROJECT BARU KE FIRESTORE ---
+        window.saveProject = async () => {
             const name = document.getElementById('inputProjectName').value;
-            const descEditor = document.getElementById('inputProjectDesc');
-            const desc = descEditor.innerText;
-            const owner = document.getElementById('inputOwnerId').value;
-            const submitBtn = document.querySelector('#createProjectForm .btn-dlg-blue');
+            const desc = document.getElementById('inputProjectDesc').innerText;
+            const saveBtn = document.querySelector('#createProjectForm .btn-dlg-blue');
 
-            if(!name) { alert("Project Name cannot be empty!"); return; }
+            if (!name) return alert("Please enter project name!");
 
-            const originalText = submitBtn.innerText;
-            submitBtn.innerText = "Saving...";
-            submitBtn.disabled = true;
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
 
-            fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'createProject',
-                    projectName: name,
+            try {
+                await addDoc(collection(db, "projects"), {
+                    name: name,
                     description: desc,
-                    ownerId: owner,
-                    department: "General"
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    document.getElementById('inputProjectName').value = "";
-                    descEditor.innerText = "";
-                    const modalEl = document.getElementById('newProjectModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    modal.hide();
-                    fetchProjects(); // Reload data
-                } else {
-                    alert("Error: " + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Terjadi kesalahan koneksi.");
-            })
-            .finally(() => {
-                submitBtn.innerText = originalText;
-                submitBtn.disabled = false;
-            });
-        }
+                    owner_id: currentUser.uid,
+                    pinned: true, // Otomatis pin project baru
+                    status: "active",
+                    department: "General",
+                    members: [currentUser.uid],
+                    created_at: serverTimestamp()
+                });
 
-        // Toggle Mobile Sidebar
-        function toggleSidebar() {
-            document.getElementById('sidebarNav').classList.toggle('show');
-        }
+                // Reset & Close Modal
+                document.getElementById('inputProjectName').value = "";
+                document.getElementById('inputProjectDesc').innerText = "";
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newProjectModal'));
+                modal.hide();
 
-        // Generate Online Users (Code-28 Logic)
-        const onlineUsers = [
-            { name: "Sarah", img: "https://i.pravatar.cc/150?img=1", tasks: 0 },
-            { name: "Dimas", img: "https://i.pravatar.cc/150?img=3", tasks: 1 },
-            { name: "Budi", img: "https://i.pravatar.cc/150?img=11", tasks: 2 },
-            { name: "Putri", img: "https://i.pravatar.cc/150?img=5", tasks: 3 },
-            { name: "Andi", img: "https://i.pravatar.cc/150?img=8", tasks: 4 },
-            { name: "Citra", img: "https://i.pravatar.cc/150?img=9", tasks: 2 },
-            { name: "Eko", img: "https://i.pravatar.cc/150?img=13", tasks: 1 },
-            { name: "Fani", img: "https://i.pravatar.cc/150?img=20", tasks: 5 },
-        ];
-
-        const container = document.getElementById('onlineUsersContainer');
-        const colorBlue = '#0B2B6A';
-        const colorGap = 'transparent';
-
-        function getConicGradient(tasks) {
-            if (tasks === 0) return `conic-gradient(#e2e8f0 0% 100%)`;
-            if (tasks === 1) return `conic-gradient(${colorBlue} 0% 100%)`;
-            
-            let gradientStr = 'conic-gradient(';
-            let sectionDeg = 360 / tasks;
-            let gapDeg = 6;
-            let fillDeg = sectionDeg - gapDeg;
-
-            for (let i = 0; i < tasks; i++) {
-                let start = i * sectionDeg;
-                let endFill = start + fillDeg;
-                let endGap = (i + 1) * sectionDeg;
-                gradientStr += `${colorBlue} ${start}deg ${endFill}deg, ${colorGap} ${endFill}deg ${endGap}deg`;
-                if (i < tasks - 1) gradientStr += ', ';
+            } catch (error) {
+                console.error("Error adding project: ", error);
+                alert("Failed to save project.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Save changes";
             }
-            gradientStr += ')';
-            return gradientStr;
-        }
+        };
 
-        document.addEventListener('DOMContentLoaded', function() {
-            onlineUsers.forEach(user => {
-                const gradientStyle = getConicGradient(user.tasks);
-                const html = `
-                    <div class="avatar-wrapper" 
-                         data-bs-toggle="popover" data-bs-trigger="focus" 
-                         title="${user.name}" data-bs-content="Completed ${user.tasks} tasks today.">
-                        <div class="avatar-ring" style="background: ${gradientStyle};"></div>
-                        <div class="avatar-mask">
-                            <img src="${user.img}" alt="${user.name}" class="avatar-img">
-                        </div>
-                        <div class="online-status-dot"></div>
-                    </div>
-                `;
-                container.innerHTML += html;
-            });
-            // Initialize Popovers
-            const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
-            const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
-        });
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // 1. Ambil data dari localStorage
-            const data = localStorage.getItem('userData');
-            
-            if (!data) {
-                // Jika tidak ada data login, tendang balik ke login page
-                window.location.href = "index.html";
-                return;
-            }
-
-            const user = JSON.parse(data);
-
-            // 2. Fungsi untuk konversi link Google Drive ke Direct Image Link
-            function getDirectLink(url) {
-                if (!url) return "https://i.pravatar.cc/300";
-                if (url.includes('drive.google.com')) {
-                    let id = "";
-                    if (url.includes('id=')) {
-                        id = url.split('id=')[1].split('&')[0];
-                    } else {
-                        id = url.split('/d/')[1].split('/')[0];
-                    }
-                    return `https://lh3.googleusercontent.com/u/0/d/${id}`;
-                }
-                return url;
-            }
-
-            // 3. Update Tampilan Navbar
-            document.getElementById('user-name-display').innerText = user.name;
-            document.getElementById('user-photo-display').src = getDirectLink(user.photo);
-            // Posisi bisa disesuaikan jika ada di spreadsheet
-            document.getElementById('user-role-display').innerText = "Dialogika Member";
-            
-            // Update juga pesan selamat datang jika perlu
-            const welcomeMsg = document.querySelector('h4.fw-bold');
-            if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${user.name.split(' ')[0]}!`;
-        });
-
-        // Fungsi Logout
-        function logout() {
+        // --- 6. LOGOUT ---
+        window.logout = async () => {
+            await signOut(auth);
             localStorage.removeItem('userData');
             window.location.href = "index.html";
-        }
+        };
+
+        // UI Helper: Sidebar Toggle
+        window.toggleSidebar = () => {
+            document.getElementById('sidebarNav').classList.toggle('show');
+        };
+
     </script>
 </body>
 </html>
