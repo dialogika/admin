@@ -317,11 +317,19 @@
         }
 
         function listenToTasks() {
-            const q = query(collection(db, "tasks"), where("project_id", "==", projectId), orderBy("position", "asc"));
+            const q = query(collection(db, "tasks"), where("project_id", "==", projectId));
             onSnapshot(q, (snapshot) => {
                 allTasks = [];
                 snapshot.forEach(docSnap => allTasks.push({ id: docSnap.id, ...docSnap.data() }));
+                allTasks.sort((a, b) => {
+                    const pa = typeof a.position === "number" ? a.position : 0;
+                    const pb = typeof b.position === "number" ? b.position : 0;
+                    return pa - pb;
+                });
                 renderUI();
+            }, (error) => {
+                console.error("Failed to listen tasks", error);
+                alert("Gagal mengambil data tasks: " + error.message);
             });
         }
 
