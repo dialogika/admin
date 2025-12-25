@@ -372,8 +372,12 @@
                             </div>
                         </div>
 
-                        <!-- Assigned To (Sementara hardcode ID owner karena belum ada sistem login) -->
                         <input type="hidden" id="inputOwnerId" value="USER-001">
+
+                        <div class="mb-4 form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="inputProjectPinned" checked>
+                            <label class="form-check-label" for="inputProjectPinned">Pin this project</label>
+                        </div>
 
                         <!-- Footer Buttons -->
                         <div class="d-flex gap-3 pt-3 border-top">
@@ -473,9 +477,8 @@
                 </div>
             `;
 
-            // Pisahkan yang di-pin
-            const pinnedList = projects.filter(p => p.pinned === true);
-            const unpinnedList = projects.filter(p => p.pinned !== true);
+            const pinnedList = projects.filter(p => (p.is_pinned === true) || (p.pinned === true));
+            const unpinnedList = projects.filter(p => !(p.is_pinned === true || p.pinned === true));
 
             // Render Pinned
             pinnedList.forEach((p, index) => {
@@ -529,6 +532,8 @@
         window.saveProject = async () => {
             const name = document.getElementById('inputProjectName').value;
             const desc = document.getElementById('inputProjectDesc').innerText;
+            const pinnedInput = document.getElementById('inputProjectPinned');
+            const isPinned = pinnedInput ? pinnedInput.checked : false;
             const saveBtn = document.querySelector('#createProjectForm .btn-dlg-blue');
 
             if (!name) return alert("Please enter project name!");
@@ -541,7 +546,8 @@
                     name: name,
                     description: desc,
                     owner_id: currentUser.uid,
-                    pinned: true, // Otomatis pin project baru
+                    is_pinned: isPinned,
+                    pinned: isPinned,
                     status: "active",
                     department: "General",
                     members: [currentUser.uid],

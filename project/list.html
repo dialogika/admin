@@ -2456,6 +2456,211 @@ async function postComment() {
             window.location.href = "index.html";
         }
     </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import {
+            getFirestore, doc, collection, addDoc, updateDoc,
+            query, where, orderBy, onSnapshot, serverTimestamp, getDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDyzzEYbJkkl-N8snrQf14qvj8De4YliV0",
+            authDomain: "pre-dialogika.firebaseapp.com",
+            projectId: "pre-dialogika",
+            storageBucket: "pre-dialogika.firebasestorage.app",
+            messagingSenderId: "343771410480",
+            appId: "1:343771410480:web:32881c9868522090237df5",
+            measurementId: "G-SXN811P3N0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const firebaseProjectId = urlParams.get('id');
+        let currentUser = null;
+        let allLists = [];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && firebaseProjectId) {
+                currentUser = user;
+                setupProfileUI();
+                loadProjectInfo();
+                listenToData();
+            } else {
+                window.location.href = "../index.html";
+            }
+        });
+
+        function setupProfileUI() {
+            const localData = JSON.parse(localStorage.getItem('userData'));
+            const nameEl = document.getElementById('user-name-display');
+            const photoEl = document.getElementById('user-photo-display');
+
+            const name = localData?.name || "User";
+            const photo = localData?.photo || "https://i.pravatar.cc/300";
+
+            if (nameEl) nameEl.innerText = name;
+            if (photoEl) photoEl.src = photo;
+        }
+
+        async function loadProjectInfo() {
+            const snap = await getDoc(doc(db, "projects", firebaseProjectId));
+            if (snap.exists()) {
+                const data = snap.data();
+                const nameEl = document.getElementById('projectNameHeader');
+                const badgeEl = document.getElementById('projectBadge');
+                if (nameEl) nameEl.innerText = data.name || "Untitled Project";
+                if (badgeEl) badgeEl.innerText = data.department || "Project";
+            }
+        }
+
+        function listenToData() {
+            const qLists = query(
+                collection(db, "projects", firebaseProjectId, "lists"),
+                orderBy("position", "asc")
+            );
+
+            onSnapshot(qLists, (snapshot) => {
+                allLists = [];
+                snapshot.forEach(d => allLists.push({ id: d.id, ...d.data() }));
+
+                const qTasks = query(
+                    collection(db, "tasks"),
+                    where("project_id", "==", firebaseProjectId)
+                );
+
+                onSnapshot(qTasks, (taskSnap) => {
+                    const tasks = [];
+                    taskSnap.forEach(tDoc => tasks.push({ id: tDoc.id, ...tDoc.data() }));
+
+                    allLists.forEach(list => {
+                        list.tasks = tasks.filter(t => t.list_id === list.id);
+                    });
+
+                    renderListsUI(allLists);
+                    const loadingEl = document.getElementById('loadingState');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                });
+            });
+        }
+
+        function renderListsUI(lists) {
+            const container = document.getElementById('listsContainer');
+            const emptyEl = document.getElementById('emptyState');
+            if (!container) return;
+
+            container.innerHTML = '';
+            if (lists.length === 0) {
+                if (emptyEl) emptyEl.style.display = 'block';
+                return;
+            }
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            lists.forEach(list => {
+                const tasksHtml = (list.tasks || []).map(t => `
+                    <div class="todo-row ${t.status === 'DONE' ? 'task-row-done' : ''}">
+                        <i class="bi bi-list drag-handle-task"></i>
+                        <input type="checkbox" class="task-checkbox me-2" ${t.status === 'DONE' ? 'checked' : ''}
+                               onclick="toggleTaskStatus('${t.id}', '${t.status || ''}')">
+                        <div class="flex-grow-1">
+                            <span class="task-text-content">${t.title}</span>
+                        </div>
+                        <span class="badge bg-light text-dark border small">${t.status || 'OPEN'}</span>
+                    </div>
+                `).join('');
+
+                const html = `
+                    <div class="mb-5 bg-white p-4 rounded-4 border shadow-sm">
+                        <h2 class="h4 fw-bold mb-3">${list.name}</h2>
+                        <div class="todo-list-items">${tasksHtml}</div>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="showTaskForm('${list.id}')">
+                                <i class="bi bi-plus"></i> Add a to-do
+                            </button>
+                            <div id="form-add-${list.id}" class="task-create-panel" style="display:none">
+                                <input type="text" id="task-title-${list.id}" class="task-title-large" placeholder="What needs to be done?">
+                                <div class="d-flex gap-2 mt-3">
+                                    <button class="btn btn-dlg-blue rounded-pill px-4" onclick="createNewTask('${list.id}')">Add to-do</button>
+                                    <button class="btn btn-light border rounded-pill px-4" onclick="hideTaskForm('${list.id}')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        window.saveNewList = async () => {
+            const nameInput = document.getElementById('inputListName');
+            if (!nameInput) return;
+
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            await addDoc(collection(db, "projects", firebaseProjectId, "lists"), {
+                name: name,
+                position: allLists.length,
+                created_at: serverTimestamp()
+            });
+
+            nameInput.value = '';
+            window.toggleNewListForm();
+        };
+
+        window.createNewTask = async (listId) => {
+            const titleInput = document.getElementById(`task-title-${listId}`);
+            if (!titleInput) return;
+
+            const title = titleInput.value.trim();
+            if (!title) return;
+
+            await addDoc(collection(db, "tasks"), {
+                project_id: firebaseProjectId,
+                list_id: listId,
+                title: title,
+                status: "OPEN",
+                created_by: currentUser.uid,
+                created_at: serverTimestamp()
+            });
+
+            titleInput.value = '';
+            window.hideTaskForm(listId);
+        };
+
+        window.toggleTaskStatus = async (taskId, currentStatus) => {
+            const newStatus = currentStatus === 'DONE' ? 'OPEN' : 'DONE';
+            await updateDoc(doc(db, "tasks", taskId), {
+                status: newStatus
+            });
+        };
+
+        window.toggleNewListForm = () => {
+            const form = document.getElementById('newListForm');
+            if (!form) return;
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        };
+
+        window.showTaskForm = (id) => {
+            const panel = document.getElementById(`form-add-${id}`);
+            if (panel) panel.style.display = 'block';
+        };
+
+        window.hideTaskForm = (id) => {
+            const panel = document.getElementById(`form-add-${id}`);
+            if (panel) panel.style.display = 'none';
+        };
+
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebarNav');
+            if (sidebar) sidebar.classList.toggle('show');
+        };
+    </script>
 <!-- MODAL EDIT LIST -->
 <div class="modal fade" id="editListModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
