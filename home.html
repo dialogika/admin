@@ -354,8 +354,12 @@
                         <!-- Name -->
                         <div class="mb-4">
                             <label class="form-label">Name</label>
-                            <!-- Tambahkan ID: inputProjectName -->
                             <input type="text" id="inputProjectName" class="form-control form-control-lg" placeholder="e.g. Website Redesign">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Department</label>
+                            <div id="departmentOptions" class="d-flex flex-wrap gap-2"></div>
                         </div>
 
                         <!-- Description (Rich Editor) -->
@@ -416,6 +420,8 @@
         const db = getFirestore(app);
 
         let currentUser = null;
+        let departments = [];
+        let selectedDepartment = null;
 
         // --- 2. PROTEKSI HALAMAN (Cek Login) ---
         onAuthStateChanged(auth, async (user) => {
@@ -432,13 +438,87 @@
                 const welcomeMsg = document.querySelector('h4.fw-bold');
                 if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${localData?.name.split(' ')[0]}!`;
 
-                // Panggil fungsi untuk mengambil project
+                await loadDepartments();
                 listenToProjects();
             } else {
                 // Jika tidak login, lempar ke halaman login
                 window.location.href = "index.html";
             }
         });
+
+        async function loadDepartments() {
+            const container = document.getElementById('departmentOptions');
+            if (container) {
+                container.innerHTML = '<span class="text-muted small">Loading departments...</span>';
+            }
+            try {
+                const snap = await getDocs(collection(db, "departments"));
+                const items = [];
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    items.push({
+                        id: docSnap.id,
+                        name: d.name || "Untitled",
+                        color: d.color || "#e5e7eb"
+                    });
+                });
+                departments = items;
+                if (!selectedDepartment && departments.length > 0) {
+                    selectedDepartment = departments[0];
+                }
+                renderDepartmentOptions();
+            } catch (e) {
+                console.error("Failed to load departments", e);
+                if (container) {
+                    container.innerHTML = '<span class="text-danger small">Failed to load departments.</span>';
+                }
+            }
+        }
+
+        function renderDepartmentOptions() {
+            const container = document.getElementById('departmentOptions');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!departments || departments.length === 0) {
+                container.innerHTML = '<span class="text-muted small">No departments available.</span>';
+                selectedDepartment = null;
+                return;
+            }
+            departments.forEach(dept => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-light border rounded-pill d-flex align-items-center gap-2';
+                btn.dataset.deptId = dept.id;
+                btn.innerHTML = `
+                    <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background:${dept.color};"></span>
+                    <span>${dept.name}</span>
+                `;
+                btn.addEventListener('click', () => {
+                    selectedDepartment = dept;
+                    updateDepartmentSelectionUI();
+                });
+                container.appendChild(btn);
+            });
+            updateDepartmentSelectionUI();
+        }
+
+        function updateDepartmentSelectionUI() {
+            const container = document.getElementById('departmentOptions');
+            if (!container) return;
+            const buttons = container.querySelectorAll('button[data-dept-id]');
+            buttons.forEach(btn => {
+                const id = btn.getAttribute('data-dept-id');
+                if (selectedDepartment && id === selectedDepartment.id) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('btn-light');
+                    btn.classList.add('text-white');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-light');
+                    btn.classList.remove('text-white');
+                }
+            });
+        }
 
         // --- 3. AMBIL DATA PROJECT (Real-time) ---
         function listenToProjects() {
@@ -535,6 +615,9 @@
             const pinnedInput = document.getElementById('inputProjectPinned');
             const isPinned = pinnedInput ? pinnedInput.checked : false;
             const saveBtn = document.querySelector('#createProjectForm .btn-dlg-blue');
+            const dept = selectedDepartment;
+            const departmentName = dept ? (dept.name || "General") : "General";
+            const departmentColor = dept ? (dept.color || "") : "";
 
             if (!name) return alert("Please enter project name!");
 
@@ -549,7 +632,8 @@
                     is_pinned: isPinned,
                     pinned: isPinned,
                     status: "active",
-                    department: "General",
+                    department: departmentName,
+                    department_color: departmentColor,
                     members: [currentUser.uid],
                     created_at: serverTimestamp()
                 });
