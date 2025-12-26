@@ -560,14 +560,15 @@
                     <div class="d-flex align-items-center flex-grow-1 gap-4">
                         <div style="max-width:260px; width:100%;">
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-light border-end-0">
+                                <span class="input-group-text bg-light border-end-0" onclick="showGlobalSearchInput()" style="cursor:pointer;">
                                     <i class="bi bi-search text-muted"></i>
                                 </span>
                                 <input type="text"
                                        id="globalTaskSearch"
                                        class="form-control border-start-0"
                                        placeholder="Search tasks..."
-                                       oninput="onGlobalTaskSearchChange(this.value)">
+                                       oninput="onGlobalTaskSearchChange(this.value)"
+                                       style="display:none;">
                             </div>
                         </div>
                         <div class="text-center flex-grow-1">
@@ -716,6 +717,15 @@
             "#ddd6fe", "#e9d5ff", "#f5d0fe", "#fce7f3", "#fee2e2", "#ffedd5", "#d1fae5", "#bae6fd",
             "#e5e7eb", "#d1d5db", "#f9a8d4", "#fda4af", "#fdba74", "#bef264", "#a7f3d0", "#67e8f9"
         ];
+
+        window.showGlobalSearchInput = () => {
+            const input = document.getElementById('globalTaskSearch');
+            if (!input) return;
+            if (input.style.display === 'none') {
+                input.style.display = 'block';
+                input.focus();
+            }
+        };
 
         window.onGlobalTaskSearchChange = (value) => {
             renderUI();
