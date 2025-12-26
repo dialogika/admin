@@ -330,7 +330,7 @@
                     
                     <!-- 1. URGENT (ex Message Board) -->
                     <div class="col-lg-4 col-md-6">
-                        <a href="message.html" class="text-decoration-none"> <!-- Bungkus dengan Link -->
+                        <a href="message.html" class="text-decoration-none" id="linkToMessage">
                             <div class="tool-card">
                                 <div class="tool-header"><h5 class="tool-title">Message</h5></div>
                                 <div class="tool-body">
@@ -526,6 +526,8 @@
 
             // D. Link Tool Card (Sesuaikan ID agar tool lain tahu project mana yang dibuka)
             document.getElementById('linkToList').href = `list.html?id=${project.id}`;
+            const msgLink = document.getElementById('linkToMessage');
+            if (msgLink) msgLink.href = `message.html?projectId=${project.id}`;
             
             // E. Ambil "Pending Tasks" dari koleksi tasks (Optional/Contoh)
             loadRecentTasks(project.id);

@@ -718,7 +718,7 @@
 
                     <i class="bi bi-chevron-right ph-sep"></i>
 
-                    <a href="#" id="breadAllListLink" class="ph-crumb-link">Lists</a>
+                    <a href="#" id="breadAllListLink" class="ph-crumb-link">Messages</a>
                 </div>
 
                 <div class="position-absolute end-0 me-3">
@@ -727,10 +727,48 @@
             </div>
             
             <div class="main-list-card">
-                <div class="mb-5 text-center">
+                <div class="mb-5">
+                    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                        <button type="button" class="btn btn-dlg-blue rounded-pill px-4 btn-sm fw-bold" id="craftMessageButton" onclick="goToCraftMessage()">
+                            Craft Message
+                        </button>
+                        <div>
+                            <h1 class="fw-bold display-5 mb-0 text-center flex-grow-1" id="listTitleDisplay" style="color:#111; cursor:text;">Loading List...</h1>
+                            <p class="text-muted mb-1" style="font-size:0.8rem;margin-top: 7px;">Annoucement, Updates, and All Things Matter.</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-light border rounded-pill px-3 py-1 d-flex align-items-center gap-2 btn-sm" type="button" id="messageCategoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span id="messageCategoryLabel" class="small fw-semibold text-dark">All messages</span>
+                                    <span class="d-inline-flex flex-column" style="line-height:0;">
+                                        <i class="bi bi-caret-up-fill" style="font-size:0.55rem;"></i>
+                                        <i class="bi bi-caret-down-fill" style="font-size:0.55rem; margin-top:-2px;"></i>
+                                    </span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="messageCategoryDropdown">
+                                    <li><button class="dropdown-item small" type="button" data-category="all">All messages</button></li>
+                                    <li><button class="dropdown-item small" type="button" data-category="urgent">Urgent</button></li>
+                                    <li><button class="dropdown-item small" type="button" data-category="updates">Updates</button></li>
+                                    <li><button class="dropdown-item small" type="button" data-category="question">Question</button></li>
+                                </ul>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center"
+                                        type="button"
+                                        id="messageMoreDropdown"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        style="width:34px; height:34px; padding:0;">
+                                    <i class="bi bi-three-dots text-dark"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="messageMoreDropdown">
+                                    <li><button class="dropdown-item small" type="button" id="sortMessagesMenuItem">Sort messages by</button></li>
+                                    <li><button class="dropdown-item small" type="button" id="editCategoriesMenuItem">Edit category</button></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                     <span class="badge text-bg-success mb-2" id="listAllDoneBadge" style="display:none">All Done!</span>
-                    <h1 class="fw-bold display-5 mb-3" id="listTitleDisplay" style="color:#111; cursor:text;">Loading List...</h1>
-                    
                     <div id="listDescWrapper" class="text-muted mx-auto" style="max-width: 700px; line-height: 1.6; cursor:text;">
                         <span id="descShort"></span>
                         <span id="descFull" style="display:none;"></span>
@@ -757,46 +795,10 @@
                     </div>
                 </div>
 
+                <div id="commentsContainer" class="mb-4 d-flex flex-column"></div>
+
                 <div class="todo-list-wrapper d-none"></div>
 
-                <div class="mt-5 pt-5 border-top">
-                    <div id="commentsContainer" class="mb-4 d-flex flex-column gap-3"></div>
-                    <div class="d-flex gap-3">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:40px; height:40px;">
-                            <img id="commentAvatar" src="https://i.pravatar.cc/150" alt="Avatar" style="width:100%; height:100%; object-fit:cover;">
-                        </div>
-                        <div class="w-100">
-                            <div id="replyContext" class="small text-muted mb-1" style="display:none;"></div>
-                            <div class="rich-editor mb-2" style="position:relative;">
-                                <div class="rich-toolbar">
-                                    <button type="button" class="rich-btn" onclick="applyFormat('commentInput','bold')"><i class="bi bi-type-bold"></i></button>
-                                    <button type="button" class="rich-btn" onclick="applyFormat('commentInput','italic')"><i class="bi bi-type-italic"></i></button>
-                                    <button type="button" class="rich-btn" onclick="applyFormat('commentInput','insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
-                                    <button type="button" class="rich-btn" onclick="applyFormat('commentInput','insertOrderedList')"><i class="bi bi-list-ol"></i></button>
-                                    <button type="button" class="rich-btn" onclick="applyBlockquote('commentInput')"><i class="bi bi-chat-right-quote"></i></button>
-                                    <button type="button" class="rich-btn ms-auto" onclick="triggerCommentFileInput()"><i class="bi bi-paperclip"></i></button>
-                                </div>
-                                <div id="commentInput" class="rich-editor-body" contenteditable="true" data-placeholder="Add a comment here..."></div>
-                                <div id="mentionDropdown" class="bg-white border rounded shadow-sm small" style="position:absolute; z-index:1050; display:none; max-height:200px; overflow-y:auto; min-width:180px;"></div>
-                            </div>
-                            <div id="commentAttachmentPreview" class="small text-muted mb-2"></div>
-                            <input type="file" id="comment-file-input" multiple style="display:none">
-                            <button class="btn btn-dlg-yellow rounded-pill px-4 btn-sm fw-bold" style="margin-top: 7px;" onclick="postComment('list')">Post comment</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-5 pt-4 border-top">
-                    <h6 class="fw-bold text-dark">Subscribers</h6>
-                    <p class="small text-muted mb-3">People listed below will be notified when comments are posted.</p>
-                    
-                    <div class="d-flex align-items-center gap-2 flex-wrap" id="subsContainer"></div>
-                    
-                    <div class="mt-3 p-2 bg-light rounded-pill d-inline-block border">
-                        <small id="subscriptionStatusText" class="text-dark fw-bold px-2">You’re subscribed</small>
-                        <button id="subscriptionToggleButton" class="btn btn-sm btn-link text-muted text-decoration-none p-0" style="font-size:0.8rem;" onclick="toggleSubscription()">Unsubscribe me</button>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
@@ -918,8 +920,8 @@
         ];
 
         const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('projectId') || urlParams.get('id');
         const listId = urlParams.get('listId');
-        const projectId = urlParams.get('projectId');
 
         const tasksWrapper = document.querySelector('.todo-list-wrapper');
         const titleEl = document.getElementById('listTitleDisplay');
@@ -951,6 +953,28 @@
         let mentionActive = false;
         let mentionQuery = "";
         let mentionDropdownElement = null;
+        let currentMessageCategory = "all";
+
+        function getCommentsCollectionRef() {
+            if (!projectId) return null;
+            if (listId) {
+                return collection(db, "projects", projectId, "lists", listId, "comments");
+            }
+            return collection(db, "projects", projectId, "messages");
+        }
+
+        function getSubscribersCollectionRef() {
+            if (!projectId) return null;
+            if (listId) {
+                return collection(db, "projects", projectId, "lists", listId, "subscribers");
+            }
+            return collection(db, "projects", projectId, "message_subscribers");
+        }
+
+        function getCommentAttachmentPath(fileName) {
+            const base = listId || "project";
+            return `comments/${projectId}/${base}/${Date.now()}_${fileName}`;
+        }
 
         function getDirectPhotoUrl(url, uid) {
             if (!url) return `https://i.pravatar.cc/150?u=${uid || "user"}`;
@@ -967,8 +991,8 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            if (!listId || !projectId) {
-                alert("Error: Parameter URL tidak lengkap.");
+            if (!projectId) {
+                alert("Error: Project ID tidak ditemukan.");
                 return;
             }
 
@@ -1012,10 +1036,10 @@
                 });
             }
 
-            if (titleEl) {
+            if (titleEl && listId) {
                 titleEl.addEventListener('click', startEditListTitle);
             }
-            if (listDescWrapper) {
+            if (listDescWrapper && listId) {
                 listDescWrapper.addEventListener('click', startEditListDescription);
             }
 
@@ -1028,15 +1052,65 @@
             } catch (e) {}
 
             loadProjectHeader();
-            loadListDetail();
+            if (listId) {
+                loadListDetail();
+            } else if (titleEl) {
+                titleEl.innerText = "Messages";
+            }
             listenComments();
             listenSubscribers();
+
+            initMessageHeaderControls();
 
             onAuthStateChanged(auth, (user) => {
                 currentUser = user || null;
                 updateSubscriptionUI();
             });
         });
+
+        function initMessageHeaderControls() {
+            const categoryItems = document.querySelectorAll('.dropdown-menu [data-category]');
+            const categoryLabel = document.getElementById('messageCategoryLabel');
+            categoryItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const cat = item.getAttribute('data-category') || 'all';
+                    const text = item.innerText || 'All messages';
+                    currentMessageCategory = cat;
+                    if (categoryLabel) categoryLabel.innerText = text;
+                    renderComments(currentComments);
+                });
+            });
+            const sortItem = document.getElementById('sortMessagesMenuItem');
+            const editItem = document.getElementById('editCategoriesMenuItem');
+            if (sortItem) {
+                sortItem.addEventListener('click', () => {
+                    console.log('Sort messages by clicked');
+                });
+            }
+            if (editItem) {
+                editItem.addEventListener('click', () => {
+                    console.log('Edit category clicked');
+                });
+            }
+        }
+
+        window.goToCraftMessage = function () {
+            if (!projectId) {
+                alert("Project ID tidak ditemukan.");
+                return;
+            }
+            let url = `message-craft.html?projectId=${encodeURIComponent(projectId)}`;
+            if (listId) {
+                url += `&listId=${encodeURIComponent(listId)}`;
+            }
+            window.location.href = url;
+        };
+
+        window.openMessageDetail = function (messageId) {
+            if (!messageId || !projectId) return;
+            const url = `message-detail.html?projectId=${encodeURIComponent(projectId)}&messageId=${encodeURIComponent(messageId)}`;
+            window.location.href = url;
+        };
 
         async function loadProjectHeader() {
             try {
@@ -1356,6 +1430,14 @@
             return "";
         }
 
+        function escapeHtml(str) {
+            if (!str) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
         function placeCaretAtEnd(el) {
             if (!el) return;
             const range = document.createRange();
@@ -1496,15 +1578,43 @@
         };
 
         function renderComments(comments) {
+            if (!commentsContainer) return;
             commentsContainer.innerHTML = '';
             if (!comments || comments.length === 0) {
-                commentsContainer.innerHTML = '<p class="text-muted small">No comments yet.</p>';
+                commentsContainer.innerHTML = '<p class="text-muted small">no message/announcement</p>';
                 return;
             }
-            
-            comments.forEach(c => {
+
+            let roots = comments.filter(c => {
+                const parentId = c.parent_comment_id || c.parentCommentId || null;
+                return !parentId;
+            });
+
+            if (currentMessageCategory && currentMessageCategory !== 'all') {
+                const selected = String(currentMessageCategory || '').toLowerCase();
+                roots = roots.filter(c => {
+                    const cat = String(c.category || '').toLowerCase();
+                    return cat === selected;
+                });
+            }
+
+            roots.sort((a, b) => {
+                const ad = normalizeTimestamp(a.created_at || a.createdAt);
+                const bd = normalizeTimestamp(b.created_at || b.createdAt);
+                if (!ad && !bd) return 0;
+                if (!ad) return 1;
+                if (!bd) return -1;
+                return bd.getTime() - ad.getTime();
+            });
+
+            if (roots.length === 0) {
+                commentsContainer.innerHTML = '<p class="text-muted small">no message/announcement</p>';
+                return;
+            }
+
+            roots.forEach(c => {
                 const createdAt = normalizeTimestamp(c.created_at || c.createdAt);
-                const dateStr = createdAt ? createdAt.toLocaleString() : 'Just now';
+                const dateStr = createdAt ? createdAt.toLocaleString() : '';
                 const userId = c.user_id || c.userId || '';
                 const userName = c.user_name || c.userName || userId || 'User';
                 const initialsSource = c.user_initials || userName || userId || '';
@@ -1512,119 +1622,54 @@
                     ? initialsSource.trim().split(' ').map(part => part[0]).join('').substring(0, 2).toUpperCase()
                     : '??';
                 const photo = c.user_photo || "";
-                const attachments = Array.isArray(c.attachments) ? c.attachments : [];
-                const attachmentsHtml = attachments.length
-                    ? `<div class="mt-2 small">${attachments.map(a => `<a href="${a.url}" target="_blank" rel="noopener" class="me-2"><i class="bi bi-paperclip me-1"></i>${a.name}</a>`).join('')}</div>`
-                    : '';
                 const avatar = photo
-                    ? `<div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:40px; height:40px;">
+                    ? `<div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:36px; height:36px;">
                            <img src="${photo}" alt="${userName}" style="width:100%; height:100%; object-fit:cover;">
                        </div>`
-                    : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:40px; height:40px;">
+                    : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:36px; height:36px;">
                            ${initials}
                        </div>`;
-                const canEdit = canEditComment(c);
-            });
 
-            const commentById = {};
-            comments.forEach(c => {
-                commentById[c.id] = c;
-            });
-
-            const childrenMap = {};
-            comments.forEach(c => {
-                const parentId = c.parent_comment_id || c.parentCommentId || null;
-                if (parentId) {
-                    if (!childrenMap[parentId]) childrenMap[parentId] = [];
-                    childrenMap[parentId].push(c);
+                const plain = getPlainCommentText(c);
+                let title = (c.title || '').trim();
+                if (!title) {
+                    title = plain.split('\n')[0] || '';
                 }
-            });
+                title = title || 'Untitled message';
 
-            const roots = comments.filter(c => {
-                const parentId = c.parent_comment_id || c.parentCommentId || null;
-                if (!parentId) return true;
-                return !commentById[parentId];
-            });
-
-            function renderCommentTree(c, depth) {
-                const createdAt = normalizeTimestamp(c.created_at || c.createdAt);
-                const dateStr = createdAt ? createdAt.toLocaleString() : 'Just now';
-                const userId = c.user_id || c.userId || '';
-                const userName = c.user_name || c.userName || userId || 'User';
-                const initialsSource = c.user_initials || userName || userId || '';
-                const initials = initialsSource
-                    ? initialsSource.trim().split(' ').map(part => part[0]).join('').substring(0, 2).toUpperCase()
-                    : '??';
-                const photo = c.user_photo || "";
-                const attachments = Array.isArray(c.attachments) ? c.attachments : [];
-                const attachmentsHtml = attachments.length
-                    ? `<div class="mt-2 small">${attachments.map(a => `<a href="${a.url}" target="_blank" rel="noopener" class="me-2"><i class="bi bi-paperclip me-1"></i>${a.name}</a>`).join('')}</div>`
-                    : '';
-                const avatar = photo
-                    ? `<div class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:40px; height:40px;">
-                           <img src="${photo}" alt="${userName}" style="width:100%; height:100%; object-fit:cover;">
-                       </div>`
-                    : `<div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:40px; height:40px;">
-                           ${initials}
-                       </div>`;
-                const canEdit = canEditComment(c);
-                const actions = [];
-                actions.push(`
-                    <button class="btn btn-sm btn-outline-primary px-2 py-0 small"
-                            style="border-color:#0B2B6A; color:#0B2B6A;"
-                            onclick="replyToComment('${c.id}')">
-                        Reply
-                    </button>
-                `);
-                if (canEdit) {
-                    actions.push(`
-                        <button class="btn btn-sm btn-outline-primary px-2 py-0 small"
-                                style="border-color:#0B2B6A; color:#0B2B6A;"
-                                onclick="editComment('${c.id}')">
-                            Edit
-                        </button>
-                    `);
-                    actions.push(`
-                        <button class="btn btn-sm btn-outline-danger px-2 py-0 small"
-                                style="border-color:#e7181a; color:#e7181a;"
-                                onclick="deleteComment('${c.id}')">
-                            Delete
-                        </button>
-                    `);
+                let snippet = plain;
+                if (snippet.length > 200) {
+                    snippet = snippet.substring(0, 197) + '...';
                 }
-                const actionsHtml = actions.length
-                    ? `<div class="mt-1 d-flex gap-2">${actions.join('')}</div>`
-                    : '';
-                const parentId = c.parent_comment_id || c.parentCommentId || null;
-                const parent = parentId ? commentById[parentId] : null;
-                const parentName = parent ? (parent.user_name || parent.userName || '') : '';
-                const replyingHtml = parentName
-                    ? `<div class="small text-muted mb-1">Replying to <strong>${parentName}</strong></div>`
-                    : '';
-                const indentClass = depth > 0 ? ' ms-5' : '';
-                const marginClass = depth > 0 ? 'mb-2' : 'mb-3';
+
+                const catKey = String(c.category || '').toLowerCase();
+                let categoryLabel = "";
+                if (catKey === 'urgent') categoryLabel = 'Urgent';
+                else if (catKey === 'updates') categoryLabel = 'Updates';
+                else if (catKey === 'question') categoryLabel = 'Question';
+
+                const metaParts = [];
+                if (userName) metaParts.push(userName);
+                if (dateStr) metaParts.push(dateStr);
+                if (categoryLabel) metaParts.push(categoryLabel);
+                const metaText = metaParts.join(' • ');
+
                 const html = `
-                    <div class="d-flex gap-3 ${marginClass}${indentClass}">
+                    <div class="d-flex align-items-start gap-3 py-3 border-top message-board-row" style="cursor:pointer;" onclick="openMessageDetail('${c.id}')">
                         ${avatar}
-                        <div class="bg-white border rounded p-3 w-100 shadow-sm">
-                            <div class="d-flex justify-content-between mb-1">
-                                <strong class="small text-dark">${userName}</strong>
-                                <small class="text-muted" style="font-size:0.7rem">${dateStr}</small>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                                <div class="fw-semibold" style="font-size:1rem;">${escapeHtml(title)}</div>
+                                <small class="text-muted ms-3">${escapeHtml(dateStr)}</small>
                             </div>
-                            ${replyingHtml}
-                            <div class="text-dark small" id="comment-text-${c.id}">${c.text || ''}</div>
-                            ${attachmentsHtml}
-                            ${actionsHtml}
+                            <div class="small text-muted mb-1">${escapeHtml(metaText)}</div>
+                            <div class="small text-dark" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                ${escapeHtml(snippet)}
+                            </div>
                         </div>
                     </div>
                 `;
                 commentsContainer.insertAdjacentHTML('beforeend', html);
-                const children = childrenMap[c.id] || [];
-                children.forEach(child => renderCommentTree(child, depth + 1));
-            }
-
-            roots.forEach(root => {
-                renderCommentTree(root, 0);
             });
         }
 
@@ -1660,7 +1705,8 @@
 
         function listenComments() {
             try {
-                const ref = collection(db, "projects", projectId, "lists", listId, "comments");
+                const ref = getCommentsCollectionRef();
+                if (!ref) return;
                 const q = query(ref, orderBy("created_at", "asc"));
                 onSnapshot(q, (snapshot) => {
                     const comments = [];
@@ -1677,7 +1723,8 @@
 
         function listenSubscribers() {
             try {
-                const ref = collection(db, "projects", projectId, "lists", listId, "subscribers");
+                const ref = getSubscribersCollectionRef();
+                if (!ref) return;
                 onSnapshot(ref, (snapshot) => {
                     const subs = [];
                     snapshot.forEach(docSnap => subs.push({ id: docSnap.id, ...docSnap.data() }));
@@ -1736,7 +1783,7 @@
                 if (pendingCommentFiles && pendingCommentFiles.length > 0) {
                     for (const file of pendingCommentFiles) {
                         try {
-                            const path = `comments/${projectId}/${listId}/${Date.now()}_${file.name}`;
+                            const path = getCommentAttachmentPath(file.name);
                             const ref = storageRef(storage, path);
                             await uploadBytes(ref, file);
                             const url = await getDownloadURL(ref);
@@ -1751,7 +1798,9 @@
                 const mentionNodes = tempDiv.querySelectorAll('[data-mention-uid]');
                 const mentionedIds = Array.from(mentionNodes).map(node => node.getAttribute('data-mention-uid')).filter(Boolean);
                 const mentionedUnique = Array.from(new Set(mentionedIds));
-                await addDoc(collection(db, "projects", projectId, "lists", listId, "comments"), {
+                const commentsRef = getCommentsCollectionRef();
+                if (!commentsRef) throw new Error("Project ID tidak tersedia untuk menyimpan komentar.");
+                await addDoc(commentsRef, {
                     text: htmlText,
                     text_plain: plainText,
                     attachments: attachments,
@@ -1826,7 +1875,9 @@
             }
             try {
                 const html = trimmed.replace(/\n/g, '<br>');
-                await updateDoc(doc(db, "projects", projectId, "lists", listId, "comments", commentId), {
+                const ref = getCommentsCollectionRef();
+                if (!ref) throw new Error("Project ID tidak tersedia untuk menyimpan komentar.");
+                await updateDoc(doc(ref, commentId), {
                     text: html,
                     text_plain: trimmed,
                     updated_at: serverTimestamp()
@@ -1867,7 +1918,9 @@
                 return;
             }
             try {
-                await deleteDoc(doc(db, "projects", projectId, "lists", listId, "comments", commentId));
+                const ref = getCommentsCollectionRef();
+                if (!ref) throw new Error("Project ID tidak tersedia untuk menghapus komentar.");
+                await deleteDoc(doc(ref, commentId));
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if (modal) modal.hide();
             } catch (e) {
@@ -2521,7 +2574,9 @@
 
             try {
                 if (existing && existing.id) {
-                    await deleteDoc(doc(db, "projects", projectId, "lists", listId, "subscribers", existing.id));
+                    const subsRef = getSubscribersCollectionRef();
+                    if (!subsRef) throw new Error("Project ID tidak tersedia untuk mengubah subscriber.");
+                    await deleteDoc(doc(subsRef, existing.id));
                 } else {
                     const localData = JSON.parse(localStorage.getItem('userData') || 'null');
                     const userName = localData && localData.name ? localData.name : (currentUser.email || 'User');
@@ -2531,7 +2586,9 @@
                     const initials = initialsSource
                         ? initialsSource.trim().split(' ').map(part => part[0]).join('').substring(0, 2).toUpperCase()
                         : 'US';
-                    await addDoc(collection(db, "projects", projectId, "lists", listId, "subscribers"), {
+                    const subsRef = getSubscribersCollectionRef();
+                    if (!subsRef) throw new Error("Project ID tidak tersedia untuk menambah subscriber.");
+                    await addDoc(subsRef, {
                         user_id: uid,
                         user_name: userName,
                         user_initials: initials,
@@ -2551,7 +2608,9 @@
 
             try {
                 if (existing && existing.id) {
-                    await deleteDoc(doc(db, "projects", projectId, "lists", listId, "subscribers", existing.id));
+                    const subsRef = getSubscribersCollectionRef();
+                    if (!subsRef) throw new Error("Project ID tidak tersedia untuk mengubah subscriber.");
+                    await deleteDoc(doc(subsRef, existing.id));
                 } else {
                     const target = projectMembers.find(m => m.uid === uid);
                     const userName = target && target.name ? target.name : 'User';
@@ -2561,7 +2620,9 @@
                     const initials = initialsSource
                         ? initialsSource.trim().split(' ').map(part => part[0]).join('').substring(0, 2).toUpperCase()
                         : 'US';
-                    await addDoc(collection(db, "projects", projectId, "lists", listId, "subscribers"), {
+                    const subsRef = getSubscribersCollectionRef();
+                    if (!subsRef) throw new Error("Project ID tidak tersedia untuk menambah subscriber.");
+                    await addDoc(subsRef, {
                         user_id: uid,
                         user_name: userName,
                         user_initials: initials,
