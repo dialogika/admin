@@ -901,10 +901,6 @@
                     }).join('');
                 }
 
-                if (hasSearchQuery && !tasksHtml) {
-                    return;
-                }
-
                 const rawDesc = (list.description || "").replace(/<[^>]+>/g, " ");
                 const words = rawDesc.trim().split(/\s+/).filter(Boolean);
                 const truncatedDesc = words.length > 8
