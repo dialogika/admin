@@ -196,7 +196,7 @@
         }
         .ph-crumb-container {
             display: flex; align-items: center; gap: 12px;
-            background: #1f2937; padding: 8px 20px;
+            background: linear-gradient(to bottom, #0f61a8 5%, #0b2b6a 100%); padding: 8px 20px;
             border-radius: 50px; font-size: 0.95rem; color: white;
         }
         .ph-crumb-link { text-decoration: none; color: #d1d5db; font-weight: 500; transition: 0.2s; }
@@ -1130,7 +1130,10 @@
                 const data = snap.data();
                 const nameEl = document.getElementById('projectNameHeader');
                 const badgeEl = document.getElementById('projectBadge');
-                if (nameEl) nameEl.innerText = data.name || "Untitled Project";
+                if (nameEl) {
+                    nameEl.innerText = data.name || "Untitled Project";
+                    nameEl.href = `project.html?id=${projectId}`;
+                }
                 if (badgeEl) badgeEl.innerText = data.department || "General";
                 await loadProjectMembers(data.members || []);
                 renderUI();
