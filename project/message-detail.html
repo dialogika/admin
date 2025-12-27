@@ -449,6 +449,7 @@
         let currentComments = [];
         let currentSubscribers = [];
         let projectMembers = [];
+        let membersLoaded = false;
         let manageSubscriberSearchQuery = "";
         let pendingCommentFiles = [];
         let replyTargetCommentId = null;
@@ -540,58 +541,103 @@
                     });
                 }
                 const snap = await getDoc(doc(db, "projects", projectId));
-                if (!snap.exists()) return;
-                const data = snap.data();
-                if (breadProjectLink) breadProjectLink.innerText = data.name || "Untitled Project";
-                if (badgeEl) badgeEl.innerText = data.department || "Project";
-                const members = Array.isArray(data.members) ? data.members : [];
+                let members = [];
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (breadProjectLink) breadProjectLink.innerText = data.name || "Untitled Project";
+                    if (badgeEl) badgeEl.innerText = data.department || "Project";
+                    members = Array.isArray(data.members) ? data.members : [];
+                }
                 await loadProjectMembers(members);
-                renderManageSubscriberList(manageSubscriberSearchQuery);
             } catch (e) {
                 console.error("Failed to load project header", e);
+                await loadProjectMembers([]);
             }
         }
         async function loadProjectMembers(memberUids) {
+            console.log("loadProjectMembers called with:", memberUids);
             projectMembers = [];
+            membersLoaded = false;
+            renderManageSubscriberList(manageSubscriberSearchQuery);
             try {
+                let loadedMembers = [];
+                
+                // 1. Try fetching from provided UIDs
                 if (Array.isArray(memberUids) && memberUids.length > 0) {
+                    console.log("Attempting to load specific members...");
                     const promises = memberUids.map(async (uid) => {
                         try {
                             const snap = await getDoc(doc(db, "users", uid));
                             if (snap.exists()) {
                                 const u = snap.data();
                                 return {
-                                    uid,
-                                    name: u.name || u.email || uid,
+                                    uid: uid,
+                                    name: u.name || u.email || "Unknown",
                                     email: u.email || "",
-                                    photo: getDirectPhotoUrl(u.photo || "", uid)
+                                    photo: getDirectPhotoUrl(u.photo || "", uid),
+                                    role: (u.employment && u.employment.position) || "Member"
                                 };
                             }
-                        } catch (e) {
-                            console.error("Failed to load member", uid, e);
+                        } catch (err) {
+                            console.warn("Error fetching user " + uid, err);
                         }
                         return null;
                     });
                     const results = await Promise.all(promises);
-                    projectMembers = results.filter(Boolean);
-                } else {
+                    loadedMembers = results.filter(Boolean);
+                }
+                
+                // 2. Fallback: If no members loaded (either no UIDs provided or UIDs invalid), fetch ALL users
+                if (loadedMembers.length === 0) {
+                    console.log("No specific members found. Fetching ALL users from 'users' collection...");
                     const snap = await getDocs(collection(db, "users"));
-                    const allUsers = [];
+                    console.log("Fetched users collection snapshot size:", snap.size);
+                    
+                    if (snap.empty) {
+                         console.warn("Users collection is EMPTY!");
+                    }
+
                     snap.forEach(docSnap => {
                         const u = docSnap.data() || {};
-                        const uid = docSnap.id;
-                        allUsers.push({
-                            uid,
-                            name: u.name || u.email || uid,
+                        // Log first few users to ensure mapping is correct
+                        if (loadedMembers.length < 3) console.log("Sample user data:", u); 
+                        
+                        loadedMembers.push({
+                            uid: docSnap.id,
+                            name: u.name || u.email || "Unknown",
                             email: u.email || "",
-                            photo: getDirectPhotoUrl(u.photo || "", uid)
+                            photo: getDirectPhotoUrl(u.photo || "", docSnap.id),
+                            role: (u.employment && u.employment.position) || "Member"
                         });
                     });
-                    projectMembers = allUsers;
                 }
+                
+                projectMembers = loadedMembers;
+                console.log("Final projectMembers count:", projectMembers.length);
+
             } catch (e) {
-                console.error("Failed to load project members", e);
-                projectMembers = [];
+                console.error("Error loading project members:", e);
+                // Attempt one last simple fetch if complex logic failed
+                try {
+                     const snap = await getDocs(collection(db, "users"));
+                     projectMembers = [];
+                     snap.forEach(d => {
+                         const u = d.data();
+                         projectMembers.push({
+                            uid: d.id,
+                            name: u.name || "Unknown",
+                            email: u.email || "",
+                            photo: getDirectPhotoUrl(u.photo || "", d.id),
+                            role: "Member"
+                         });
+                     });
+                     console.log("Emergency fallback fetched users:", projectMembers.length);
+                } catch(err2) {
+                    console.error("Emergency fallback failed:", err2);
+                }
+            } finally {
+                membersLoaded = true;
+                renderManageSubscriberList(manageSubscriberSearchQuery);
             }
         }
         async function loadMessage() {
@@ -921,6 +967,7 @@
                     renderSubscribers(subs);
                     updateSubscriptionUI();
                     updateNotifiedText();
+                    renderManageSubscriberList(manageSubscriberSearchQuery);
                 }, (error) => {
                     console.error("Failed to listen subscribers", error);
                 });
@@ -1309,33 +1356,41 @@
         window.renderManageSubscriberList = function (queryText) {
             if (!manageSubsScroll) return;
             manageSubscriberSearchQuery = (queryText || "").trim().toLowerCase();
-            manageSubsScroll.innerHTML = "";
+            
+            if (!membersLoaded) {
+                manageSubsScroll.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-secondary"></div><div class="small text-muted mt-2">Loading members...</div></div>';
+                return;
+            }
+
             if (!projectMembers || projectMembers.length === 0) {
-                manageSubsScroll.innerHTML = '<p class="text-muted small mb-0">No project members available.</p>';
+                manageSubsScroll.innerHTML = '<p class="text-center text-muted small py-3">No members found.</p>';
                 return;
             }
             const filtered = projectMembers.filter(m => {
-                if (!manageSubscriberSearchQuery) return true;
-                const haystack = `${m.name || ""} ${m.email || ""}`.toLowerCase();
+                const name = m.name || "";
+                const email = m.email || "";
+                const haystack = `${name} ${email}`.toLowerCase();
                 return haystack.includes(manageSubscriberSearchQuery);
             });
             if (filtered.length === 0) {
-                manageSubsScroll.innerHTML = '<p class="text-muted small mb-0">No people match your search.</p>';
+                manageSubsScroll.innerHTML = '<p class="text-center text-muted small py-3">No members found.</p>';
                 return;
             }
-            filtered.forEach(m => {
+            manageSubsScroll.innerHTML = filtered.map(m => {
                 const isSubscribed = currentSubscribers.some(s => (s.user_id || s.userId) === m.uid);
-                const btnClass = isSubscribed ? "btn-outline-danger" : "btn-outline-primary";
-                const btnText = isSubscribed ? "Unsubscribe" : "Subscribe";
-                const rowHtml = `
-                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-circle overflow-hidden" style="width:32px; height:32px;">
-                                <img src="${m.photo}" alt="${m.name}" style="width:100%; height:100%; object-fit:cover;">
-                            </div>
+                const btnClass = isSubscribed ? "btn-outline-danger" : "btn-dlg-blue";
+                const btnText = isSubscribed ? "Remove" : "Add";
+                const safeName = m.name || "Unknown";
+                const safeRole = m.role || "Member";
+                const photo = m.photo || "";
+                const fallback = encodeURIComponent(safeName);
+                return `
+                    <div class="d-flex align-items-center justify-content-between py-3 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="${photo}" class="rounded-circle border" style="width:38px; height:38px; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${fallback}'">
                             <div>
-                                <div class="small fw-semibold">${m.name}</div>
-                                <div class="small text-muted">${m.email || ""}</div>
+                                <div class="fw-bold" style="font-size:0.9rem;">${safeName}</div>
+                                <div class="text-muted" style="font-size:0.75rem;">${safeRole}</div>
                             </div>
                         </div>
                         <button class="btn btn-sm ${btnClass} rounded-pill px-3" type="button" onclick="toggleSubscriberForUser('${m.uid}')">
@@ -1343,8 +1398,7 @@
                         </button>
                     </div>
                 `;
-                manageSubsScroll.insertAdjacentHTML("beforeend", rowHtml);
-            });
+            }).join("");
         };
         window.toggleSubscription = async function () {
             if (!currentUser) {
@@ -1530,6 +1584,13 @@
                 onAuthStateChanged(auth, (user) => {
                     currentUser = user || null;
                     updateSubscriptionUI();
+                    
+                    // Jika user baru login dan data member masih kosong, coba load ulang
+                    // Ini menangani kasus di mana fetch pertama gagal karena permission denied (belum auth)
+                    if (user && (!projectMembers || projectMembers.length === 0)) {
+                        console.log("User authenticated, retrying to load project members...");
+                        loadProjectHeader();
+                    }
                 });
             }
             loadProjectHeader();
