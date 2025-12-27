@@ -119,6 +119,41 @@
             content: attr(data-placeholder);
             color: #9ca3af;
         }
+        .boost-emoji-container {
+            position: relative;
+            display: inline-block;
+        }
+        .boost-emoji-popover {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111827;
+            border-radius: 999px;
+            padding: 6px 10px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.3);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .boost-emoji-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+        }
+        .boost-emoji-option:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.35);
+        }
         @media (max-width: 768px) {
             .ph-badge { display: none; }
             .ph-crumb-container { width: 100%; justify-content: center; padding: 8px 10px; gap: 8px; font-size: 0.85rem;}
@@ -267,13 +302,21 @@
                 <div id="messageContent" class="mb-4"></div>
                 <div id="messageAttachments" class="small mb-2"></div>
                 <div id="messageError" class="text-danger small mt-2"></div>
-                <div id="messageBoostSection" class="mt-4 pt-2" style="border-top:1px solid #e5e7eb; display:none;">
-                    <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                <div id="messageBoostSection" class="mt-4 pt-2" style="border-top:1px solid #e5e7eb;">
+                    <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap boost-emoji-container">
                         <div class="d-flex align-items-center avatar-pile" id="messageBoostAvatars"></div>
-                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 d-flex align-items-center gap-2" onclick="toggleBoostMessage()">
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 d-flex align-items-center gap-2" onclick="toggleBoostMessage()" id="messageBoostButton">
                             <span id="messageBoostEmoji">👏</span>
                             <span id="messageBoostLabel" class="small fw-semibold">Boost this</span>
                         </button>
+                        <div id="boostEmojiPopover" class="boost-emoji-popover" style="display:none;">
+                            <button type="button" class="boost-emoji-option" data-emoji="👍">👍</button>
+                            <button type="button" class="boost-emoji-option" data-emoji="❤️">❤️</button>
+                            <button type="button" class="boost-emoji-option" data-emoji="😆">😆</button>
+                            <button type="button" class="boost-emoji-option" data-emoji="😮">😮</button>
+                            <button type="button" class="boost-emoji-option" data-emoji="😢">�</button>
+                            <button type="button" class="boost-emoji-option" data-emoji="😡">😡</button>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-5 pt-5 border-top">
@@ -435,6 +478,7 @@
         const messageBoostAvatarsEl = document.getElementById("messageBoostAvatars");
         const messageBoostEmojiEl = document.getElementById("messageBoostEmoji");
         const messageBoostLabelEl = document.getElementById("messageBoostLabel");
+        const boostEmojiPopoverEl = document.getElementById("boostEmojiPopover");
         const contentEl = document.getElementById("messageContent");
         const attachmentsEl = document.getElementById("messageAttachments");
         const errorEl = document.getElementById("messageError");
@@ -448,6 +492,9 @@
         let currentUser = null;
         let currentComments = [];
         let currentSubscribers = [];
+        let currentBoosts = [];
+        let currentUserBoosted = false;
+        let currentUserBoostEmoji = "";
         let projectMembers = [];
         let membersLoaded = false;
         let manageSubscriberSearchQuery = "";
@@ -896,9 +943,11 @@
             if (!messageBoostSectionEl || !messageBoostAvatarsEl || !messageBoostEmojiEl || !messageBoostLabelEl) return;
             messageBoostAvatarsEl.innerHTML = "";
             if (!boosts || boosts.length === 0) {
-                messageBoostSectionEl.style.display = "none";
+                messageBoostSectionEl.style.display = "block";
                 messageBoostEmojiEl.innerText = "👏";
                 messageBoostLabelEl.innerText = "Boost this";
+                currentUserBoosted = false;
+                currentUserBoostEmoji = "";
                 return;
             }
             boosts.forEach(b => {
@@ -906,6 +955,11 @@
                 const name = b.user_name || b.userName || "User";
                 const photo = b.user_photo || "";
                 const src = getDirectPhotoUrl(photo || "", uid || "");
+                const emoji = b.emoji || b.emoticon || "👏";
+                const wrapper = document.createElement("div");
+                wrapper.style.position = "relative";
+                wrapper.style.display = "inline-block";
+                wrapper.style.marginLeft = "-10px";
                 const img = document.createElement("img");
                 img.src = src;
                 img.alt = name;
@@ -914,15 +968,30 @@
                 img.style.height = "32px";
                 img.style.borderRadius = "999px";
                 img.style.border = "2px solid #fff";
-                img.style.marginLeft = "-10px";
                 img.style.objectFit = "cover";
                 img.style.backgroundColor = "#e5e7eb";
-                messageBoostAvatarsEl.appendChild(img);
+                const emojiBadge = document.createElement("span");
+                emojiBadge.innerText = emoji;
+                emojiBadge.style.position = "absolute";
+                emojiBadge.style.bottom = "-4px";
+                emojiBadge.style.right = "-4px";
+                emojiBadge.style.fontSize = "0.75rem";
+                emojiBadge.style.backgroundColor = "#ffffff";
+                emojiBadge.style.borderRadius = "999px";
+                emojiBadge.style.padding = "0 2px";
+                emojiBadge.style.border = "1px solid #e5e7eb";
+                wrapper.appendChild(img);
+                wrapper.appendChild(emojiBadge);
+                messageBoostAvatarsEl.appendChild(wrapper);
             });
             messageBoostSectionEl.style.display = "block";
             const uid = getCurrentUserUid();
-            const isBoosted = uid && boosts.some(b => (b.user_id || b.userId) === uid);
-            messageBoostEmojiEl.innerText = isBoosted ? "👏" : "👏";
+            const myBoost = uid ? boosts.find(b => (b.user_id || b.userId) === uid) : null;
+            const isBoosted = !!myBoost;
+            currentUserBoosted = isBoosted;
+            const myEmoji = myBoost && (myBoost.emoji || myBoost.emoticon) ? (myBoost.emoji || myBoost.emoticon) : "👏";
+            currentUserBoostEmoji = isBoosted ? myEmoji : "";
+            messageBoostEmojiEl.innerText = myEmoji;
             messageBoostLabelEl.innerText = isBoosted ? "Boosted" : "Boost this";
         }
         function listenComments() {
@@ -968,6 +1037,7 @@
                 onSnapshot(ref, (snapshot) => {
                     const boosts = [];
                     snapshot.forEach(docSnap => boosts.push({ id: docSnap.id, ...docSnap.data() }));
+                    currentBoosts = boosts;
                     renderBoosts(boosts);
                 }, (error) => {
                     console.error("Failed to listen boosts", error);
@@ -994,7 +1064,7 @@
                 await Promise.all(deletions);
             }
         }
-        async function toggleBoostForCurrentUser() {
+        async function toggleBoostForCurrentUser(emoji) {
             const boostsRef = getBoostsCollectionRef();
             if (!boostsRef) throw new Error("Project ID atau Message ID tidak tersedia untuk mengubah boost.");
             const uid = getCurrentUserUid();
@@ -1013,14 +1083,50 @@
                 const photoUrl = getDirectPhotoUrl(rawPhoto || "", uid || "");
                 const initialsSource = userName || uid || "";
                 const initials = buildInitials(initialsSource);
+                const usedEmoji = emoji && typeof emoji === "string" && emoji.trim() ? emoji.trim() : "👏";
                 await addDoc(boostsRef, {
                     user_id: uid,
                     user_name: userName,
                     user_initials: initials,
                     user_photo: photoUrl,
+                    emoji: usedEmoji,
+                    emoticon: usedEmoji,
                     created_at: serverTimestamp()
                 });
                 return true;
+            }
+        }
+        async function setBoostEmojiForCurrentUser(emoji) {
+            const boostsRef = getBoostsCollectionRef();
+            if (!boostsRef) throw new Error("Project ID atau Message ID tidak tersedia untuk mengubah boost.");
+            const uid = getCurrentUserUid();
+            if (!uid) throw new Error("User tidak ditemukan.");
+            const q = query(boostsRef, where("user_id", "==", uid));
+            const snap = await getDocs(q);
+            const docs = [];
+            snap.forEach(docSnap => docs.push(docSnap));
+            const usedEmoji = emoji && typeof emoji === "string" && emoji.trim() ? emoji.trim() : "👏";
+            if (docs.length === 0) {
+                const localData = JSON.parse(localStorage.getItem("userData") || "null");
+                const userName = localData && localData.name ? localData.name : (currentUser && currentUser.email ? currentUser.email : "User");
+                const rawPhoto = localData && localData.photo ? localData.photo : (currentUser && currentUser.photoURL ? currentUser.photoURL : "");
+                const photoUrl = getDirectPhotoUrl(rawPhoto || "", uid || "");
+                const initialsSource = userName || uid || "";
+                const initials = buildInitials(initialsSource);
+                await addDoc(boostsRef, {
+                    user_id: uid,
+                    user_name: userName,
+                    user_initials: initials,
+                    user_photo: photoUrl,
+                    emoji: usedEmoji,
+                    emoticon: usedEmoji,
+                    created_at: serverTimestamp()
+                });
+            } else {
+                await Promise.all(docs.map(d => updateDoc(d.ref, {
+                    emoji: usedEmoji,
+                    emoticon: usedEmoji
+                })));
             }
         }
         function updateSubscriptionUI() {
@@ -1514,16 +1620,32 @@
                 alert("Gagal menghapus message: " + e.message);
             }
         };
-        window.toggleBoostMessage = async function () {
+        window.toggleBoostMessage = function () {
             try {
                 if (!currentUser && !localStorage.getItem("userData")) {
                     alert("Harus login terlebih dahulu.");
                     return;
                 }
-                await toggleBoostForCurrentUser();
+                if (!boostEmojiPopoverEl) return;
+                const isVisible = boostEmojiPopoverEl.style.display === "flex";
+                boostEmojiPopoverEl.style.display = isVisible ? "none" : "flex";
             } catch (e) {
-                console.error("Failed to toggle boost", e);
-                alert("Gagal mengubah boost: " + e.message);
+                console.error("Failed to toggle boost popover", e);
+            }
+        };
+        window.handleBoostEmojiClick = async function (emoji) {
+            try {
+                if (!currentUser && !localStorage.getItem("userData")) {
+                    alert("Harus login terlebih dahulu.");
+                    return;
+                }
+                await setBoostEmojiForCurrentUser(emoji);
+                if (boostEmojiPopoverEl) {
+                    boostEmojiPopoverEl.style.display = "none";
+                }
+            } catch (e) {
+                console.error("Failed to set boost emoji", e);
+                alert("Gagal menyimpan boost: " + e.message);
             }
         };
         document.addEventListener("DOMContentLoaded", () => {
@@ -1555,6 +1677,28 @@
                                 mentionDropdownElement.innerHTML = "";
                             }
                         }, 150);
+                    });
+                }
+                const boostContainer = document.querySelector(".boost-emoji-container");
+                const boostButton = document.getElementById("messageBoostButton");
+                const boostEmojiButtons = document.querySelectorAll("#boostEmojiPopover .boost-emoji-option");
+                let boostHideTimeout = null;
+                if (boostContainer && boostEmojiPopoverEl) {
+                    boostContainer.addEventListener("mouseenter", () => {
+                        if (boostHideTimeout) clearTimeout(boostHideTimeout);
+                    });
+                    boostContainer.addEventListener("mouseleave", () => {
+                        boostHideTimeout = setTimeout(() => {
+                            boostEmojiPopoverEl.style.display = "none";
+                        }, 120);
+                    });
+                }
+                if (boostEmojiButtons && boostEmojiButtons.length > 0) {
+                    boostEmojiButtons.forEach(btn => {
+                        btn.addEventListener("click", () => {
+                            const emoji = btn.getAttribute("data-emoji") || btn.innerText || "👏";
+                            window.handleBoostEmojiClick(emoji);
+                        });
                     });
                 }
                 try {
