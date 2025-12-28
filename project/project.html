@@ -270,14 +270,20 @@
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
-            
-            
             <div class="project-container">
                 <!-- STICKY BADGE -->
                 <div id="projectBadge" class="sticky-badge">Loading...</div>
-                
-                
-                <a href="../home.html" class="btn btn-sm btn-light rounded-pill position-absolute top-0 end-0 mt-4 me-4 border"><i class="bi bi-x-lg"></i> Close</a>
+                <div class="position-absolute top-0 end-0 mt-4 me-4 d-flex align-items-center gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light rounded-pill border" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="window.openEditProjectModal(); return false;">Edit</a></li>
+                        </ul>
+                    </div>
+                    <a href="../home.html" class="btn btn-sm btn-light rounded-pill border"><i class="bi bi-x-lg"></i> Close</a>
+                </div>
 
                 <!-- HEADER PROJECT (DINAMIS) -->
                 <div class="text-center" id="projectHeader">
@@ -317,9 +323,7 @@
                             <span class="text-muted small fw-bold">Who's on this project?</span>
                         </div>
 
-                        <!-- Container Dinamis: Diisi oleh JS -->
                         <div class="d-flex align-items-center flex-wrap justify-content-center gap-3" id="projectMembersContainer">
-                            <!-- Default Loading State -->
                             <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
                         </div>
                     </div>
@@ -334,10 +338,8 @@
                             <div class="tool-card">
                                 <div class="tool-header"><h5 class="tool-title">Message</h5></div>
                                 <div class="tool-body">
-                                    <div class="msg-item">
-                                        <img src="https://i.pravatar.cc/150?img=12" class="msg-avatar">
-                                        <div class="msg-content"><h6>Podcast Excerpts</h6><p>Pitch — Hey Annie...</p></div>
-                                        <span class="badge bg-primary rounded-pill ms-auto">7</span>
+                                    <div id="projectMessagePreview">
+                                        <div class="text-muted small fst-italic">Loading messages...</div>
                                     </div>
                                 </div>
                             </div>
@@ -365,10 +367,9 @@
                         <a href="files.html" class="text-decoration-none">
                             <div class="tool-card">
                                 <div class="tool-header"><h5 class="tool-title">Files</h5></div>
-                                <div class="tool-body d-flex gap-3 justify-content-center">
-                                    <div class="text-center p-2 border rounded hover-shadow cursor-pointer">
-                                        <i class="bi bi-file-earmark-text-fill text-primary fs-1"></i>
-                                        <div class="small fw-bold mt-1" style="font-size:0.7rem;">Script</div>
+                                <div class="tool-body">
+                                    <div id="projectFilesPreview">
+                                        <div class="text-muted small fst-italic">Loading files...</div>
                                     </div>
                                 </div>
                             </div>
@@ -434,14 +435,61 @@
             </div>
         </main>
     </div>
+    
+    <div class="modal fade" id="manageProjectMembersModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0 p-4 pb-0">
+                    <h5 class="fw-bold">Manage Project Members</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="input-group mb-3 bg-light rounded-pill px-2">
+                        <span class="input-group-text bg-transparent border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control bg-transparent border-0 shadow-none" placeholder="Search people..." oninput="window.renderProjectMemberList(this.value)">
+                    </div>
+                    <div id="projectMemberListScroll" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="modal fade" id="editProjectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0 px-4 pt-4 pb-0">
+                    <h5 class="fw-bold mb-0">Edit Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <div class="mb-3">
+                        <label for="editProjectTitleInput" class="form-label small text-muted mb-1">Project Name</label>
+                        <input type="text" id="editProjectTitleInput" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProjectDescriptionInput" class="form-label small text-muted mb-1">Description</label>
+                        <textarea id="editProjectDescriptionInput" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Department</label>
+                        <div id="editDepartmentOptions" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-light border rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-dlg-blue rounded-pill px-4" onclick="window.saveProjectChanges()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Script JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Firebase SDK Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, getDocs, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // 1. Konfigurasi Firebase (Wajib sama dengan index/register)
         const firebaseConfig = { 
@@ -466,6 +514,13 @@
                 localStorage.setItem('currentProjectId', projectId);
             } catch (e) {}
         }
+        let currentProjectData = null;
+        let editDepartments = [];
+        let editSelectedDepartment = null;
+        let projectMembers = [];
+        let membersLoaded = false;
+        let currentMemberUids = [];
+        let projectMemberSearchQuery = "";
 
         // --- 2. PROTEKSI & UNTUK TAMPILAN USER ---
         onAuthStateChanged(auth, (user) => {
@@ -489,17 +544,136 @@
         // --- 3. AMBIL DETAIL PROJECT (REAL-TIME) ---
         function loadProjectDetail(id) {
             const docRef = doc(db, "projects", id);
-
+    
             // onSnapshot memantau perubahan data secara langsung
             onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const projectData = docSnap.data();
-                    renderProjectUI({ id: docSnap.id, ...projectData });
+                    currentProjectData = { id: docSnap.id, ...projectData };
+                    renderProjectUI(currentProjectData);
+                    loadEditDepartments();
                 } else {
                     document.getElementById('projectHeader').innerHTML = `<div class="alert alert-danger">Project tidak ditemukan atau telah dihapus.</div>`;
                 }
             }, (error) => {
                 console.error("Error fetching project:", error);
+            });
+        }
+    
+        async function loadProjectMembers() {
+            membersLoaded = false;
+            projectMembers = [];
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                const allUsers = [];
+                snap.forEach(docSnap => {
+                    const u = docSnap.data() || {};
+                    allUsers.push({
+                        uid: docSnap.id,
+                        name: u.name || u.email || "Unknown",
+                        email: u.email || "",
+                        photo: u.photo || "",
+                        role: (u.employment && u.employment.position) || "Member"
+                    });
+                });
+                let currentUid = "";
+                try {
+                    const localData = JSON.parse(localStorage.getItem("userData") || "null");
+                    if (localData && (localData.uid || localData.id)) {
+                        currentUid = localData.uid || localData.id;
+                    }
+                } catch (e2) {}
+                allUsers.sort((a, b) => {
+                    if (a.uid === currentUid) return -1;
+                    if (b.uid === currentUid) return 1;
+                    return a.name.localeCompare(b.name);
+                });
+                projectMembers = allUsers;
+            } catch (e) {
+                console.error("Failed to load project members", e);
+            } finally {
+                membersLoaded = true;
+                renderMembers(currentMemberUids);
+                if (typeof window.renderProjectMemberList === "function") {
+                    window.renderProjectMemberList(projectMemberSearchQuery);
+                }
+            }
+        }
+    
+        async function loadEditDepartments() {
+            const container = document.getElementById('editDepartmentOptions');
+            if (!container) return;
+            container.innerHTML = '<span class="text-muted small">Loading departments...</span>';
+            try {
+                const snap = await getDocs(collection(db, "departments"));
+                const items = [];
+                snap.forEach(docSnap => {
+                    const d = docSnap.data() || {};
+                    items.push({
+                        id: docSnap.id,
+                        name: d.name || "Untitled",
+                        color: d.color || "#e5e7eb"
+                    });
+                });
+                editDepartments = items;
+                if (currentProjectData && currentProjectData.department) {
+                    const currentName = String(currentProjectData.department || "").toLowerCase();
+                    const found = editDepartments.find(dept => String(dept.name || "").toLowerCase() === currentName);
+                    if (found) {
+                        editSelectedDepartment = found;
+                    }
+                }
+                if (!editSelectedDepartment && editDepartments.length > 0) {
+                    editSelectedDepartment = editDepartments[0];
+                }
+                renderEditDepartmentOptions();
+            } catch (e) {
+                console.error("Failed to load departments for edit", e);
+                container.innerHTML = '<span class="text-danger small">Failed to load departments.</span>';
+            }
+        }
+
+        function renderEditDepartmentOptions() {
+            const container = document.getElementById('editDepartmentOptions');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!editDepartments || editDepartments.length === 0) {
+                container.innerHTML = '<span class="text-muted small">No departments available.</span>';
+                return;
+            }
+            editDepartments.forEach(dept => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-light border rounded-pill d-flex align-items-center gap-2';
+                btn.dataset.deptId = dept.id;
+                btn.innerHTML = `
+                    <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background:${dept.color};"></span>
+                    <span>${dept.name}</span>
+                `;
+                btn.addEventListener('click', () => {
+                    editSelectedDepartment = dept;
+                    updateEditDepartmentSelectionUI();
+                });
+                container.appendChild(btn);
+            });
+            updateEditDepartmentSelectionUI();
+        }
+
+        function updateEditDepartmentSelectionUI() {
+            const container = document.getElementById('editDepartmentOptions');
+            if (!container) return;
+            const buttons = container.querySelectorAll('button[data-dept-id]');
+            buttons.forEach(btn => {
+                const id = btn.getAttribute('data-dept-id');
+                if (editSelectedDepartment && id === editSelectedDepartment.id) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('btn-light');
+                    btn.classList.add('text-white');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-light');
+                    btn.classList.remove('text-white');
+                }
             });
         }
 
@@ -509,7 +683,13 @@
             const header = document.getElementById('projectHeader');
             const badge = document.getElementById('projectBadge');
             
-            badge.innerText = project.department || "General";
+            const departmentName = project.department || "General";
+            const departmentColor = project.department_color || "";
+            badge.innerText = departmentName;
+            if (departmentColor && badge) {
+                badge.style.backgroundColor = departmentColor;
+                badge.style.color = "#ffffff";
+            }
             
             let descHtml = project.description || "No description.";
             if (descHtml.length > 100) {
@@ -522,69 +702,427 @@
                 <h1 class="fw-bold display-5 mb-3" style="color: var(--dlg-blue);">${project.name}</h1>
                 <p class="text-muted mx-auto fs-6 desc-text" style="max-width: 650px;">${descHtml}</p>
             `;
-
-            // B. Gauge Progress (Gunakan logic project management nanti untuk hitung otomatis)
-            const progress = project.progress || 0;
-            animateGauge(progress);
-
+    
+            currentMemberUids = Array.isArray(project.members) ? project.members.slice() : [];
+            loadProjectProgress(project.id);
+    
             // C. Members (Menampilkan lingkaran avatar dari array members)
-            renderMembers(project.members || []);
+            renderMembers(currentMemberUids);
+            if (!membersLoaded) {
+                loadProjectMembers();
+            }
 
             // D. Link Tool Card (Sesuaikan ID agar tool lain tahu project mana yang dibuka)
             document.getElementById('linkToList').href = `list.html?id=${project.id}`;
             const msgLink = document.getElementById('linkToMessage');
             if (msgLink) msgLink.href = `message.html?projectId=${project.id}`;
             
-            // E. Ambil "Pending Tasks" dari koleksi tasks (Optional/Contoh)
+            // E. Ambil "Pending Tasks" dan preview tools lain dari koleksi terkait
             loadRecentTasks(project.id);
+            loadRecentMessages(project.id);
+            loadRecentFiles(project.id);
         }
 
         // --- 5. FUNGSI RENDER AVATAR MEMBER ---
         function renderMembers(memberUids) {
             const container = document.getElementById('projectMembersContainer');
-            container.innerHTML = '<div class="avatar-pile"></div>';
-            const pile = container.querySelector('.avatar-pile');
-
-            memberUids.slice(0, 5).forEach(uid => {
-                const img = document.createElement('img');
-                // Untuk sementara pakai placeholder, nanti bisa fetch profil user berdasarkan UID
-                img.src = `https://i.pravatar.cc/150?u=${uid}`; 
-                img.title = "Team Member";
+            if (!container) return;
+            container.innerHTML = "";
+            const pile = document.createElement("div");
+            pile.className = "avatar-pile";
+            container.appendChild(pile);
+    
+            const uids = Array.isArray(memberUids) ? memberUids : [];
+            uids.slice(0, 5).forEach(uid => {
+                const img = document.createElement("img");
+                const user = projectMembers.find(m => m.uid === uid);
+                if (user && user.photo) {
+                    img.src = user.photo;
+                    img.alt = user.name || "Member";
+                    img.title = user.name || "Member";
+                } else {
+                    img.src = `https://i.pravatar.cc/150?u=${uid}`;
+                    img.alt = "Member";
+                    img.title = "Member";
+                }
                 pile.appendChild(img);
             });
-
-            if (memberUids.length > 5) {
-                const more = document.createElement('div');
+    
+            if (uids.length > 5) {
+                const more = document.createElement("div");
                 more.className = "bg-dark text-white rounded-circle d-flex align-items-center justify-content-center small fw-bold";
                 more.style = "width:38px; height:38px; border:3px solid white; margin-left:-15px; font-size:0.7rem; position:relative; z-index:1;";
-                more.innerText = `+${memberUids.length - 5}`;
+                more.innerText = `+${uids.length - 5}`;
                 pile.appendChild(more);
             }
-
-            container.insertAdjacentHTML('beforeend', `<button class="btn-add-people ms-3"><i class="bi bi-plus-lg me-1"></i> Add</button>`);
+    
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn-add-people ms-3";
+            btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Add';
+            btn.setAttribute("data-bs-toggle", "modal");
+            btn.setAttribute("data-bs-target", "#manageProjectMembersModal");
+            container.appendChild(btn);
         }
+
+        window.openEditProjectModal = function () {
+            if (!currentProjectData || !currentProjectData.id) return;
+            const titleInput = document.getElementById('editProjectTitleInput');
+            const descInput = document.getElementById('editProjectDescriptionInput');
+            if (titleInput) titleInput.value = currentProjectData.name || "";
+            if (descInput) descInput.value = currentProjectData.description || "";
+            if (editDepartments && editDepartments.length > 0 && currentProjectData.department) {
+                const currentName = String(currentProjectData.department || "").toLowerCase();
+                const found = editDepartments.find(dept => String(dept.name || "").toLowerCase() === currentName);
+                if (found) {
+                    editSelectedDepartment = found;
+                    updateEditDepartmentSelectionUI();
+                }
+            }
+            const modalEl = document.getElementById('editProjectModal');
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        };
+
+        window.saveProjectChanges = async function () {
+            if (!currentProjectData || !currentProjectData.id) return;
+            const titleInput = document.getElementById('editProjectTitleInput');
+            const descInput = document.getElementById('editProjectDescriptionInput');
+            if (!titleInput || !descInput) return;
+            const name = (titleInput.value || "").trim();
+            const description = (descInput.value || "").trim();
+            let departmentName = currentProjectData.department || "General";
+            let departmentColor = currentProjectData.department_color || "";
+            if (editSelectedDepartment) {
+                if (editSelectedDepartment.name) departmentName = editSelectedDepartment.name;
+                if (editSelectedDepartment.color) departmentColor = editSelectedDepartment.color;
+            }
+            const payload = {
+                name,
+                description,
+                department: departmentName,
+                department_color: departmentColor
+            };
+            try {
+                await updateDoc(doc(db, "projects", currentProjectData.id), payload);
+                const modalEl = document.getElementById('editProjectModal');
+                if (modalEl) {
+                    const instance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                    instance.hide();
+                }
+            } catch (e) {
+                console.error("Failed to save project changes", e);
+                alert("Gagal menyimpan perubahan project: " + e.message);
+            }
+        };
+    
+        window.renderProjectMemberList = function (queryText) {
+            const list = document.getElementById("projectMemberListScroll");
+            if (!list) return;
+            projectMemberSearchQuery = (queryText || "").trim().toLowerCase();
+            if (!membersLoaded) {
+                list.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-secondary"></div><div class="small text-muted mt-2">Loading members...</div></div>';
+                return;
+            }
+            if (!projectMembers || projectMembers.length === 0) {
+                list.innerHTML = '<p class="text-center text-muted small py-3">No members found.</p>';
+                return;
+            }
+            const filtered = projectMembers.filter(m => {
+                const name = m.name || "";
+                const email = m.email || "";
+                const haystack = `${name} ${email}`.toLowerCase();
+                return haystack.includes(projectMemberSearchQuery);
+            });
+            if (filtered.length === 0) {
+                list.innerHTML = '<p class="text-center text-muted small py-3">No members found.</p>';
+                return;
+            }
+            list.innerHTML = filtered.map(m => {
+                const isMember = Array.isArray(currentMemberUids) && currentMemberUids.includes(m.uid);
+                const btnClass = isMember ? "btn-outline-danger" : "btn-dlg-blue";
+                const btnText = isMember ? "Remove" : "Add";
+                const safeName = m.name || "Unknown";
+                const safeRole = m.role || "Member";
+                const photo = m.photo || "";
+                const fallback = encodeURIComponent(safeName);
+                return `
+                    <div class="d-flex align-items-center justify-content-between py-3 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="${photo}" class="rounded-circle border" style="width:38px; height:38px; object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=${fallback}'">
+                            <div>
+                                <div class="fw-bold" style="font-size:0.9rem;">${safeName}</div>
+                                <div class="text-muted" style="font-size:0.75rem;">${safeRole}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm ${btnClass} rounded-pill px-3" type="button" onclick="window.toggleMemberForUser('${m.uid}')">
+                            ${btnText}
+                        </button>
+                    </div>
+                `;
+            }).join("");
+        };
+    
+        window.toggleMemberForUser = async function (uid) {
+            if (!uid || !projectId) return;
+            try {
+                const ref = doc(db, "projects", projectId);
+                const base = Array.isArray(currentMemberUids) ? currentMemberUids.slice() : [];
+                const index = base.indexOf(uid);
+                if (index >= 0) {
+                    base.splice(index, 1);
+                } else {
+                    base.push(uid);
+                }
+                await updateDoc(ref, { members: base });
+                currentMemberUids = base;
+                renderMembers(currentMemberUids);
+                window.renderProjectMemberList(projectMemberSearchQuery);
+            } catch (e) {
+                console.error("Failed to toggle project member", e);
+                alert("Gagal mengubah anggota project: " + e.message);
+            }
+        };
 
         // --- 6. LOAD PENDING TASKS DARI KOLEKSI TASKS ---
         async function loadRecentTasks(pId) {
             const taskList = document.getElementById('pendingTaskList');
-            const q = query(collection(db, "tasks"), where("project_id", "==", pId), where("status.name", "!=", "Done"));
-            
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                taskList.innerHTML = '<div class="text-muted small">No pending tasks.</div>';
+            if (!taskList) return;
+            taskList.innerHTML = '<div class="text-muted small fst-italic">Loading tasks...</div>';
+            if (!pId) {
+                taskList.innerHTML = '<div class="text-muted small fst-italic">No project selected.</div>';
                 return;
             }
-
-            let html = '';
-            querySnapshot.forEach((taskDoc) => {
-                const task = taskDoc.data();
-                html += `
+            try {
+                const q = query(collection(db, "tasks"), where("project_id", "==", pId));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    taskList.innerHTML = '<div class="text-muted small">No pending tasks.</div>';
+                    return;
+                }
+                const pending = [];
+                snap.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    let statusRaw = "";
+                    if (typeof data.status === "string") {
+                        statusRaw = data.status;
+                    } else if (data.status && typeof data.status === "object") {
+                        statusRaw = data.status.name || data.status.label || "";
+                    }
+                    const normalized = String(statusRaw || "").trim().toLowerCase();
+                    const isDone = normalized === "complete" || normalized === "done";
+                    if (!isDone) {
+                        pending.push({ id: docSnap.id, ...data });
+                    }
+                });
+                if (pending.length === 0) {
+                    taskList.innerHTML = '<div class="text-muted small">All tasks are completed.</div>';
+                    return;
+                }
+                const limited = pending.slice(0, 5);
+                let html = "";
+                limited.forEach((task) => {
+                    const title = task.title || "Untitled task";
+                    html += `
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <input class="form-check-input" type="checkbox"> 
-                        <span class="text-dark small text-truncate">${task.title}</span>
-                    </div>`;
+                        <input class="form-check-input" type="checkbox" onchange="window.handleProjectTaskCheckbox('${task.id}', this)">
+                        <span class="text-dark small text-truncate">${title}</span>
+                    </div>
+                    `;
+                });
+                taskList.innerHTML = html;
+            } catch (e) {
+                console.error("Failed to load pending tasks", e);
+                taskList.innerHTML = '<div class="text-danger small">Failed to load tasks.</div>';
+            }
+        }
+
+        async function loadRecentFiles(pId) {
+            const container = document.getElementById('projectFilesPreview');
+            if (!container) return;
+            container.innerHTML = '<div class="text-muted small fst-italic">Loading files...</div>';
+            if (!pId) {
+                container.innerHTML = '<div class="text-muted small fst-italic">No project selected.</div>';
+                return;
+            }
+            try {
+                const ref = collection(db, "projects", pId, "files");
+                const q = query(ref, orderBy("created_at", "desc"));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-muted small fst-italic">No files yet.</div>';
+                    return;
+                }
+                const items = [];
+                snap.forEach(docSnap => items.push({ id: docSnap.id, ...docSnap.data() }));
+                const top = items.slice(0, 3);
+                const parts = top.map(f => {
+                    const title = f.title || "Untitled file";
+                    return `
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="bi bi-file-earmark-text text-primary"></i>
+                            <span class="text-dark small text-truncate" style="max-width: 180px;">${title}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = parts.join('');
+            } catch (e) {
+                console.error("Failed to load recent files", e);
+                container.innerHTML = '<div class="text-danger small">Failed to load files.</div>';
+            }
+        }
+
+        window.handleProjectTaskCheckbox = async function (taskId, checkbox) {
+            if (!taskId || !checkbox) return;
+            if (!checkbox.checked) {
+                checkbox.checked = false;
+                return;
+            }
+            checkbox.disabled = true;
+            try {
+                await updateDoc(doc(db, "tasks", taskId), { status: "Complete" });
+                if (projectId) {
+                    loadProjectProgress(projectId);
+                    loadRecentTasks(projectId);
+                }
+            } catch (e) {
+                console.error("Failed to update task status", e);
+                checkbox.checked = false;
+                checkbox.disabled = false;
+                alert("Gagal mengubah status task: " + e.message);
+            }
+        };
+
+        async function loadProjectProgress(pId) {
+            if (!pId) {
+                animateGauge(0);
+                return;
+            }
+            try {
+                const q = query(collection(db, "tasks"), where("project_id", "==", pId));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    animateGauge(0);
+                    return;
+                }
+                let total = 0;
+                let complete = 0;
+                snap.forEach((docSnap) => {
+                    const data = docSnap.data() || {};
+                    total += 1;
+                    let statusRaw = "";
+                    if (typeof data.status === "string") {
+                        statusRaw = data.status;
+                    } else if (data.status && typeof data.status === "object") {
+                        statusRaw = data.status.name || data.status.label || "";
+                    }
+                    const normalized = String(statusRaw || "").trim().toLowerCase();
+                    const isDone = normalized === "complete" || normalized === "done";
+                    if (isDone) {
+                        complete += 1;
+                    }
+                });
+                const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
+                animateGauge(percent);
+            } catch (e) {
+                console.error("Failed to load project progress", e);
+                animateGauge(0);
+            }
+        }
+
+        async function loadRecentMessages(pId) {
+            const container = document.getElementById('projectMessagePreview');
+            if (!container) return;
+            container.innerHTML = '<div class="text-muted small fst-italic">Loading messages...</div>';
+            if (!pId) {
+                container.innerHTML = '<div class="text-muted small fst-italic">No project selected.</div>';
+                return;
+            }
+            try {
+                const ref = collection(db, "projects", pId, "messages");
+                const q = query(ref, orderBy("created_at", "desc"));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    container.innerHTML = '<div class="text-muted small fst-italic">No message/announcement yet.</div>';
+                    return;
+                }
+                const items = [];
+                snap.forEach(docSnap => items.push({ id: docSnap.id, ...docSnap.data() }));
+                const top = items.slice(0, 3);
+                const parts = top.map(c => {
+                    const userId = c.user_id || c.userId || '';
+                    const userName = c.user_name || c.userName || userId || 'User';
+                    const initialsSource = c.user_initials || userName || userId || '';
+                    const initials = initialsSource
+                        ? initialsSource.trim().split(' ').map(part => part[0]).join('').substring(0, 2).toUpperCase()
+                        : '??';
+                    const photo = c.user_photo || "";
+                    const avatar = photo
+                        ? `<img src="${photo}" class="msg-avatar">`
+                        : `<div class="msg-avatar d-flex align-items-center justify-content-center bg-secondary text-white fw-bold">${initials}</div>`;
+                    const plain = typeof c.text_plain === "string" && c.text_plain.trim().length
+                        ? c.text_plain
+                        : "";
+                    let title = (c.title || '').trim();
+                    if (!title) {
+                        title = plain.split('\n')[0] || '';
+                    }
+                    title = title || 'Untitled message';
+                    let snippet = plain;
+                    if (snippet.length > 80) {
+                        snippet = snippet.substring(0, 77) + '...';
+                    }
+                    return `
+                        <div class="msg-item mb-2 mini-message-row" data-message-id="${c.id}">
+                            ${avatar}
+                            <div class="msg-content flex-grow-1">
+                                <h6>${title}</h6>
+                                <p>${snippet || '&nbsp;'}</p>
+                            </div>
+                            <span class="badge bg-primary rounded-pill ms-auto mini-message-comment-count" style="display:none; min-width:24px; text-align:center;">0</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = parts.join('');
+                loadMiniCommentCounts(pId, top);
+            } catch (e) {
+                console.error("Failed to load recent messages", e);
+                container.innerHTML = '<div class="text-danger small">Failed to load messages.</div>';
+            }
+        }
+
+        async function loadMiniCommentCounts(pId, messages) {
+            if (!pId) return;
+            if (!Array.isArray(messages) || messages.length === 0) return;
+            const container = document.getElementById('projectMessagePreview');
+            if (!container) return;
+            const tasks = messages.map(async (m) => {
+                const messageId = m && m.id ? m.id : "";
+                if (!messageId) return;
+                try {
+                    const ref = collection(db, "projects", pId, "messages", messageId, "comments");
+                    const snap = await getDocs(ref);
+                    const count = snap.size;
+                    const row = container.querySelector(`.mini-message-row[data-message-id="${messageId}"]`);
+                    if (!row) return;
+                    const badge = row.querySelector('.mini-message-comment-count');
+                    if (!badge) return;
+                    if (count > 0) {
+                        badge.innerText = String(count);
+                        badge.style.display = "inline-block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                } catch (e) {
+                    console.error("Failed to load comment count for message", messageId, e);
+                }
             });
-            taskList.innerHTML = html;
+            try {
+                await Promise.all(tasks);
+            } catch (e) {
+                console.error("Failed to load some mini message comment counts", e);
+            }
         }
 
         // --- UI HELPERS (Global Access) ---

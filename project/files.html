@@ -968,9 +968,23 @@
         let currentSearch = "";
         let isCreatingFolderInline = false;
         let currentUser = null;
-
+        
         onAuthStateChanged(auth, (user) => {
             currentUser = user || null;
+            try {
+                const nameSpan = document.getElementById("user-name-display");
+                const photoImg = document.getElementById("user-photo-display");
+                if (!nameSpan || !photoImg) return;
+                const localData = JSON.parse(localStorage.getItem("userData") || "null");
+                const userName = localData && localData.name ? localData.name : (user ? user.email : "User");
+                const rawPhoto = localData && localData.photo ? localData.photo : (user && user.photoURL ? user.photoURL : "");
+                const uid = localData && localData.uid ? localData.uid : (user && user.uid ? user.uid : "");
+                nameSpan.innerText = userName || "User";
+                const finalUrl = getDirectPhotoUrl(rawPhoto || "", uid || "");
+                if (finalUrl) {
+                    photoImg.src = finalUrl;
+                }
+            } catch (e) {}
         });
 
         function getDirectPhotoUrl(url, uid) {

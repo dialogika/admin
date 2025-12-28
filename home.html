@@ -196,7 +196,7 @@
         <main class="main-content">
             
             <div class="mb-4">
-                <h4 class="fw-bold mb-0">Good Morning, Rizky!</h4>
+                <h4 id="welcomeMessage" class="fw-bold mb-0">Welcome!</h4>
                 <small class="text-muted">Here is your daily update.</small>
             </div>
 
@@ -469,16 +469,24 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                // Ambil data user dari LocalStorage (disimpan saat login)
                 const localData = JSON.parse(localStorage.getItem('userData'));
                 
-                // Update UI Sidebar/Navbar
                 document.getElementById('user-name-display').innerText = localData?.name || user.email;
                 document.getElementById('user-photo-display').src = localData?.photo || "https://i.pravatar.cc/300";
                 document.getElementById('user-role-display').innerText = localData?.position || "Staff";
                 
-                const welcomeMsg = document.querySelector('h4.fw-bold');
-                if(welcomeMsg) welcomeMsg.innerText = `Good Morning, ${localData?.name.split(' ')[0]}!`;
+                const welcomeMsg = document.getElementById('welcomeMessage');
+                if (welcomeMsg) {
+                    const hour = new Date().getHours();
+                    let greeting = "Hello";
+                    if (hour >= 5 && hour < 12) greeting = "Good Morning";
+                    else if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+                    else if (hour >= 17 && hour < 21) greeting = "Good Evening";
+                    else greeting = "Good Night";
+                    const fullName = localData?.name || user.displayName || user.email || "";
+                    const firstName = fullName ? fullName.split(' ')[0] : "";
+                    welcomeMsg.innerText = firstName ? `${greeting}, ${firstName}!` : greeting;
+                }
 
                 await loadDepartments();
                 listenToProjects();

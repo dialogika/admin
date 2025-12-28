@@ -1150,6 +1150,30 @@
 
             onAuthStateChanged(auth, (user) => {
                 currentUser = user || null;
+                try {
+                    const nameSpan = document.getElementById('user-name-display');
+                    const photoImg = document.getElementById('user-photo-display');
+                    const roleSpan = document.getElementById('user-role-display');
+                    if (nameSpan || photoImg || roleSpan) {
+                        const storedUser = JSON.parse(localStorage.getItem('userData') || 'null');
+                        const userName = storedUser && storedUser.name ? storedUser.name : (user ? user.email : 'User');
+                        const rawPhoto = storedUser && (storedUser.photo || storedUser.Photo)
+                            ? (storedUser.photo || storedUser.Photo)
+                            : (user && user.photoURL ? user.photoURL : '');
+                        const position = storedUser && (storedUser.position || (storedUser.employment && storedUser.employment.position))
+                            ? (storedUser.position || (storedUser.employment && storedUser.employment.position))
+                            : 'Member';
+                        const uid = storedUser && (storedUser.uid || storedUser.Uid)
+                            ? (storedUser.uid || storedUser.Uid)
+                            : (user && user.uid ? user.uid : '');
+                        if (nameSpan) nameSpan.innerText = userName || 'User';
+                        if (roleSpan) roleSpan.innerText = position || 'Member';
+                        if (photoImg) {
+                            const photoUrl = getDirectPhotoUrl(rawPhoto || "", uid || "");
+                            photoImg.src = photoUrl;
+                        }
+                    }
+                } catch (e) {}
                 updateSubscriptionUI();
             });
         });
