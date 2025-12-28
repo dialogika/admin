@@ -459,9 +459,13 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Ambil ID Project dari URL
         const urlParams = new URLSearchParams(window.location.search);
         const projectId = urlParams.get('id');
+        if (projectId) {
+            try {
+                localStorage.setItem('currentProjectId', projectId);
+            } catch (e) {}
+        }
 
         // --- 2. PROTEKSI & UNTUK TAMPILAN USER ---
         onAuthStateChanged(auth, (user) => {

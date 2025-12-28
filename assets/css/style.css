@@ -412,6 +412,7 @@ body {
 @media (max-width: 991px) { .desktop-nav-links { display: none !important; } }
 @media (min-width: 992px) { .bottom-nav { display: none; } }
 
+.shadow-purple { box-shadow: 0px 7px 9px -6px rgba(114, 4, 207, 1); }
 /* --- BUTTONS --- */
 .btn-dlg-blue {
     background: linear-gradient(to bottom, #0f61a8 5%, #0b2b6a 100%);

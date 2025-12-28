@@ -1058,6 +1058,11 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const projectId = urlParams.get('id');
+        if (projectId) {
+            try {
+                localStorage.setItem('currentProjectId', projectId);
+            } catch (e) {}
+        }
         let currentUser = null;
         let projectLists = [];
         let allTasks = [];
