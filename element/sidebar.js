@@ -208,18 +208,31 @@ export function renderSidebar(target) {
 
         <div id="questCreateForm" class="mb-10 rounded-3xl border border-gray-200 bg-white shadow-sm p-6 md:p-8 hidden">
             <div class="mb-6">
-                <input type="text" placeholder="Task Name"
+                <input type="text" placeholder="Quest Name"
                     class="w-full text-2xl md:text-3xl font-semibold text-gray-900 border-none focus:ring-0 focus:outline-none placeholder-gray-400" />
             </div>
             <div class="grid md:grid-cols-2 gap-6 mb-6">
                 <div class="space-y-4 text-sm">
                     <div class="flex items-center gap-3">
-                        <div class="font-medium text-gray-500 w-24">Status</div>
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full border border-blue-500">
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            </span>
-                            <span class="text-gray-900 font-medium">Initiate</span>
+                        <div class="font-medium text-gray-500 w-24">Department</div>
+                        <div class="flex-1">
+                            <div class="relative">
+                                <button type="button"
+                                    class="w-full flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-left text-gray-700"
+                                    onclick="document.getElementById('questDepartmentDropdown').classList.toggle('hidden')">
+                                    <span class="flex items-center gap-2">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-200">
+                                            <span class="text-xs font-semibold text-gray-500">D</span>
+                                        </span>
+                                        <span id="questDepartmentButtonLabel" class="text-xs md:text-sm">Select departments...</span>
+                                    </span>
+                                    <span class="text-gray-400 text-xs md:text-sm">&#9662;</span>
+                                </button>
+                                <div id="questDepartmentDropdown"
+                                    class="absolute top-full left-0 right-0 mt-2 rounded-xl border border-gray-200 bg-white shadow-lg p-3 hidden max-h-60 overflow-y-auto text-xs md:text-sm">
+                                    <span class="text-gray-400 text-xs">Loading departments...</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
@@ -515,6 +528,77 @@ export function renderSidebar(target) {
                 el.classList.add('hidden');
             }
         }
+        function updateQuestDepartmentLabel() {
+            var dropdown = document.getElementById('questDepartmentDropdown');
+            var labelEl = document.getElementById('questDepartmentButtonLabel');
+            if (!dropdown || !labelEl) return;
+            var selected = Array.prototype.slice.call(
+                dropdown.querySelectorAll('input[type="checkbox"]:checked')
+            );
+            if (!selected.length) {
+                labelEl.textContent = 'Select departments...';
+                return;
+            }
+            var names = selected.map(function (cb) {
+                var row = cb.closest('.quest-dept-option');
+                if (!row) return '';
+                var nameEl = row.querySelector('.quest-dept-name');
+                return nameEl ? nameEl.textContent.trim() : '';
+            }).filter(function (v) { return v; });
+            if (!names.length) {
+                labelEl.textContent = 'Select departments...';
+            } else if (names.length === 1) {
+                labelEl.textContent = names[0];
+            } else if (names.length === 2) {
+                labelEl.textContent = names[0] + ', ' + names[1];
+            } else {
+                labelEl.textContent = names[0] + ' and ' + (names.length - 1) + ' more';
+            }
+        }
+        async function loadQuestDepartments() {
+            var dropdown = document.getElementById('questDepartmentDropdown');
+            if (!dropdown) return;
+            dropdown.innerHTML = '<span class="text-gray-400 text-xs">Loading departments...</span>';
+            try {
+                var parentWin = window.parent;
+                if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.getDocs) {
+                    dropdown.innerHTML = '<span class="text-red-500 text-xs">Departments not available.</span>';
+                    return;
+                }
+                var snap = await parentWin.getDocs(parentWin.collection(parentWin.db, "departments"));
+                dropdown.innerHTML = '';
+                snap.forEach(function (docSnap) {
+                    var d = docSnap.data() || {};
+                    var name = d.name || "Untitled";
+                    var color = d.color || "#0B2B6A";
+                    var row = document.createElement('div');
+                    row.className = 'quest-dept-option flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer';
+                    row.innerHTML =
+                        '<span class="inline-flex w-2.5 h-2.5 rounded-full" style="background:' + color + ';"></span>' +
+                        '<span class="quest-dept-name flex-1 text-xs md:text-sm text-gray-700">' + name + '</span>' +
+                        '<input type="checkbox" class="ml-2 accent-blue-600" data-dept-id="' + docSnap.id + '">';
+                    dropdown.appendChild(row);
+                    var checkbox = row.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', updateQuestDepartmentLabel);
+                    row.addEventListener('click', function (e) {
+                        if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'input') {
+                            return;
+                        }
+                        checkbox.checked = !checkbox.checked;
+                        updateQuestDepartmentLabel();
+                    });
+                });
+                if (!dropdown.innerHTML.trim()) {
+                    dropdown.innerHTML = '<span class="text-gray-400 text-xs">No departments available.</span>';
+                } else {
+                    updateQuestDepartmentLabel();
+                }
+            } catch (e) {
+                console.error('Failed to load departments for quest', e);
+                dropdown.innerHTML = '<span class="text-red-500 text-xs">Failed to load departments.</span>';
+            }
+        }
+        loadQuestDepartments();
     </script>
 </body>
 </html>`;
