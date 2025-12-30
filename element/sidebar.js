@@ -883,6 +883,64 @@ export function renderSidebar(target) {
             <div class="flex-grow border-t border-gray-200"></div>
         </div>
 
+        <div class="flex justify-center mb-8">
+            <div class="relative inline-block">
+                <button class="btn-dlg-yellow rounded-full px-6 py-2.5 text-sm font-semibold shadow-md"
+                    onclick="toggleSideQuestDropdown(event)">
+                    + Create
+                </button>
+                <div id="sideQuestCreateDropdown"
+                    class="absolute left-1/2 -translate-x-1/2 mt-3 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 text-sm hidden z-40">
+                    <div class="mb-3">
+                        <div class="text-xs font-semibold text-gray-500 mb-1">Priority</div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button"
+                                class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 border border-transparent"
+                                data-priority="urgent"
+                                onclick="setSideQuestPriority('urgent', this)">
+                                Urgent
+                            </button>
+                            <button type="button"
+                                class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-transparent"
+                                data-priority="high"
+                                onclick="setSideQuestPriority('high', this)">
+                                High
+                            </button>
+                            <button type="button"
+                                class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-600 border border-transparent"
+                                data-priority="normal"
+                                onclick="setSideQuestPriority('normal', this)">
+                                Normal
+                            </button>
+                            <button type="button"
+                                class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 border border-transparent"
+                                data-priority="low"
+                                onclick="setSideQuestPriority('low', this)">
+                                Low
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <input id="sideQuestNameInput" type="text" placeholder="Quest Name"
+                            class="w-full text-2xl md:text-3xl font-semibold text-gray-900 border-none focus:ring-0 focus:outline-none placeholder-gray-400" />
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                            class="rounded-full px-4 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100"
+                            onclick="toggleSideQuestDropdown(event)">
+                            Cancel
+                        </button>
+                        <button type="button"
+                            class="rounded-full px-4 py-1.5 text-xs font-semibold text-white"
+                            style="background: radial-gradient(circle at 0% 0%, #a855f7 0%, #1d4ed8 60%, #0f172a 100%); box-shadow: 0 10px 25px rgba(59,130,246,0.35);"
+                            onclick="saveSideQuest()">
+                            Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" role="tablist">
             <li class="nav-card active bg-[#FEE2E2] p-5 rounded-[2rem] flex flex-col gap-3" onclick="switchTab('urgent', this)">
                 <div class="icon-box w-10 h-10 rounded-xl flex items-center justify-center shadow-sm">
@@ -927,29 +985,20 @@ export function renderSidebar(target) {
                 <h4 class="text-red-600 font-black text-sm mb-6 uppercase tracking-widest flex items-center gap-2">
                     <span class="w-2 h-2 bg-red-600 rounded-full animate-ping"></span> Urgent Tasks
                 </h4>
-                <div class="space-y-4">
-                    <div class="p-4 rounded-2xl bg-gray-50 flex items-center justify-between">
-                        <span class="font-bold text-gray-700">Database Migration</span>
-                        <span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm font-bold text-gray-400">#DB-01</span>
-                    </div>
-                    <div class="p-4 rounded-2xl bg-gray-50 flex items-center justify-between">
-                        <span class="font-bold text-gray-700">Client Emergency Call</span>
-                        <span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm font-bold text-gray-400">#CS-09</span>
-                    </div>
-                </div>
+                <div id="sideQuestUrgentList" class="space-y-4"></div>
             </div>
             
             <div id="high-content" class="tab-pane hidden">
                 <h4 class="text-blue-600 font-black text-sm mb-6 uppercase tracking-widest">High Priority Tasks</h4>
-                <p class="text-gray-400 italic">No tasks in this category yet.</p>
+                <div id="sideQuestHighList" class="space-y-4"></div>
             </div>
             <div id="normal-content" class="tab-pane hidden">
                 <h4 class="text-amber-600 font-black text-sm mb-6 uppercase tracking-widest">Normal Priority Tasks</h4>
-                <p class="text-gray-400 italic">No tasks in this category yet.</p>
+                <div id="sideQuestNormalList" class="space-y-4"></div>
             </div>
             <div id="low-content" class="tab-pane hidden">
                 <h4 class="text-purple-600 font-black text-sm mb-6 uppercase tracking-widest">Low Priority Tasks</h4>
-                <p class="text-gray-400 italic">No tasks in this category yet.</p>
+                <div id="sideQuestLowList" class="space-y-4"></div>
             </div>
         </div>
 
@@ -975,6 +1024,7 @@ export function renderSidebar(target) {
     <script>
         lucide.createIcons();
         var questCurrentPriority = 'urgent';
+        var sideQuestCurrentPriority = 'normal';
         var questActionMode = null;
         var questTasksById = {};
 
@@ -991,8 +1041,113 @@ export function renderSidebar(target) {
             if (!el) return;
             if (el.classList.contains('hidden')) {
                 el.classList.remove('hidden');
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
                 el.classList.add('hidden');
+            }
+        }
+        function setSideQuestPriority(priority, element) {
+            sideQuestCurrentPriority = priority || 'normal';
+            var buttons = document.querySelectorAll('.side-quest-priority-btn');
+            Array.prototype.slice.call(buttons).forEach(function (btn) {
+                btn.classList.remove('border-slate-900', 'bg-slate-900', 'text-white');
+            });
+            if (element) {
+                element.classList.add('border-slate-900', 'bg-slate-900', 'text-white');
+            }
+        }
+        function toggleSideQuestDropdown(event) {
+            var dropdown = document.getElementById('sideQuestCreateDropdown');
+            if (!dropdown) return;
+            if (event && event.stopPropagation) {
+                event.stopPropagation();
+            }
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                var input = document.getElementById('sideQuestNameInput');
+                if (input && input.focus) {
+                    input.focus();
+                }
+                if (!sideQuestCurrentPriority) {
+                    setSideQuestPriority('normal');
+                } else {
+                    var buttons = document.querySelectorAll('.side-quest-priority-btn');
+                    Array.prototype.slice.call(buttons).forEach(function (btn) {
+                        if (btn.getAttribute('data-priority') === sideQuestCurrentPriority) {
+                            btn.classList.add('border-slate-900', 'bg-slate-900', 'text-white');
+                        } else {
+                            btn.classList.remove('border-slate-900', 'bg-slate-900', 'text-white');
+                        }
+                    });
+                }
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+        async function saveSideQuest() {
+            var parentWin = window.parent;
+            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.addDoc || !parentWin.serverTimestamp) {
+                alert('Tidak dapat menyimpan side quest: koneksi database tidak tersedia.');
+                return;
+            }
+            var input = document.getElementById('sideQuestNameInput');
+            var title = input ? String(input.value || '').trim() : '';
+            if (!title) {
+                alert('Silakan isi Side Quest Name terlebih dahulu.');
+                return;
+            }
+            try {
+                var localData = null;
+                try {
+                    localData = JSON.parse(localStorage.getItem('userData') || 'null');
+                } catch (e) {
+                    localData = null;
+                }
+                var createdBy = localData && localData.uid ? localData.uid : '';
+                var createdByName = localData && localData.name ? localData.name : '';
+                var basePayload = {
+                    title: title,
+                    description: '',
+                    priority: sideQuestCurrentPriority || 'normal',
+                    due_date: '',
+                    points: 0,
+                    departments: [],
+                    positions: [],
+                    assign_to: [],
+                    notify_to: [],
+                    tags: [],
+                    reminder_mode: null,
+                    reminder_dates: [],
+                    recur: null,
+                    status: 'SideQuest',
+                    created_by: createdBy,
+                    created_by_name: createdByName,
+                    type: 'side-quest'
+                };
+                var payload = basePayload;
+                if (parentWin.JSON && parentWin.JSON.parse && parentWin.JSON.stringify) {
+                    try {
+                        payload = parentWin.JSON.parse(parentWin.JSON.stringify(basePayload));
+                    } catch (e) {
+                        payload = basePayload;
+                    }
+                }
+                payload.created_at = parentWin.serverTimestamp();
+                await parentWin.addDoc(parentWin.collection(parentWin.db, 'tasks'), payload);
+                if (typeof loadSideQuestTasks === 'function') {
+                    loadSideQuestTasks();
+                }
+                if (input) {
+                    input.value = '';
+                }
+                var dropdown = document.getElementById('sideQuestCreateDropdown');
+                if (dropdown) {
+                    dropdown.classList.add('hidden');
+                }
+                alert('Side Quest berhasil disimpan.');
+            } catch (err) {
+                console.error('Gagal menyimpan side quest', err);
+                alert('Gagal menyimpan side quest: ' + (err && err.message ? err.message : String(err)));
             }
         }
         function questDueParseDate(val) {
@@ -2169,6 +2324,70 @@ export function renderSidebar(target) {
                 }
             }
         }
+        async function loadSideQuestTasks() {
+            var urgentList = document.getElementById('sideQuestUrgentList');
+            var highList = document.getElementById('sideQuestHighList');
+            var normalList = document.getElementById('sideQuestNormalList');
+            var lowList = document.getElementById('sideQuestLowList');
+            if (!urgentList && !highList && !normalList && !lowList) return;
+            var parentWin = window.parent;
+            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.getDocs) return;
+            try {
+                function esc(str) {
+                    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+                if (urgentList) urgentList.innerHTML = '';
+                if (highList) highList.innerHTML = '';
+                if (normalList) normalList.innerHTML = '';
+                if (lowList) lowList.innerHTML = '';
+                var snap = await parentWin.getDocs(parentWin.collection(parentWin.db, 'tasks'));
+                snap.forEach(function (docSnap) {
+                    var data = docSnap.data() || {};
+                    if (data.project_id || data.projectId) return;
+                    var type = String(data.type || '').toLowerCase();
+                    var status = String(data.status || '').toLowerCase();
+                    if (type !== 'side-quest' && status !== 'sidequest') return;
+                    var title = data.title || '';
+                    if (!title) return;
+                    var priority = String(data.priority || 'normal').toLowerCase();
+                    var targetList = null;
+                    if (priority === 'urgent') {
+                        targetList = urgentList;
+                    } else if (priority === 'high') {
+                        targetList = highList;
+                    } else if (priority === 'low') {
+                        targetList = lowList;
+                    } else {
+                        targetList = normalList;
+                    }
+                    if (!targetList) return;
+                    var el = document.createElement('div');
+                    el.className = 'p-4 rounded-2xl bg-gray-50 flex items-center justify-between';
+                    var label = '#' + String(docSnap.id || '').substring(0, 6).toUpperCase();
+                    var html = '';
+                    html += '<span class="font-bold text-gray-700">' + esc(title) + '</span>';
+                    html += '<span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm font-bold text-gray-400">' + esc(label) + '</span>';
+                    el.innerHTML = html;
+                    targetList.appendChild(el);
+                });
+                function ensureList(listEl, message) {
+                    if (!listEl) return;
+                    if (!listEl.innerHTML.trim()) {
+                        listEl.innerHTML = '<p class="text-gray-400 italic text-sm">' + esc(message) + '</p>';
+                    }
+                }
+                ensureList(urgentList, 'No urgent side quests yet.');
+                ensureList(highList, 'No high side quests yet.');
+                ensureList(normalList, 'No normal side quests yet.');
+                ensureList(lowList, 'No low side quests yet.');
+            } catch (e) {
+                console.error('Failed to load side quests', e);
+                if (urgentList) urgentList.innerHTML = '<p class="text-red-500 text-xs">Failed to load side quests.</p>';
+                if (highList) highList.innerHTML = '<p class="text-red-500 text-xs">Failed to load side quests.</p>';
+                if (normalList) normalList.innerHTML = '<p class="text-red-500 text-xs">Failed to load side quests.</p>';
+                if (lowList) lowList.innerHTML = '<p class="text-red-500 text-xs">Failed to load side quests.</p>';
+            }
+        }
         async function loadQuestDepartments() {
             var dropdown = document.getElementById('questDepartmentDropdown');
             if (!dropdown) return;
@@ -2726,11 +2945,13 @@ export function renderSidebar(target) {
             questCloseDropdownIfOutside(event, 'questNotifyDropdown', false);
             questCloseDropdownIfOutside(event, 'quest-tag-dropdown', true);
             questCloseDropdownIfOutside(event, 'questHeaderMenu', false);
+            questCloseDropdownIfOutside(event, 'sideQuestCreateDropdown', false);
         });
         loadQuestDepartments();
         loadQuestPositions();
         loadQuestUsers();
         loadQuestTasks();
+        loadSideQuestTasks();
     </script>
 </body>
 </html>`;
