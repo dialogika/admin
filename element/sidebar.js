@@ -2059,7 +2059,9 @@ export function renderSidebar(target) {
                 wrapper.setAttribute('data-task-id', id);
             }
             var html = '';
-            html += '<div class="w-6 h-6 border-2 ' + borderClass + ' rounded-full mt-1.5 flex-shrink-0"></div>';
+            html += '<button type="button" class="w-6 h-6 border-2 ' + borderClass + ' rounded-full mt-1.5 flex-shrink-0 flex items-center justify-center bg-white quest-card-check-btn">';
+            html += '<i data-lucide="check" class="w-3 h-3 text-gray-400"></i>';
+            html += '</button>';
             html += '<div class="flex-1">';
             html += '<div class="flex flex-wrap items-center gap-2 mb-1">';
             html += '<h3 class="text-xl font-bold leading-tight">' + esc(title) + '</h3>';
@@ -2455,6 +2457,16 @@ export function renderSidebar(target) {
                 alert('Gagal menghapus quest: ' + (e && e.message ? e.message : String(e)));
             }
         }
+        function questOpenTask(taskId) {
+            if (!taskId) return;
+            var targetWin = window.parent && window.parent !== window ? window.parent : window;
+            var url = 'quest/quest-task.html?taskId=' + encodeURIComponent(taskId);
+            try {
+                targetWin.open(url, '_blank');
+            } catch (e) {
+                window.open(url, '_blank');
+            }
+        }
         async function saveQuest() {
             var parentWin = window.parent;
             if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.addDoc || !parentWin.serverTimestamp) {
@@ -2672,6 +2684,17 @@ export function renderSidebar(target) {
             }
         }
         document.addEventListener('click', function (event) {
+            var checkBtn = event.target.closest('.quest-card-check-btn');
+            if (checkBtn) {
+                var card = checkBtn.closest('.quest-card');
+                if (card) {
+                    var id = card.getAttribute('data-task-id');
+                    if (id) {
+                        questOpenTask(id);
+                    }
+                }
+                return;
+            }
             var editBtn = event.target.closest('.quest-card-edit-btn');
             if (editBtn) {
                 var cardEdit = editBtn.closest('.quest-card');
