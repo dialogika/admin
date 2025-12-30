@@ -339,6 +339,24 @@ export function renderSidebar(target) {
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-4xl font-extrabold tracking-tight">Quest Board</h1>
             <div class="flex items-center gap-3">
+                <div class="relative">
+                    <button type="button"
+                        class="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm"
+                        onclick="toggleQuestHeaderMenu(event)">
+                        <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                    </button>
+                    <div id="questHeaderMenu"
+                        class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg py-1 text-sm text-gray-700 hidden z-40">
+                        <button type="button" class="w-full text-left px-3 py-1.5 hover:bg-gray-100"
+                            onclick="questHeaderEdit()">
+                            Edit
+                        </button>
+                        <button type="button" class="w-full text-left px-3 py-1.5 hover:bg-gray-100 text-red-600"
+                            onclick="questHeaderDelete()">
+                            Delete
+                        </button>
+                    </div>
+                </div>
                 <button class="btn-dlg-yellow rounded-full px-6 py-2.5 text-sm font-semibold shadow-md"
                     onclick="toggleQuestForm()">
                     + Create
@@ -843,87 +861,19 @@ export function renderSidebar(target) {
                 <h2 class="text-2xl font-bold text-red-600">Overdue</h2>
             </div>
             
-            <div class="space-y-8">
-                <div class="flex items-start gap-4">
-                    <div class="w-6 h-6 border-2 border-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                    <div class="flex-1">
-                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 class="text-xl font-bold leading-tight">Name Quest 1</h3>
-                            <span class="inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                                24 Dec 2023 &nbsp;&nbsp; <i data-lucide="repeat" class="w-4 h-4 text-white"></i>
-                            </span>
-                            
-                        </div>
-                        <p class="text-gray-600 italic description-truncate text-sm mb-3">
-                            description quest, anything about this quest, maximum words is two line, never create more about it, if the description is long give three dots in behind...
-                        </p>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex -space-x-2">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=1">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=2">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=3">
-                                <div class="w-7 h-7 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">+2</div>
-                            </div>
-                            <div class="flex gap-2">
-                                <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Urgent</span>
-                                <span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Dev</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-4">
-                    <div class="w-6 h-6 border-2 border-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                    <div class="flex-1">
-                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 class="text-xl font-bold">Name Quest 2</h3>
-                            <span class="inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                                25 Dec 2023 &nbsp;&nbsp; <i data-lucide="repeat" class="w-4 h-4 text-white"></i>
-                            </span>
-                            
-                        </div>
-                        <p class="text-gray-400 italic text-sm mb-3">No description provided.</p>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex -space-x-2">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=4">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=5">
-                            </div>
-                            <div class="flex gap-2">
-                                <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Backlog</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="space-y-8" id="questOverdueList">
             </div>
         </section>
 
         <section class="mb-12">
             <h2 class="text-2xl font-bold mb-6">Todays</h2>
-            <div class="space-y-6">
-                <div class="flex items-start gap-4">
-                    <div class="w-6 h-6 border-2 border-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                    <div class="flex-1">
-                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 class="text-xl font-bold">Review Project Architecture</h3>
-                            <span class="inline-flex items-center gap-1 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-                                29 Dec 2023 &nbsp;&nbsp; <i data-lucide="repeat" class="w-4 h-4 text-white"></i>
-                            </span>
-                            
-                        </div>
-                        <p class="text-gray-600 italic description-truncate text-sm mb-3">
-                            Selesaikan review modul autentikasi sebelum jam makan siang agar bisa lanjut ke bagian database.
-                        </p>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex -space-x-2">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=10">
-                                <img class="w-7 h-7 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?u=11">
-                            </div>
-                            <div class="flex gap-2">
-                                <span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Work</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="space-y-6" id="questTodayList">
+            </div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold mb-6">Upcoming</h2>
+            <div class="space-y-6" id="questUpcomingList">
             </div>
         </section>
 
@@ -2043,6 +1993,156 @@ export function renderSidebar(target) {
                 setQuestTags(current);
             }
         }
+        function parseQuestDueDateString(s) {
+            if (!s) return null;
+            var parts = String(s).split('/');
+            if (parts.length !== 3) return null;
+            var d = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10) - 1;
+            var y = parseInt(parts[2], 10);
+            if (isNaN(d) || isNaN(m) || isNaN(y)) return null;
+            var date = new Date(y, m, d);
+            if (isNaN(date.getTime())) return null;
+            if (date.getDate() !== d || date.getMonth() !== m || date.getFullYear() !== y) return null;
+            return date;
+        }
+        function questDateToNumber(date) {
+            return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+        }
+        function buildQuestTaskCard(task) {
+            var title = task && task.title ? String(task.title) : 'Untitled Quest';
+            var dueText = task && (task.due_date || task.dueDate) ? String(task.due_date || task.dueDate) : '';
+            var priority = task && task.priority ? String(task.priority).toLowerCase() : '';
+            var descHtml = task && task.description ? String(task.description) : '';
+            var tmp = document.createElement('div');
+            tmp.innerHTML = descHtml;
+            var descText = (tmp.textContent || tmp.innerText || '').trim();
+            if (!descText) {
+                descText = 'No description provided.';
+            }
+            var tags = Array.isArray(task && task.tags) ? task.tags : [];
+            var primaryTag = tags.length ? String(tags[0]) : '';
+            var assignCount = 0;
+            if (task) {
+                if (Array.isArray(task.assign_to)) {
+                    assignCount = task.assign_to.length;
+                } else if (task.assign_to) {
+                    assignCount = 1;
+                }
+            }
+            function esc(str) {
+                return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+            var borderClass = 'border-blue-500';
+            var badgeClass = 'bg-blue-600';
+            if (priority === 'urgent') {
+                borderClass = 'border-orange-500';
+                badgeClass = 'bg-red-500';
+            } else if (priority === 'high') {
+                borderClass = 'border-red-500';
+                badgeClass = 'bg-red-500';
+            } else if (priority === 'low') {
+                borderClass = 'border-gray-400';
+                badgeClass = 'bg-gray-500';
+            }
+            var wrapper = document.createElement('div');
+            wrapper.className = 'flex items-start gap-4';
+            var html = '';
+            html += '<div class="w-6 h-6 border-2 ' + borderClass + ' rounded-full mt-1.5 flex-shrink-0"></div>';
+            html += '<div class="flex-1">';
+            html += '<div class="flex flex-wrap items-center gap-2 mb-1">';
+            html += '<h3 class="text-xl font-bold leading-tight">' + esc(title) + '</h3>';
+            if (dueText) {
+                html += '<span class="inline-flex items-center gap-1 ' + badgeClass + ' text-white text-xs font-bold px-2 py-1 rounded">';
+                html += esc(dueText);
+                if (task && task.recur) {
+                    html += '&nbsp;&nbsp; <i data-lucide="repeat" class="w-4 h-4 text-white"></i>';
+                }
+                html += '</span>';
+            }
+            html += '</div>';
+            html += '<p class="text-gray-600 italic description-truncate text-sm mb-3">' + esc(descText) + '</p>';
+            html += '<div class="flex flex-col gap-3">';
+            html += '<div class="flex -space-x-2">';
+            if (assignCount > 0) {
+                html += '<div class="w-7 h-7 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">';
+                html += esc(String(assignCount));
+                html += '</div>';
+            }
+            html += '</div>';
+            html += '<div class="flex gap-2">';
+            if (primaryTag) {
+                html += '<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">';
+                html += esc(primaryTag);
+                html += '</span>';
+            }
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            wrapper.innerHTML = html;
+            return wrapper;
+        }
+        async function loadQuestTasks() {
+            var overdueList = document.getElementById('questOverdueList');
+            var todayList = document.getElementById('questTodayList');
+            var upcomingList = document.getElementById('questUpcomingList');
+            if (!overdueList && !todayList && !upcomingList) return;
+            var parentWin = window.parent;
+            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.getDocs) return;
+            try {
+                if (overdueList) overdueList.innerHTML = '';
+                if (todayList) todayList.innerHTML = '';
+                if (upcomingList) upcomingList.innerHTML = '';
+                var snap = await parentWin.getDocs(parentWin.collection(parentWin.db, 'tasks'));
+                var now = new Date();
+                var todayNum = questDateToNumber(now);
+                snap.forEach(function (docSnap) {
+                    var data = docSnap.data() || {};
+                    if (data.project_id || data.projectId) return;
+                    var status = String(data.status || '').toLowerCase();
+                    if (status === 'complete') return;
+                    var dueText = data.due_date || data.dueDate || '';
+                    if (!dueText) return;
+                    var dueDate = parseQuestDueDateString(dueText);
+                    if (!dueDate) return;
+                    var dayNum = questDateToNumber(dueDate);
+                    var targetList = null;
+                    if (dayNum < todayNum) {
+                        targetList = overdueList;
+                    } else if (dayNum === todayNum) {
+                        targetList = todayList;
+                    } else if (dayNum > todayNum) {
+                        targetList = upcomingList;
+                    }
+                    if (!targetList) return;
+                    var card = buildQuestTaskCard(data);
+                    targetList.appendChild(card);
+                });
+                if (overdueList && !overdueList.innerHTML.trim()) {
+                    overdueList.innerHTML = '<p class="text-gray-400 italic text-sm">No overdue quests.</p>';
+                }
+                if (todayList && !todayList.innerHTML.trim()) {
+                    todayList.innerHTML = '<p class="text-gray-400 italic text-sm">No quests for today.</p>';
+                }
+                if (upcomingList && !upcomingList.innerHTML.trim()) {
+                    upcomingList.innerHTML = '<p class="text-gray-400 italic text-sm">No upcoming quests.</p>';
+                }
+                if (window.lucide && window.lucide.createIcons) {
+                    window.lucide.createIcons();
+                }
+            } catch (e) {
+                console.error('Failed to load quest tasks', e);
+                if (overdueList) {
+                    overdueList.innerHTML = '<p class="text-red-500 text-xs">Failed to load quests.</p>';
+                }
+                if (todayList) {
+                    todayList.innerHTML = '<p class="text-red-500 text-xs">Failed to load quests.</p>';
+                }
+                if (upcomingList) {
+                    upcomingList.innerHTML = '<p class="text-red-500 text-xs">Failed to load quests.</p>';
+                }
+            }
+        }
         async function loadQuestDepartments() {
             var dropdown = document.getElementById('questDepartmentDropdown');
             if (!dropdown) return;
@@ -2362,7 +2462,7 @@ export function renderSidebar(target) {
                 }
                 var createdBy = localData && localData.uid ? localData.uid : '';
                 var createdByName = localData && localData.name ? localData.name : '';
-                var payload = {
+                var basePayload = {
                     title: title,
                     description: descHtml,
                     priority: questCurrentPriority || 'normal',
@@ -2377,11 +2477,19 @@ export function renderSidebar(target) {
                     reminder_dates: reminderDates,
                     recur: recur,
                     status: 'Initiate',
-                    created_at: parentWin.serverTimestamp(),
                     created_by: createdBy,
                     created_by_name: createdByName
                 };
-                await parentWin.addDoc(parentWin.collection(parentWin.db, 'quests'), payload);
+                var payload = basePayload;
+                if (parentWin.JSON && parentWin.JSON.parse && parentWin.JSON.stringify) {
+                    try {
+                        payload = parentWin.JSON.parse(parentWin.JSON.stringify(basePayload));
+                    } catch (e) {
+                        payload = basePayload;
+                    }
+                }
+                payload.created_at = parentWin.serverTimestamp();
+                await parentWin.addDoc(parentWin.collection(parentWin.db, 'tasks'), payload);
                 if (nameInput) nameInput.value = '';
                 if (dueInput) dueInput.value = '';
                 if (pointInput) pointInput.value = '';
@@ -2422,6 +2530,30 @@ export function renderSidebar(target) {
                 }
             }
         }
+        function toggleQuestHeaderMenu(event) {
+            var menu = document.getElementById('questHeaderMenu');
+            if (!menu) return;
+            if (event && event.stopPropagation) {
+                event.stopPropagation();
+            }
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+        function questHeaderEdit() {
+            var menu = document.getElementById('questHeaderMenu');
+            if (menu) {
+                menu.classList.add('hidden');
+            }
+        }
+        function questHeaderDelete() {
+            var menu = document.getElementById('questHeaderMenu');
+            if (menu) {
+                menu.classList.add('hidden');
+            }
+        }
         function questCloseDropdownIfOutside(event, dropdownId, usesDisplayStyle) {
             var dropdown = document.getElementById(dropdownId);
             if (!dropdown) return;
@@ -2449,10 +2581,12 @@ export function renderSidebar(target) {
             questCloseDropdownIfOutside(event, 'questPositionDropdown', false);
             questCloseDropdownIfOutside(event, 'questNotifyDropdown', false);
             questCloseDropdownIfOutside(event, 'quest-tag-dropdown', true);
+            questCloseDropdownIfOutside(event, 'questHeaderMenu', false);
         });
         loadQuestDepartments();
         loadQuestPositions();
         loadQuestUsers();
+        loadQuestTasks();
     </script>
 </body>
 </html>`;
