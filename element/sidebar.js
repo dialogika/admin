@@ -186,6 +186,112 @@ export function renderSidebar(target) {
             background: linear-gradient(to top,#fcf221 22%, #f1ac15 100%);
             box-shadow: 0px 0px 4px 2px rgba(114, 4, 207, 0.75);
         }
+        .tag-selector {
+            position: relative;
+            width: 100%;
+        }
+        .tag-selector-control {
+            display: flex;
+            align-items: center;
+            min-height: 34px;
+            border-radius: 8px;
+            padding: 4px 10px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            cursor: text;
+            width: 100%;
+            gap: 6px;
+        }
+        .tag-selector-control:hover {
+            background: #f3f4f6;
+        }
+        .tag-selected-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            flex: 1;
+        }
+        .tag-placeholder {
+            color: #9ca3af;
+            font-size: 0.75rem;
+        }
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            background: #e5e7eb;
+            color: #111827;
+        }
+        .tag-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
+            padding: 6px 0 4px 0;
+            z-index: 40;
+            display: none;
+        }
+        .tag-search-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 6px 12px 8px 12px;
+            font-size: 0.85rem;
+        }
+        .tag-options {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 0 4px 4px 4px;
+        }
+        .tag-option {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            cursor: pointer;
+            gap: 6px;
+        }
+        .tag-option:hover {
+            background: #f3f4f6;
+        }
+        .tag-option-selected .tag-pill {
+            background: #4338ca;
+            color: #eef2ff;
+        }
+        .tag-create {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px 8px 12px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.8rem;
+            color: #6b7280;
+            cursor: pointer;
+        }
+        .tag-create:hover {
+            background: #f3f4f6;
+        }
+        .tag-create-label {
+            margin-left: 4px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+        .tag-remove {
+            margin-left: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
+        .tag-remove:hover {
+            color: #111827;
+        }
     </style>
 </head>
 <body class="min-h-screen p-6 md:p-12" style="background: #fff;">
@@ -495,11 +601,90 @@ export function renderSidebar(target) {
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="font-medium text-gray-500 w-24">Track time</div>
-                        <button type="button"
-                            class="inline-flex items-center rounded-full border border-gray-200 px-4 py-1.5 text-xs md:text-sm font-medium text-gray-700 bg-white">
-                            Start
-                        </button>
+                        <div class="font-medium text-gray-500 w-24">Reminder</div>
+                        <div class="flex-1">
+                            <div class="relative">
+                                <button type="button"
+                                    class="w-full flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-left text-gray-700"
+                                    onclick="toggleQuestReminderDropdown()">
+                                    <span id="questReminderButtonLabel" class="text-xs md:text-sm">No reminder</span>
+                                    <span class="text-gray-400 text-xs md:text-sm">&#9662;</span>
+                                </button>
+                                <div id="questReminderDropdown"
+                                    class="absolute left-0 mt-2 w-[420px] md:w-[460px] rounded-2xl bg-white border border-gray-200 shadow-2xl p-4 text-xs md:text-sm text-gray-800 hidden z-30">
+                                    <div class="flex gap-4">
+                                        <div class="w-40 md:w-44 border-r border-gray-100 pr-4">
+                                            <div class="font-semibold text-sm mb-2">Reminder</div>
+                                            <div class="flex flex-col gap-1">
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('day-before')">
+                                                    <span>A Day Before</span>
+                                                </button>
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('two-days-before')">
+                                                    <span>Two Days Before</span>
+                                                </button>
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('three-days-before')">
+                                                    <span>Three Days Before</span>
+                                                </button>
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('weekend-before')">
+                                                    <span>At Weekend Before</span>
+                                                </button>
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('everyday-before')">
+                                                    <span>Everyday Before</span>
+                                                </button>
+                                                <hr/>
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('early-month')">
+                                                    <span>Early Day in Every Month</span>
+                                                </button>
+                                                <button type="button" class="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50"
+                                                    onclick="questReminderQuickSelect('final-month')">
+                                                    <span>Final Day in Every Month</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 pl-2">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div id="questReminderSummary"
+                                                    class="text-[11px] text-gray-500">
+                                                </div>
+                                                <div class="flex items-center gap-1">
+                                                    <button type="button"
+                                                        class="p-1 text-gray-400 hover:text-gray-600"
+                                                        onclick="questReminderChangeMonth(-1)">
+                                                        &#10094;
+                                                    </button>
+                                                    <div id="questReminderMonthLabel"
+                                                        class="text-[11px] font-semibold text-gray-700 min-w-[90px] text-center">
+                                                    </div>
+                                                    <button type="button"
+                                                        class="p-1 text-gray-400 hover:text-gray-600"
+                                                        onclick="questReminderChangeMonth(1)">
+                                                        &#10095;
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-7 gap-1 text-[10px] text-gray-400 mb-1">
+                                                <div class="text-center">Su</div>
+                                                <div class="text-center">Mo</div>
+                                                <div class="text-center">Tu</div>
+                                                <div class="text-center">We</div>
+                                                <div class="text-center">Th</div>
+                                                <div class="text-center">Fr</div>
+                                                <div class="text-center">Sa</div>
+                                            </div>
+                                            <div id="questReminderCalendarGrid"
+                                                class="grid grid-cols-7 gap-1 text-[11px] text-gray-500">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="space-y-4 text-sm">
@@ -563,11 +748,23 @@ export function renderSidebar(target) {
                     <div class="flex items-center gap-3">
                         <div class="font-medium text-gray-500 w-24">Tags</div>
                         <div class="flex-1">
-                            <button type="button"
-                                class="w-full flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-left text-gray-500">
-                                <span class="text-xs md:text-sm">Search or add tags...</span>
-                                <span class="text-gray-400 text-xs md:text-sm">&#9662;</span>
-                            </button>
+                            <div class="tag-selector w-full" id="tag-selector-quest">
+                                <div class="tag-selector-control" onclick="toggleQuestTagDropdown()">
+                                    <div class="tag-selected-list" id="quest-tag-selected">
+                                        <span class="tag-placeholder">Search or add tags...</span>
+                                    </div>
+                                    <span class="text-gray-400 text-xs md:text-sm">&#9662;</span>
+                                </div>
+                                <div class="tag-dropdown" id="quest-tag-dropdown">
+                                    <input type="text" id="quest-tag-input" class="tag-search-input" placeholder="Search or add tags..." oninput="filterQuestTagOptions()">
+                                    <div class="tag-options" id="quest-tag-options"></div>
+                                    <div class="tag-create" id="quest-tag-create" style="display:none;" onclick="createQuestTagFromInput()">
+                                        <span>Create</span>
+                                        <span class="tag-create-label" id="quest-tag-create-label"></span>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="quest-tags" value="">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -765,6 +962,23 @@ export function renderSidebar(target) {
 
     </div>
 
+    <div id="questReminderAlert"
+        class="fixed inset-0 flex items-center justify-center bg-black/40 z-40 hidden">
+        <div class="bg-white rounded-2xl shadow-xl px-6 py-5 max-w-sm w-full mx-4">
+            <div class="text-sm font-semibold text-gray-900 mb-2">Reminder unavailable</div>
+            <div class="text-xs text-gray-600 mb-4">
+                Please select Dates before setting a reminder.
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button"
+                    class="rounded-full px-4 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200"
+                    onclick="document.getElementById('questReminderAlert').classList.add('hidden')">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
 
@@ -958,9 +1172,182 @@ export function renderSidebar(target) {
                 grid.appendChild(cell);
             }
         }
+        function questReminderEnsureDue() {
+            var input = document.getElementById('questDueDate');
+            if (!input || !input.value || !String(input.value).trim()) {
+                var modal = document.getElementById('questReminderAlert');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                } else {
+                    alert('Please set Dates before choosing a reminder.');
+                }
+                return false;
+            }
+            return true;
+        }
+        function toggleQuestReminderDropdown() {
+            if (!questReminderEnsureDue()) return;
+            var panel = document.getElementById('questReminderDropdown');
+            if (!panel) return;
+            if (panel.classList.contains('hidden')) {
+                questReminderState = null;
+                questReminderEnsureState();
+                panel.classList.remove('hidden');
+                renderQuestReminderCalendar();
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+        function questReminderEnsureState() {
+            var input = document.getElementById('questDueDate');
+            var base = questDueParseDate(input ? input.value : '');
+            if (!questReminderState) {
+                questReminderState = {
+                    baseDate: base,
+                    month: base.getMonth(),
+                    year: base.getFullYear(),
+                    mode: null
+                };
+            }
+        }
+        function questReminderQuickSelect(mode) {
+            if (!questReminderEnsureDue()) return;
+            questReminderEnsureState();
+            if (!questReminderState) return;
+            questReminderState.mode = mode;
+            questReminderState.month = questReminderState.baseDate.getMonth();
+            questReminderState.year = questReminderState.baseDate.getFullYear();
+            var label = document.getElementById('questReminderButtonLabel');
+            if (label) {
+                if (mode === 'day-before') label.textContent = 'A Day Before';
+                else if (mode === 'two-days-before') label.textContent = 'Two Days Before';
+                else if (mode === 'three-days-before') label.textContent = 'Three Days Before';
+                else if (mode === 'weekend-before') label.textContent = 'At Weekend Before';
+                else if (mode === 'everyday-before') label.textContent = 'Everyday Before';
+                else if (mode === 'early-month') label.textContent = 'Early Day in Every Month';
+                else if (mode === 'final-month') label.textContent = 'Final Day in Every Month';
+                else label.textContent = 'No reminder';
+            }
+            renderQuestReminderCalendar();
+        }
+        function questReminderChangeMonth(delta) {
+            questReminderEnsureState();
+            if (!questReminderState) return;
+            var m = questReminderState.month + delta;
+            var y = questReminderState.year;
+            if (m < 0) {
+                m = 11;
+                y -= 1;
+            } else if (m > 11) {
+                m = 0;
+                y += 1;
+            }
+            questReminderState.month = m;
+            questReminderState.year = y;
+            renderQuestReminderCalendar();
+        }
+        function questReminderComputeDates() {
+            if (!questReminderState || !questReminderState.baseDate || !questReminderState.mode) return [];
+            var base = new Date(questReminderState.baseDate.getFullYear(), questReminderState.baseDate.getMonth(), questReminderState.baseDate.getDate());
+            var mode = questReminderState.mode;
+            var dates = [];
+            if (mode === 'day-before') {
+                var d1 = new Date(base.getTime());
+                d1.setDate(d1.getDate() - 1);
+                dates.push(d1);
+            } else if (mode === 'two-days-before') {
+                var d2 = new Date(base.getTime());
+                d2.setDate(d2.getDate() - 2);
+                dates.push(d2);
+            } else if (mode === 'three-days-before') {
+                var d3 = new Date(base.getTime());
+                d3.setDate(d3.getDate() - 3);
+                dates.push(d3);
+            } else if (mode === 'weekend-before') {
+                var w = new Date(base.getTime());
+                var day = w.getDay();
+                var offset = day >= 6 ? 7 : day + 1;
+                w.setDate(w.getDate() - offset);
+                dates.push(w);
+            } else if (mode === 'everyday-before') {
+                for (var i = 1; i <= 7; i++) {
+                    var d = new Date(base.getTime());
+                    d.setDate(d.getDate() - i);
+                    dates.push(d);
+                }
+            } else if (mode === 'early-month') {
+                var em = new Date(base.getFullYear(), base.getMonth(), 1);
+                dates.push(em);
+            } else if (mode === 'final-month') {
+                var fm = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+                dates.push(fm);
+            }
+            return dates;
+        }
+        function renderQuestReminderCalendar() {
+            var labelEl = document.getElementById('questReminderMonthLabel');
+            var grid = document.getElementById('questReminderCalendarGrid');
+            var summaryEl = document.getElementById('questReminderSummary');
+            if (!labelEl || !grid) return;
+            questReminderEnsureState();
+            if (!questReminderState) return;
+            var month = questReminderState.month;
+            var year = questReminderState.year;
+            var base = questReminderState.baseDate;
+            var highlightDates = questReminderComputeDates();
+            var today = new Date();
+            var monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            labelEl.textContent = monthNames[month] + ' ' + year;
+            if (summaryEl && base) {
+                summaryEl.textContent = 'Due: ' + questDueFormatDate(base);
+            }
+            grid.innerHTML = '';
+            var first = new Date(year, month, 1);
+            var startWeekday = first.getDay();
+            var daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (var i = 0; i < startWeekday; i++) {
+                var emptyCell = document.createElement('div');
+                grid.appendChild(emptyCell);
+            }
+            function dateKey(d) {
+                return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+            }
+            var highlightMap = {};
+            highlightDates.forEach(function (d) {
+                highlightMap[dateKey(d)] = true;
+            });
+            var baseKey = base ? dateKey(base) : null;
+            for (var d = 1; d <= daysInMonth; d++) {
+                var cellDate = new Date(year, month, d);
+                var cell = document.createElement('div');
+                cell.textContent = String(d);
+                var classes = ['w-7', 'h-7', 'flex', 'items-center', 'justify-center', 'rounded-full', 'text-[11px]'];
+                var isToday = cellDate.getFullYear() === today.getFullYear() &&
+                    cellDate.getMonth() === today.getMonth() &&
+                    cellDate.getDate() === today.getDate();
+                var key = dateKey(cellDate);
+                var isHighlight = highlightMap[key];
+                var isDue = baseKey && key === baseKey;
+                if (isDue) {
+                    classes.push('bg-red-500', 'text-white');
+                } else if (isHighlight) {
+                    classes.push('bg-blue-100', 'text-blue-700');
+                } else if (isToday) {
+                    classes.push('border', 'border-red-300', 'text-red-500');
+                } else {
+                    classes.push('text-gray-500');
+                }
+                cell.className = classes.join(' ');
+                grid.appendChild(cell);
+            }
+        }
         var questRecurState = null;
         var questRecurPrevState = null;
         var questDueState = null;
+        var questReminderState = null;
         function toggleQuestRecurDropdown() {
             var panel = document.getElementById('questRecurDropdown');
             if (!panel) return;
@@ -1422,6 +1809,152 @@ export function renderSidebar(target) {
                 var email = String(u.email || '').toLowerCase();
                 return name.indexOf(q) !== -1 || email.indexOf(q) !== -1;
             });
+        }
+        function getQuestTags() {
+            var hidden = document.getElementById('quest-tags');
+            if (!hidden || !hidden.value) return [];
+            return hidden.value.split(',').map(function (t) { return t.trim(); }).filter(function (t) { return t; });
+        }
+        function setQuestTags(tags) {
+            var hidden = document.getElementById('quest-tags');
+            if (!hidden) return;
+            var clean = Array.from(new Set(tags.map(function (t) { return String(t || '').trim(); }).filter(function (t) { return t; })));
+            hidden.value = clean.join(',');
+            updateQuestSelectedTagUI();
+            var optionsContainer = document.getElementById('quest-tag-options');
+            if (!optionsContainer) return;
+            Array.prototype.slice.call(optionsContainer.children).forEach(function (opt) {
+                var tag = opt.getAttribute('data-tag') || '';
+                if (!tag) return;
+                if (clean.indexOf(tag) !== -1) {
+                    opt.classList.add('tag-option-selected');
+                } else {
+                    opt.classList.remove('tag-option-selected');
+                }
+            });
+        }
+        function updateQuestSelectedTagUI() {
+            var selectedContainer = document.getElementById('quest-tag-selected');
+            if (!selectedContainer) return;
+            var tags = getQuestTags();
+            selectedContainer.innerHTML = '';
+            if (!tags.length) {
+                var span = document.createElement('span');
+                span.className = 'tag-placeholder';
+                span.textContent = 'Search or add tags...';
+                selectedContainer.appendChild(span);
+                return;
+            }
+            tags.forEach(function (tag) {
+                var pill = document.createElement('span');
+                pill.className = 'tag-pill';
+                pill.textContent = tag;
+                var remove = document.createElement('span');
+                remove.className = 'tag-remove';
+                remove.textContent = '×';
+                remove.onclick = function (event) {
+                    event.stopPropagation();
+                    removeQuestTagFromSelection(tag);
+                };
+                pill.appendChild(remove);
+                selectedContainer.appendChild(pill);
+            });
+        }
+        function toggleQuestTagDropdown() {
+            var dropdown = document.getElementById('quest-tag-dropdown');
+            if (!dropdown) return;
+            var isOpen = dropdown.style.display === 'block';
+            dropdown.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen) {
+                var input = document.getElementById('quest-tag-input');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+                filterQuestTagOptions();
+            }
+        }
+        function filterQuestTagOptions() {
+            var input = document.getElementById('quest-tag-input');
+            var optionsContainer = document.getElementById('quest-tag-options');
+            var createRow = document.getElementById('quest-tag-create');
+            var createLabel = document.getElementById('quest-tag-create-label');
+            if (!input || !optionsContainer || !createRow || !createLabel) return;
+            var query = input.value.trim().toLowerCase();
+            var hasVisible = false;
+            var hasExact = false;
+            Array.prototype.slice.call(optionsContainer.children).forEach(function (opt) {
+                var tag = String(opt.getAttribute('data-tag') || '').toLowerCase();
+                var visible = !query || tag.indexOf(query) !== -1;
+                opt.style.display = visible ? 'flex' : 'none';
+                if (visible) {
+                    hasVisible = true;
+                }
+                if (tag === query && query) {
+                    hasExact = true;
+                }
+            });
+            if (query && !hasExact) {
+                createRow.style.display = 'flex';
+                createLabel.textContent = input.value.trim();
+            } else {
+                createRow.style.display = 'none';
+                createLabel.textContent = '';
+            }
+            if (!query && !hasVisible) {
+                createRow.style.display = 'none';
+                createLabel.textContent = '';
+            }
+        }
+        function toggleQuestTagFromOption(tag) {
+            var current = getQuestTags();
+            var index = current.indexOf(tag);
+            if (index >= 0) {
+                current.splice(index, 1);
+            } else {
+                current.push(tag);
+            }
+            setQuestTags(current);
+        }
+        function createQuestTagFromInput() {
+            var input = document.getElementById('quest-tag-input');
+            if (!input) return;
+            var value = input.value.trim();
+            if (!value) return;
+            var current = getQuestTags();
+            if (current.indexOf(value) === -1) {
+                current.push(value);
+            }
+            var optionsContainer = document.getElementById('quest-tag-options');
+            if (optionsContainer) {
+                var exists = Array.prototype.slice.call(optionsContainer.children).some(function (opt) {
+                    return String(opt.getAttribute('data-tag') || '') === value;
+                });
+                if (!exists) {
+                    var opt = document.createElement('div');
+                    opt.className = 'tag-option';
+                    opt.setAttribute('data-tag', value);
+                    opt.onclick = function () {
+                        toggleQuestTagFromOption(value);
+                    };
+                    var pill = document.createElement('span');
+                    pill.className = 'tag-pill';
+                    pill.textContent = value;
+                    opt.appendChild(pill);
+                    optionsContainer.insertBefore(opt, optionsContainer.firstChild || null);
+                }
+            }
+            setQuestTags(current);
+            input.value = '';
+            filterQuestTagOptions();
+        }
+        function removeQuestTagFromSelection(tag) {
+            var current = getQuestTags();
+            var index = current.indexOf(tag);
+            if (index >= 0) {
+                current.splice(index, 1);
+                setQuestTags(current);
+            }
         }
         async function loadQuestDepartments() {
             var dropdown = document.getElementById('questDepartmentDropdown');
