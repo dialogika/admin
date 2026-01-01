@@ -136,7 +136,9 @@ export function renderSidebar(target) {
     <title>Quest Board - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         body { font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -293,6 +295,31 @@ export function renderSidebar(target) {
         .tag-remove:hover {
             color: #111827;
         }
+        .tooltip .tooltip-inner {
+            background-color: #0f172a;
+            color: #e5e7eb;
+            font-size: 11px;
+            line-height: 1.3;
+            padding: 4px 8px;
+            border-radius: 999px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35);
+        }
+        .tooltip.bs-tooltip-top .tooltip-arrow::before,
+        .tooltip.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before {
+            border-top-color: #0f172a;
+        }
+        .tooltip.bs-tooltip-bottom .tooltip-arrow::before,
+        .tooltip.bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before {
+            border-bottom-color: #0f172a;
+        }
+        .tooltip.bs-tooltip-start .tooltip-arrow::before,
+        .tooltip.bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before {
+            border-left-color: #0f172a;
+        }
+        .tooltip.bs-tooltip-end .tooltip-arrow::before,
+        .tooltip.bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before {
+            border-right-color: #0f172a;
+        }
         .rich-editor {
             position: relative;
             background: #ffffff;
@@ -359,11 +386,11 @@ export function renderSidebar(target) {
                 </div>
                 <button class="btn-dlg-yellow rounded-full px-6 py-2.5 text-sm font-semibold shadow-md"
                     onclick="toggleQuestForm()">
-                    + Create
+                    Add Quest
                 </button>
                 <button class="btn-dlg-red rounded-full px-5 py-2 text-sm font-semibold shadow-md"
                     onclick="if (window.parent && window.parent.closeQuestBoardModal) { window.parent.closeQuestBoardModal(); }">
-                    X
+                    Close
                 </button>
             </div>
         </div>
@@ -607,8 +634,7 @@ export function renderSidebar(target) {
                                                         Cancel
                                                     </button>
                                                     <button type="button"
-                                                        class="rounded-full px-4 py-1.5 text-xs md:text-sm font-semibold text-white"
-                                                        style="background: radial-gradient(circle at 0% 0%, #a855f7 0%, #1d4ed8 60%, #0f172a 100%);"
+                                                        class="rounded-full px-4 py-1.5 text-xs md:text-sm font-semibold text-white btn-dlg-blue"
                                                         onclick="questRecurSave()">
                                                         Save
                                                     </button>
@@ -848,8 +874,8 @@ export function renderSidebar(target) {
                 </button>
                 <button type="button"
                     id="questSaveButton"
-                    class="rounded-full px-8 py-2.5 text-sm font-semibold text-white"
-                    style="background: radial-gradient(circle at 0% 0%, #a855f7 0%, #1d4ed8 60%, #0f172a 100%); box-shadow: 0 10px 25px rgba(59,130,246,0.35);"
+                    class="rounded-full px-8 py-2.5 text-sm font-semibold text-white btn-dlg-blue"
+                    box-shadow: 0 10px 25px rgba(59,130,246,0.35);"
                     onclick="saveQuest()">
                     Create Quest    
                 </button>
@@ -883,11 +909,11 @@ export function renderSidebar(target) {
             <div class="flex-grow border-t border-gray-200"></div>
         </div>
 
-        <div class="flex justify-center mb-8">
+        <div class="flex items-center justify-between mb-8">
             <div class="relative inline-block">
                 <button class="btn-dlg-yellow rounded-full px-6 py-2.5 text-sm font-semibold shadow-md"
                     onclick="toggleSideQuestDropdown(event)">
-                    + Create
+                    Add Side Quest
                 </button>
                 <div id="sideQuestCreateDropdown"
                     class="absolute left-1/2 -translate-x-1/2 mt-3 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 text-sm hidden z-40">
@@ -931,12 +957,30 @@ export function renderSidebar(target) {
                             Cancel
                         </button>
                         <button type="button"
-                            class="rounded-full px-4 py-1.5 text-xs font-semibold text-white"
-                            style="background: radial-gradient(circle at 0% 0%, #a855f7 0%, #1d4ed8 60%, #0f172a 100%); box-shadow: 0 10px 25px rgba(59,130,246,0.35);"
+                            class="rounded-full px-4 py-1.5 text-xs font-semibold text-white btn-dlg-blue"
+                            style="box-shadow: 0 10px 25px rgba(59,130,246,0.35);"
                             onclick="saveSideQuest()">
                             Add
                         </button>
                     </div>
+                </div>
+            </div>
+            <div class="relative inline-block">
+                <button id="sideQuestHeaderToggleButton" type="button"
+                    class="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm"
+                    onclick="toggleSideQuestHeaderMenu(event)">
+                    <i data-lucide="more-vertical" class="w-4 h-4 text-gray-600"></i>
+                </button>
+                <div id="sideQuestHeaderMenu"
+                    class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-xl shadow-lg py-1 text-sm text-gray-700 hidden z-40">
+                    <button type="button" class="w-full text-left px-3 py-1.5 hover:bg-gray-100"
+                        onclick="sideQuestHeaderEdit()">
+                        Edit
+                    </button>
+                    <button type="button" class="w-full text-left px-3 py-1.5 hover:bg-gray-100 text-red-600"
+                        onclick="sideQuestHeaderDelete()">
+                        Delete
+                    </button>
                 </div>
             </div>
         </div>
@@ -1047,8 +1091,19 @@ export function renderSidebar(target) {
         var sideQuestCurrentPriority = 'normal';
         var questActionMode = null;
         var questTasksById = {};
+        var questUsersById = {};
         var questAlertOkHandler = null;
         var questAlertCancelHandler = null;
+
+        function initQuestTooltips() {
+            if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return;
+            var triggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            triggerList.forEach(function (el) {
+                try {
+                    new bootstrap.Tooltip(el);
+                } catch (e) {}
+            });
+        }
 
         function showQuestAlert(title, message) {
             var modal = document.getElementById('questUniversalAlert');
@@ -2281,17 +2336,29 @@ export function renderSidebar(target) {
                 descText = 'No description provided.';
             }
             var tags = Array.isArray(task && task.tags) ? task.tags : [];
-            var primaryTag = tags.length ? String(tags[0]) : '';
-            var assignCount = 0;
-            if (task) {
+            var assignList = [];
+            if (task && task.assign_to) {
                 if (Array.isArray(task.assign_to)) {
-                    assignCount = task.assign_to.length;
-                } else if (task.assign_to) {
-                    assignCount = 1;
+                    assignList = task.assign_to.slice();
+                } else {
+                    assignList = [task.assign_to];
                 }
             }
+            var departments = Array.isArray(task && task.departments) ? task.departments : [];
+            var positions = Array.isArray(task && task.positions) ? task.positions : [];
+            var points = typeof (task && task.points) === 'number' ? task.points : 0;
             function esc(str) {
                 return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+            function renderCollectionNames(arr) {
+                if (!Array.isArray(arr) || arr.length === 0) return '';
+                var names = arr.map(function (x) {
+                    if (!x) return '';
+                    if (typeof x === 'string') return x;
+                    if (x.name) return String(x.name);
+                    return '';
+                }).filter(function (v) { return v; });
+                return names.join(', ');
             }
             var borderClass = 'border-blue-500';
             var badgeClass = 'bg-blue-600';
@@ -2334,21 +2401,87 @@ export function renderSidebar(target) {
             html += '<button type="button" class="px-3 py-1 text-xs font-semibold rounded-full border border-red-500 text-red-600 quest-card-delete-btn">Delete</button>';
             html += '</div>';
             html += '<p class="text-gray-600 italic description-truncate text-sm mb-3">' + esc(descText) + '</p>';
-            html += '<div class="flex flex-col gap-3">';
-            html += '<div class="flex -space-x-2">';
-            if (assignCount > 0) {
-                html += '<div class="w-7 h-7 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">';
-                html += esc(String(assignCount));
+            html += '<div class="flex flex-col gap-2 mt-2">';
+            if (assignList.length > 0) {
+                html += '<div class="flex items-center gap-2">';
+                var maxAvatars = 4;
+                assignList.forEach(function (uid, index) {
+                    if (index >= maxAvatars) return;
+                    var user = questUsersById && questUsersById[uid] ? questUsersById[uid] : { uid: uid, name: uid };
+                    var initials = getQuestUserInitials(user);
+                    var titleText = user && user.name ? user.name : initials;
+                    if (user.photo) {
+                        html += '<img src="' + esc(user.photo) + '" alt="' + esc(titleText) + '" title="' + esc(titleText) + '" data-bs-toggle="tooltip" data-bs-title="' + esc(titleText) + '" class="w-7 h-7 rounded-full object-cover border border-slate-700">';
+                    } else {
+                        html += '<span class="w-7 h-7 rounded-full bg-slate-700 text-slate-100 text-[10px] font-semibold flex items-center justify-center" title="' + esc(titleText) + '" data-bs-toggle="tooltip" data-bs-title="' + esc(titleText) + '">';
+                        html += esc(initials);
+                        html += '</span>';
+                    }
+                });
+                if (assignList.length > maxAvatars) {
+                    html += '<span class="w-7 h-7 rounded-full bg-slate-800 text-slate-100 text-[10px] font-semibold flex items-center justify-center">';
+                    html += esc('+' + (assignList.length - maxAvatars));
+                    html += '</span>';
+                }
                 html += '</div>';
             }
-            html += '</div>';
-            html += '<div class="flex gap-2">';
-            if (primaryTag) {
-                html += '<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">';
-                html += esc(primaryTag);
-                html += '</span>';
+            var deptNames = renderCollectionNames(departments);
+            var posNames = renderCollectionNames(positions);
+            if (deptNames || posNames) {
+                html += '<div class="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">';
+                if (departments && departments.length) {
+                    departments.forEach(function (d) {
+                        var name = '';
+                        if (typeof d === 'string') {
+                            name = d;
+                        } else if (d && d.name) {
+                            name = String(d.name);
+                        }
+                        if (!name) return;
+                        var hash = 0;
+                        for (var i = 0; i < name.length; i++) {
+                            hash = ((hash << 5) - hash) + name.charCodeAt(i);
+                            hash |= 0;
+                        }
+                        var colorIndex = Math.abs(hash) % 5;
+                        var cls = '';
+                        if (colorIndex === 0) cls = 'bg-blue-50 text-blue-700 border-blue-100';
+                        else if (colorIndex === 1) cls = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                        else if (colorIndex === 2) cls = 'bg-amber-50 text-amber-700 border-amber-100';
+                        else if (colorIndex === 3) cls = 'bg-purple-50 text-purple-700 border-purple-100';
+                        else cls = 'bg-rose-50 text-rose-700 border-rose-100';
+                        html += '<span class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold ' + cls + '">';
+                        html += esc(name);
+                        html += '</span>';
+                    });
+                }
+                if (posNames) {
+                    if (departments && departments.length) {
+                        html += '<span class="text-gray-300 text-[11px]">|</span>';
+                    }
+                    html += '<span>' + esc(posNames) + '</span>';
+                }
+                html += '</div>';
             }
-            html += '</div>';
+            var hasTags = tags && tags.length;
+            var hasPoints = points && points > 0;
+            if (hasTags || hasPoints) {
+                html += '<div class="flex flex-wrap items-center gap-2 text-[11px] text-gray-600">';
+                if (hasTags) {
+                    tags.forEach(function (t) {
+                        if (!t) return;
+                        html += '<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">';
+                        html += esc(String(t));
+                        html += '</span>';
+                    });
+                }
+                if (hasPoints) {
+                    html += '<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 font-semibold">';
+                    html += esc(String(points) + ' XP');
+                    html += '</span>';
+                }
+                html += '</div>';
+            }
             html += '</div>';
             html += '</div>';
             wrapper.innerHTML = html;
@@ -2416,6 +2549,7 @@ export function renderSidebar(target) {
                 if (window.lucide && window.lucide.createIcons) {
                     window.lucide.createIcons();
                 }
+                initQuestTooltips();
             } catch (e) {
                 console.error('Failed to load quest tasks', e);
                 if (overdueList) {
@@ -2600,14 +2734,17 @@ export function renderSidebar(target) {
                 }
                 var snap = await parentWin.getDocs(parentWin.collection(parentWin.db, "users"));
                 var users = [];
+                questUsersById = {};
                 snap.forEach(function (docSnap) {
                     var u = docSnap.data() || {};
-                    users.push({
+                    var user = {
                         uid: docSnap.id,
                         name: u.name || u.email || "Unknown",
                         email: u.email || "",
                         photo: u.photo || ""
-                    });
+                    };
+                    users.push(user);
+                    questUsersById[user.uid] = user;
                 });
                 users.sort(function (a, b) {
                     return a.name.localeCompare(b.name);
@@ -3008,7 +3145,7 @@ export function renderSidebar(target) {
                     labelReminder.textContent = 'No reminder';
                 }
                 toggleQuestForm();
-                alert('Quest berhasil disimpan.');
+                showQuestAlert('Sukses', 'Quest berhasil disimpan.');
             } catch (err) {
                 console.error('Gagal menyimpan quest', err);
                 alert('Gagal menyimpan quest: ' + (err && err.message ? err.message : String(err)));
@@ -3080,6 +3217,30 @@ export function renderSidebar(target) {
             updateQuestActionButtons();
             updateQuestHeaderToggleButton();
         }
+        function toggleSideQuestHeaderMenu(event) {
+            var menu = document.getElementById('sideQuestHeaderMenu');
+            if (!menu) return;
+            if (event && event.stopPropagation) {
+                event.stopPropagation();
+            }
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+        function sideQuestHeaderEdit() {
+            var menu = document.getElementById('sideQuestHeaderMenu');
+            if (menu) {
+                menu.classList.add('hidden');
+            }
+        }
+        function sideQuestHeaderDelete() {
+            var menu = document.getElementById('sideQuestHeaderMenu');
+            if (menu) {
+                menu.classList.add('hidden');
+            }
+        }
         function questCloseDropdownIfOutside(event, dropdownId, usesDisplayStyle) {
             var dropdown = document.getElementById(dropdownId);
             if (!dropdown) return;
@@ -3137,6 +3298,7 @@ export function renderSidebar(target) {
             questCloseDropdownIfOutside(event, 'quest-tag-dropdown', true);
             questCloseDropdownIfOutside(event, 'questHeaderMenu', false);
             questCloseDropdownIfOutside(event, 'sideQuestCreateDropdown', false);
+            questCloseDropdownIfOutside(event, 'sideQuestHeaderMenu', false);
         });
         loadQuestDepartments();
         loadQuestPositions();
