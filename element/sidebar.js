@@ -2876,6 +2876,35 @@ export function renderSidebar(target) {
                 }
             }
         }
+        var questUsersById = {};
+        function getQuestUserInitials(user) {
+            var source = user.name || user.email || user.uid || '';
+            if (!source) return 'U';
+            var parts = String(source).trim().split(/\s+/);
+            var initials = parts.map(function (p) { return p[0]; }).join('');
+            return initials.substring(0, 2).toUpperCase();
+        }
+        function getQuestUserInitials(user) {
+            var source = user.name || user.email || user.uid || '';
+            if (!source) return 'U';
+            var parts = String(source).trim().split(/\s+/);
+            var initials = parts.map(function (p) { return p[0]; }).join('');
+            return initials.substring(0, 2).toUpperCase();
+        }
+        function getQuestUserInitials(user) {
+            var source = user.name || user.email || user.uid || '';
+            if (!source) return 'U';
+            var parts = String(source).trim().split(/\s+/);
+            var initials = parts.map(function (p) { return p[0]; }).join('');
+            return initials.substring(0, 2).toUpperCase();
+        }
+        function getQuestUserInitials(user) {
+            var source = user.name || user.email || user.uid || '';
+            if (!source) return 'U';
+            var parts = String(source).trim().split(/\s+/);
+            var initials = parts.map(function (p) { return p[0]; }).join('');
+            return initials.substring(0, 2).toUpperCase();
+        }
         async function loadSideQuestTasks() {
             var urgentList = document.getElementById('sideQuestUrgentList');
             var highList = document.getElementById('sideQuestHighList');
@@ -2887,6 +2916,74 @@ export function renderSidebar(target) {
             try {
                 function esc(str) {
                     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+                function buildSideQuestCard(data, docId) {
+                    var title = data && data.title ? String(data.title) : 'Untitled Side Quest';
+                    var descHtml = data && data.description ? String(data.description) : '';
+                    var tmp = document.createElement('div');
+                    tmp.innerHTML = descHtml;
+                    var descText = (tmp.textContent || tmp.innerText || '').trim();
+                    if (!descText) {
+                        descText = '';
+                    }
+                    var maxLen = 140;
+                    if (descText.length > maxLen) {
+                        var truncated = descText.substring(0, maxLen);
+                        truncated = truncated.replace(/\s+\S*$/, '');
+                        descText = truncated + '...';
+                    }
+                    var dueText = data && (data.due_date || data.dueDate) ? String(data.due_date || data.dueDate) : '';
+                    var assignList = [];
+                    if (data && data.assign_to) {
+                        if (Array.isArray(data.assign_to)) {
+                            assignList = data.assign_to.slice();
+                        } else {
+                            assignList = [data.assign_to];
+                        }
+                    }
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'p-4 rounded-2xl bg-gray-50 flex flex-col gap-2';
+                    var html = '';
+                    html += '<div class="flex items-start justify-between gap-2">';
+                    html += '<h3 class="font-semibold text-gray-900 text-sm md:text-base leading-snug">' + esc(title) + '</h3>';
+                    if (dueText) {
+                        html += '<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-[10px] md:text-xs font-semibold">';
+                        html += esc(dueText);
+                        html += '</span>';
+                    }
+                    html += '</div>';
+                    if (descText) {
+                        html += '<p class="text-xs md:text-sm text-gray-600 leading-snug">' + esc(descText) + '</p>';
+                    }
+                    if (assignList.length > 0) {
+                        html += '<div class="flex items-center justify-between gap-2 mt-1">';
+                        html += '<div class="flex -space-x-1">';
+                        var maxAvatars = 4;
+                        assignList.forEach(function (uid, index) {
+                            if (index >= maxAvatars) return;
+                            var user = questUsersById && questUsersById[uid] ? questUsersById[uid] : { uid: uid };
+                            var initials = getQuestUserInitials(user);
+                            var titleText = user && user.name ? user.name : initials;
+                            if (user.photo) {
+                                html += '<img src="' + esc(user.photo) + '" alt="' + esc(titleText) + '" title="' + esc(titleText) + '" class="w-7 h-7 rounded-full object-cover border border-gray-200 bg-white">';
+                            } else {
+                                html += '<span class="w-7 h-7 rounded-full bg-slate-700 text-slate-100 text-[10px] font-semibold flex items-center justify-center border border-gray-200" title="' + esc(titleText) + '">';
+                                html += esc(initials);
+                                html += '</span>';
+                            }
+                        });
+                        if (assignList.length > maxAvatars) {
+                            var remaining = assignList.length - maxAvatars;
+                            html += '<span class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold flex items-center justify-center border border-gray-200">+' + esc(String(remaining)) + '</span>';
+                        }
+                        html += '</div>';
+                        html += '</div>';
+                    }
+                    wrapper.innerHTML = html;
+                    if (docId) {
+                        wrapper.setAttribute('data-task-id', String(docId));
+                    }
+                    return wrapper;
                 }
                 if (urgentList) urgentList.innerHTML = '';
                 if (highList) highList.innerHTML = '';
@@ -2913,14 +3010,8 @@ export function renderSidebar(target) {
                         targetList = normalList;
                     }
                     if (!targetList) return;
-                    var el = document.createElement('div');
-                    el.className = 'p-4 rounded-2xl bg-gray-50 flex items-center justify-between';
-                    var label = '#' + String(docSnap.id || '').substring(0, 6).toUpperCase();
-                    var html = '';
-                    html += '<span class="font-bold text-gray-700">' + esc(title) + '</span>';
-                    html += '<span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm font-bold text-gray-400">' + esc(label) + '</span>';
-                    el.innerHTML = html;
-                    targetList.appendChild(el);
+                    var card = buildSideQuestCard(data, docSnap.id);
+                    targetList.appendChild(card);
                 });
                 function ensureList(listEl, message) {
                     if (!listEl) return;
@@ -3892,8 +3983,8 @@ export function renderSidebar(target) {
                 <input id="sideQuestNameInput" type="text" placeholder="Side Quest Name"
                     class="w-full text-2xl md:text-3xl font-semibold text-gray-900 border-none focus:ring-0 focus:outline-none placeholder-gray-400" />
             </div>
-            <div class="grid md:grid-cols-2 gap-6 mb-6 text-sm">
-                <div class="space-y-4">
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="space-y-4 text-sm">
                     <div class="flex items-center gap-3">
                         <div class="font-medium text-gray-500 w-24">Department</div>
                         <div class="flex-1">
@@ -3954,52 +4045,26 @@ export function renderSidebar(target) {
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="font-medium text-gray-500 w-24">Dates</div>
-                        <div class="flex-1">
-                            <div class="flex gap-2">
+                        <div class="flex-1 flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs md:text-sm text-gray-500">Start</span>
                                 <input id="sideQuestStartInput" type="date"
                                     onclick="if (this.showPicker) this.showPicker();"
                                     onfocus="if (this.showPicker) this.showPicker();"
-                                    class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs md:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                                    class="w-28 md:w-32 rounded-xl border border-gray-200 px-3 py-2 text-xs md:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs md:text-sm text-gray-500">Due</span>
                                 <input id="sideQuestDueInput" type="date"
                                     onclick="if (this.showPicker) this.showPicker();"
                                     onfocus="if (this.showPicker) this.showPicker();"
-                                    class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs md:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                                    class="w-28 md:w-32 rounded-xl border border-gray-200 px-3 py-2 text-xs md:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100" />
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="font-medium text-gray-500 w-24">Priority</div>
-                        <div class="flex-1">
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button"
-                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 border border-transparent"
-                                    data-priority="urgent"
-                                    onclick="setSideQuestPriority('urgent', this)">
-                                    Urgent
-                                </button>
-                                <button type="button"
-                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-transparent"
-                                    data-priority="high"
-                                    onclick="setSideQuestPriority('high', this)">
-                                    High
-                                </button>
-                                <button type="button"
-                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-600 border border-transparent"
-                                    data-priority="normal"
-                                    onclick="setSideQuestPriority('normal', this)">
-                                    Normal
-                                </button>
-                                <button type="button"
-                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 border border-transparent"
-                                    data-priority="low"
-                                    onclick="setSideQuestPriority('low', this)">
-                                    Low
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
-                <div class="space-y-4">
+                <div class="space-y-4 text-sm">
                     <div class="flex items-center gap-3">
                         <div class="font-medium text-gray-500 w-24">Positions</div>
                         <div class="flex-1">
@@ -4054,34 +4119,41 @@ export function renderSidebar(target) {
                     </div>
                     <div class="flex items-center gap-3">
                         <div class="font-medium text-gray-500 w-24">Task point</div>
-                        <div class="flex-1">
-                            <input id="sideQuestPointsInput" type="number" min="0"
-                                class="w-24 rounded-xl border border-gray-200 px-3 py-2 text-xs md:text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100" />
-                        </div>
+                        <input id="sideQuestPointsInput" type="number" min="0" placeholder="0"
+                            class="w-24 rounded-xl border border-gray-200 px-3 py-2 text-xs md:text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100" />
                     </div>
-                    
                     <div class="flex items-center gap-3">
-                        <div class="font-medium text-gray-500 w-24">Tags</div>
+                        <div class="font-medium text-gray-500 w-24">Priority</div>
                         <div class="flex-1">
-                            <div class="tag-selector w-full" id="tag-selector-sidequest">
-                                <div class="tag-selector-control" onclick="toggleSideQuestTagDropdown()">
-                                    <div class="tag-selected-list" id="sideQuest-tag-selected">
-                                        <span class="tag-placeholder">Search or add tags...</span>
-                                    </div>
-                                    <span class="text-gray-400 text-xs md:text-sm">&#9662;</span>
-                                </div>
-                                <div class="tag-dropdown" id="sideQuest-tag-dropdown">
-                                    <input type="text" id="sideQuest-tag-input" class="tag-search-input" placeholder="Search or add tags..." oninput="filterSideQuestTagOptions()">
-                                    <div class="tag-options" id="sideQuest-tag-options"></div>
-                                    <div class="tag-create" id="sideQuest-tag-create" style="display:none;" onclick="createSideQuestTagFromInput()">
-                                        <span>Create</span>
-                                        <span class="tag-create-label" id="sideQuest-tag-create-label"></span>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="sideQuest-tags" value="">
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button"
+                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-600 border border-transparent"
+                                    data-priority="urgent"
+                                    onclick="setSideQuestPriority('urgent', this)">
+                                    Urgent
+                                </button>
+                                <button type="button"
+                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-transparent"
+                                    data-priority="high"
+                                    onclick="setSideQuestPriority('high', this)">
+                                    High
+                                </button>
+                                <button type="button"
+                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-600 border border-transparent"
+                                    data-priority="normal"
+                                    onclick="setSideQuestPriority('normal', this)">
+                                    Normal
+                                </button>
+                                <button type="button"
+                                    class="side-quest-priority-btn px-3 py-1.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600 border border-transparent"
+                                    data-priority="low"
+                                    onclick="setSideQuestPriority('low', this)">
+                                    Low
+                                </button>
                             </div>
                         </div>
                     </div>
+                    
                 </div>
             </div>
             <div class="border border-gray-200 rounded-2xl overflow-hidden mb-6">
@@ -4451,6 +4523,8 @@ export function renderSidebar(target) {
                 alert('Silakan isi Side Quest Name terlebih dahulu.');
                 return;
             }
+            var startEl = document.getElementById('sideQuestStartInput');
+            var startValue = startEl && startEl.value ? String(startEl.value) : '';
             var dueEl = document.getElementById('sideQuestDueInput');
             var dueValue = dueEl && dueEl.value ? String(dueEl.value) : '';
             var pointsEl = document.getElementById('sideQuestPointsInput');
@@ -4476,6 +4550,37 @@ export function renderSidebar(target) {
                 var uid = cb.getAttribute('data-user-id') || '';
                 if (uid) notifySelected.push(uid);
             });
+            var deptSelected = [];
+            Array.prototype.slice.call(
+                document.querySelectorAll('#sideQuestDepartmentDropdown input[type=\"checkbox\"]:checked')
+            ).forEach(function (cb) {
+                var id = cb.getAttribute('data-dept-id') || '';
+                var row = cb.closest('.sidequest-dept-option');
+                var nameEl = row ? row.querySelector('.sidequest-dept-name') : null;
+                var name = nameEl ? nameEl.textContent.trim() : '';
+                var color = '';
+                if (row) {
+                    var dot = row.querySelector('.inline-flex');
+                    if (dot && dot.style) {
+                        color = dot.style.backgroundColor || dot.style.background || '';
+                    }
+                }
+                if (id) {
+                    deptSelected.push({ id: id, name: name, color: color });
+                }
+            });
+            var positionSelected = [];
+            Array.prototype.slice.call(
+                document.querySelectorAll('#sideQuestPositionDropdown input[type=\"checkbox\"]:checked')
+            ).forEach(function (cb) {
+                var id = cb.getAttribute('data-position-id') || '';
+                var row = cb.closest('.sidequest-position-option');
+                var nameEl = row ? row.querySelector('.sidequest-position-name') : null;
+                var name = nameEl ? nameEl.textContent.trim() : '';
+                if (id) {
+                    positionSelected.push({ id: id, name: name });
+                }
+            });
             try {
                 var localData = null;
                 try {
@@ -4492,8 +4597,8 @@ export function renderSidebar(target) {
                     start_date: startValue,
                     due_date: dueValue,
                     points: pointsValue,
-                    departments: [],
-                    positions: [],
+                    departments: deptSelected,
+                    positions: positionSelected,
                     assign_to: assignSelected,
                     notify_to: notifySelected,
                     tags: tags,
@@ -4576,6 +4681,20 @@ export function renderSidebar(target) {
                 function esc(str) {
                     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 }
+                function normalizeCollectionItems(arr) {
+                    if (!Array.isArray(arr)) return [];
+                    return arr.map(function (item) {
+                        if (!item) return null;
+                        if (typeof item === 'string') {
+                            return { name: item, color: '', id: '' };
+                        }
+                        return {
+                            id: item.id || '',
+                            name: item.name || '',
+                            color: item.color || ''
+                        };
+                    }).filter(function (x) { return x && x.name; });
+                }
                 if (urgentList) urgentList.innerHTML = '';
                 if (highList) highList.innerHTML = '';
                 if (normalList) normalList.innerHTML = '';
@@ -4587,8 +4706,7 @@ export function renderSidebar(target) {
                     var type = String(data.type || '').toLowerCase();
                     var status = String(data.status || '').toLowerCase();
                     if (type !== 'side-quest' && status !== 'sidequest') return;
-                    var title = data.title || '';
-                    if (!title) return;
+                    var title = data.title || 'Untitled Side Quest';
                     var priority = String(data.priority || 'normal').toLowerCase();
                     var targetList = null;
                     if (priority === 'urgent') {
@@ -4601,13 +4719,105 @@ export function renderSidebar(target) {
                         targetList = normalList;
                     }
                     if (!targetList) return;
+                    var descHtml = data.description || '';
+                    var tmp = document.createElement('div');
+                    tmp.innerHTML = descHtml;
+                    var descText = (tmp.textContent || tmp.innerText || '').trim();
+                    if (!descText) {
+                        descText = 'No description provided.';
+                    }
+                    var maxLen = 140;
+                    if (descText.length > maxLen) {
+                        var truncated = descText.substring(0, maxLen);
+                        truncated = truncated.replace(/\s+\S*$/, '');
+                        descText = truncated + '...';
+                    }
+                    var departments = normalizeCollectionItems(data.departments);
+                    var positions = normalizeCollectionItems(data.positions);
+                    var assignList = [];
+                    if (data.assign_to) {
+                        if (Array.isArray(data.assign_to)) {
+                            assignList = data.assign_to.slice();
+                        } else {
+                            assignList = [data.assign_to];
+                        }
+                    }
+                    var dueText = data.due_date || data.dueDate || '';
                     var el = document.createElement('div');
-                    el.className = 'p-4 rounded-2xl bg-gray-50 flex items-center justify-between';
+                    el.className = 'p-4 rounded-2xl bg-gray-50 flex flex-col gap-2';
                     var label = '#' + String(docSnap.id || '').substring(0, 6).toUpperCase();
                     var htmlCard = '';
-                    htmlCard += '<span class="font-bold text-gray-700">' + esc(title) + '</span>';
-                    htmlCard += '<span class="text-xs bg-white px-3 py-1 rounded-full shadow-sm font-bold text-gray-400">' + esc(label) + '</span>';
+                    htmlCard += '<div class="flex items-start justify-between gap-2">';
+                    htmlCard += '<div class="flex flex-col gap-1">';
+                    htmlCard += '<h3 class="font-semibold text-gray-900 text-sm md:text-base leading-snug">' + esc(title) + '</h3>';
+                    htmlCard += '</div>';
+                    htmlCard += '<span class="inline-flex items-center px-3 py-1 rounded-full bg-white shadow-sm text-[10px] md:text-xs font-bold text-gray-400">' + esc(label) + '</span>';
+                    htmlCard += '</div>';
+                    if (descText) {
+                        htmlCard += '<p class="text-xs md:text-sm text-gray-600 leading-snug">' + esc(descText) + '</p>';
+                    }
+                    if (departments.length > 0) {
+                        htmlCard += '<div class="flex flex-wrap gap-2 mt-1">';
+                        departments.forEach(function (dept, index) {
+                            if (index >= 3) return;
+                            var color = dept.color || '#0B2B6A';
+                            htmlCard += '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium text-white" style="background-color:' + esc(color) + ';">';
+                            htmlCard += esc(dept.name);
+                            htmlCard += '</span>';
+                        });
+                        if (departments.length > 3) {
+                            htmlCard += '<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] md:text-xs font-medium">+' + esc(String(departments.length - 3)) + ' more</span>';
+                        }
+                        htmlCard += '</div>';
+                    }
+                    if (positions.length > 0) {
+                        htmlCard += '<div class="flex flex-wrap gap-2 mt-1">';
+                        positions.forEach(function (pos, index) {
+                            if (index >= 4) return;
+                            htmlCard += '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] md:text-xs font-medium border border-slate-200">';
+                            htmlCard += esc(pos.name);
+                            htmlCard += '</span>';
+                        });
+                        if (positions.length > 4) {
+                            htmlCard += '<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] md:text-xs font-medium">+' + esc(String(positions.length - 4)) + '</span>';
+                        }
+                        htmlCard += '</div>';
+                    }
+                    if (assignList.length > 0 || dueText) {
+                        htmlCard += '<div class="flex items-center justify-between gap-2 mt-2">';
+                        if (assignList.length > 0) {
+                            htmlCard += '<div class="flex -space-x-1">';
+                            var maxAvatars = 4;
+                            assignList.forEach(function (uid, index) {
+                                if (index >= maxAvatars) return;
+                                var user = questUsersById && questUsersById[uid] ? questUsersById[uid] : { uid: uid };
+                                var initials = getQuestUserInitials(user);
+                                var titleText = user && user.name ? user.name : initials;
+                                if (user.photo) {
+                                    htmlCard += '<img src="' + esc(user.photo) + '" alt="' + esc(titleText) + '" title="' + esc(titleText) + '" class="w-7 h-7 rounded-full object-cover border border-gray-200 bg-white">';
+                                } else {
+                                    htmlCard += '<span class="w-7 h-7 rounded-full bg-slate-700 text-slate-100 text-[10px] font-semibold flex items-center justify-center border border-gray-200" title="' + esc(titleText) + '">';
+                                    htmlCard += esc(initials);
+                                    htmlCard += '</span>';
+                                }
+                            });
+                            if (assignList.length > maxAvatars) {
+                                var remaining = assignList.length - maxAvatars;
+                                htmlCard += '<span class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-[10px] font-semibold flex items-center justify-center border border-gray-200">+' + esc(String(remaining)) + '</span>';
+                            }
+                            htmlCard += '</div>';
+                        } else {
+                            htmlCard += '<div></div>';
+                        }
+                        if (dueText) {
+                            htmlCard += '<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-500 text-white text-[10px] md:text-xs font-semibold">';
+                            htmlCard += esc(dueText);
+                            htmlCard += '</span>';
+                        }
+                        htmlCard += '</div>';
+                    }
                     el.innerHTML = htmlCard;
+                    el.setAttribute('data-task-id', String(docSnap.id || ''));
                     targetList.appendChild(el);
                 });
                 function ensureList(listEl, message) {
@@ -4698,6 +4908,10 @@ export function renderSidebar(target) {
                         email: d.email || '',
                         photo: d.photo || ''
                     });
+                });
+                questUsersById = {};
+                users.forEach(function (user) {
+                    questUsersById[user.uid] = user;
                 });
                 users.sort(function (a, b) {
                     return a.name.localeCompare(b.name);
