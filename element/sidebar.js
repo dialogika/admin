@@ -45,6 +45,58 @@ export function renderSidebar(target) {
             #questBoardOverlay.show {
                 display: block;
             }
+            .rich-editor {
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                overflow: hidden;
+                background: #ffffff;
+            }
+            .rich-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 12px;
+                background: #f9fafb;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .rich-toolbar-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .rich-btn {
+                border: none;
+                background: transparent;
+                padding: 4px;
+                border-radius: 4px;
+                color: #64748b;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            }
+            .rich-btn:hover {
+                background: #f1f5f9;
+                color: #0f172a;
+            }
+            .rich-btn.active {
+                background: #e2e8f0;
+                color: #2563eb;
+            }
+            .rich-editor-body {
+                min-height: 120px;
+                padding: 12px 16px;
+                background: #ffffff;
+                outline: none;
+                font-size: 0.95rem;
+                color: #334155;
+                line-height: 1.5;
+            }
+            .rich-editor-body[contenteditable="true"]:empty:before {
+                content: attr(data-placeholder);
+                color: #94a3b8;
+            }
         </style>
         <!-- 2. SIDEBAR (Light, Smart Filters, Pending Widget) -->
         <aside class="sidebar" id="sidebarNav">
@@ -329,41 +381,66 @@ export function renderSidebar(target) {
             border-right-color: #0f172a;
         }
         .rich-editor {
-            position: relative;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
             background: #ffffff;
+            transition: border-color 0.2s;
+        }
+        .rich-editor:focus-within {
+            border-color: #94a3b8;
         }
         .rich-toolbar {
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .rich-toolbar-left {
+            display: flex;
+            align-items: center;
             gap: 4px;
-            padding: 6px 8px;
-            background: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
         }
         .rich-btn {
             border: none;
             background: transparent;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            color: #4b5563;
-            display: inline-flex;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            color: #475569;
+            font-size: 1.1rem;
+            display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s;
+            cursor: pointer;
         }
         .rich-btn:hover {
-            background: #e5e7eb;
-            color: #111827;
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .rich-btn.active {
+            background: #e2e8f0;
+            color: #2563eb;
         }
         .rich-editor-body {
-            min-height: 120px;
-            padding: 10px 14px;
-            font-size: 0.9rem;
+            min-height: 140px;
+            padding: 12px 16px;
+            background: #ffffff;
             outline: none;
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.6;
         }
         .rich-editor-body:empty:before {
             content: attr(data-placeholder);
-            color: #9ca3af;
+            color: #94a3b8;
+        }
+        .rich-toolbar-right {
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
@@ -867,19 +944,24 @@ export function renderSidebar(target) {
                     </div>
                 </div>
             </div>
-            <div class="border border-gray-200 rounded-2xl overflow-hidden mb-6">
-                <div class="rich-editor">
-                    <div class="rich-toolbar">
-                        <button type="button" class="rich-btn" onclick="questApplyFormat('questDescEditor','bold')"><i class="bi bi-type-bold"></i></button>
-                        <button type="button" class="rich-btn" onclick="questApplyFormat('questDescEditor','italic')"><i class="bi bi-type-italic"></i></button>
-                        <button type="button" class="rich-btn" onclick="questApplyFormat('questDescEditor','underline')"><i class="bi bi-type-underline"></i></button>
-                        <button type="button" class="rich-btn" onclick="questApplyFormat('questDescEditor','insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
-                        <button type="button" class="rich-btn" onclick="questApplyFormat('questDescEditor','insertOrderedList')"><i class="bi bi-list-ol"></i></button>
-                        <button type="button" class="rich-btn ms-auto" onclick="questTriggerDescFileInput()"><i class="bi bi-paperclip"></i></button>
+            <div class="rich-editor mb-6">
+                <div class="rich-toolbar">
+                    <div class="rich-toolbar-left">
+                        <button type="button" class="rich-btn" title="Bold" onclick="questApplyFormat('questDescEditor','bold')"><i class="bi bi-type-bold"></i></button>
+                        <button type="button" class="rich-btn" title="Italic" onclick="questApplyFormat('questDescEditor','italic')"><i class="bi bi-type-italic"></i></button>
+                        <button type="button" class="rich-btn" title="Underline" onclick="questApplyFormat('questDescEditor','underline')"><i class="bi bi-type-underline"></i></button>
+                        <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                        <button type="button" class="rich-btn" title="Bullet List" onclick="questApplyFormat('questDescEditor','insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
+                        <button type="button" class="rich-btn" title="Numbered List" onclick="questApplyFormat('questDescEditor','insertOrderedList')"><i class="bi bi-list-ol"></i></button>
+                        <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                        <button type="button" class="rich-btn" title="Add Link" onclick="addLinkToEditor('questDescEditor')"><i class="bi bi-link-45deg"></i></button>
                     </div>
-                    <div id="questDescEditor" class="rich-editor-body min-h-[120px] px-4 py-3 text-sm text-gray-700 outline-none" contenteditable="true" data-placeholder="Task description or notes..."></div>
-                    <input type="file" id="quest-desc-file-input" multiple style="display:none" onchange="questHandleDescFiles(this)">
+                    <div class="rich-toolbar-right">
+                        <button type="button" class="rich-btn" title="Add Files" onclick="document.getElementById('quest-desc-file-input').click()"><i class="bi bi-paperclip"></i></button>
+                        <input type="file" id="quest-desc-file-input" class="hidden" multiple onchange="questHandleDescFiles(this)" />
+                    </div>
                 </div>
+                <div id="questDescEditor" class="rich-editor-body outline-none" contenteditable="true" data-placeholder="Task description or notes..."></div>
             </div>
             <div class="flex flex-col md:flex-row items-stretch md:items-center justify-end gap-3">
                 <button type="button"
@@ -1165,12 +1247,6 @@ export function renderSidebar(target) {
             if (element) {
                 element.classList.add('border-slate-900', 'bg-slate-900', 'text-white');
             }
-        }
-        function applyFormat(editorId, command) {
-            var editor = document.getElementById(editorId);
-            if (!editor) return;
-            editor.focus();
-            document.execCommand(command, false, null);
         }
         function toggleSideQuestUserDropdown(field) {
             var dropdownId = field === 'assign' ? 'sideQuestAssignDropdown' : 'sideQuestNotifyDropdown';
@@ -2531,6 +2607,32 @@ export function renderSidebar(target) {
             if (!editor) return;
             editor.focus();
             document.execCommand(command, false, null);
+
+            // Update button states
+            var toolbar = editor.previousElementSibling;
+            if (toolbar && toolbar.classList.contains('rich-toolbar')) {
+                var btns = toolbar.querySelectorAll('.rich-btn');
+                btns.forEach(function (btn) {
+                    var cmd = btn.getAttribute('onclick');
+                    if (cmd && cmd.indexOf('questApplyFormat') !== -1) {
+                        var part = cmd.split("'")[3];
+                        if (part && document.queryCommandState(part)) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    }
+                });
+            }
+        }
+        function addLinkToEditor(editorId) {
+            var url = prompt("Enter URL:", "https://");
+            if (url) {
+                var editor = document.getElementById(editorId);
+                if (!editor) return;
+                editor.focus();
+                document.execCommand("createLink", false, url);
+            }
         }
         function questTriggerDescFileInput() {
             var input = document.getElementById('quest-desc-file-input');
@@ -4093,11 +4195,67 @@ export function renderSidebar(target) {
             box-shadow: 0px 0px 4px 2px rgba(114, 4, 207, 0.75);
         }
         
-        .description-truncate {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+        .rich-editor {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             overflow: hidden;
+            background: #ffffff;
+            transition: border-color 0.2s;
+        }
+        .rich-editor:focus-within {
+            border-color: #94a3b8;
+        }
+        .rich-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .rich-toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .rich-btn {
+            border: none;
+            background: transparent;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            color: #475569;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .rich-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .rich-btn.active {
+            background: #e2e8f0;
+            color: #2563eb;
+        }
+        .rich-editor-body {
+            min-height: 140px;
+            padding: 12px 16px;
+            background: #ffffff;
+            outline: none;
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+        .rich-editor-body:empty:before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+        }
+        .rich-toolbar-right {
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
@@ -4316,18 +4474,25 @@ export function renderSidebar(target) {
                     
                 </div>
             </div>
-            <div class="border border-gray-200 rounded-2xl overflow-hidden mb-6">
-                <div class="rich-editor">
-                    <div class="rich-toolbar">
-                        <button type="button" class="rich-btn" onclick="applyFormat('sideQuestDesc','bold')"><i class="bi bi-type-bold"></i></button>
-                        <button type="button" class="rich-btn" onclick="applyFormat('sideQuestDesc','italic')"><i class="bi bi-type-italic"></i></button>
-                        <button type="button" class="rich-btn" onclick="applyFormat('sideQuestDesc','underline')"><i class="bi bi-type-underline"></i></button>
-                        <button type="button" class="rich-btn" onclick="applyFormat('sideQuestDesc','insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
-                        <button type="button" class="rich-btn" onclick="applyFormat('sideQuestDesc','insertOrderedList')"><i class="bi bi-list-ol"></i></button>
+            <div class="rich-editor mb-6">
+                <div class="rich-toolbar">
+                    <div class="rich-toolbar-left">
+                        <button type="button" class="rich-btn" title="Bold" onclick="applyFormat('sideQuestDesc','bold')"><i class="bi bi-type-bold"></i></button>
+                        <button type="button" class="rich-btn" title="Italic" onclick="applyFormat('sideQuestDesc','italic')"><i class="bi bi-type-italic"></i></button>
+                        <button type="button" class="rich-btn" title="Underline" onclick="applyFormat('sideQuestDesc','underline')"><i class="bi bi-type-underline"></i></button>
+                        <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                        <button type="button" class="rich-btn" title="Bullet List" onclick="applyFormat('sideQuestDesc','insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
+                        <button type="button" class="rich-btn" title="Numbered List" onclick="applyFormat('sideQuestDesc','insertOrderedList')"><i class="bi bi-list-ol"></i></button>
+                        <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                        <button type="button" class="rich-btn" title="Add Link" onclick="addLinkToEditor('sideQuestDesc')"><i class="bi bi-link-45deg"></i></button>
                     </div>
-                    <div id="sideQuestDesc" class="rich-editor-body min-h-[120px] px-4 py-3 text-sm text-gray-700 outline-none"
-                        contenteditable="true" data-placeholder="Task description or notes..."></div>
+                    <div class="rich-toolbar-right">
+                        <button type="button" class="rich-btn" title="Add Files" onclick="document.getElementById('sideQuestFileInput').click()"><i class="bi bi-paperclip"></i></button>
+                        <input type="file" id="sideQuestFileInput" class="hidden" multiple onchange="handleSideQuestFiles(this)" />
+                    </div>
                 </div>
+                <div id="sideQuestDesc" class="rich-editor-body outline-none"
+                    contenteditable="true" data-placeholder="Task description or notes..."></div>
             </div>
             <div class="flex flex-col md:flex-row items-stretch md:items-center justify-end gap-3">
                 <button type="button"
@@ -4439,6 +4604,59 @@ export function renderSidebar(target) {
             } catch (e) {
                 console.error('Gagal mengubah status quest', e);
                 alert('Gagal mengubah status quest: ' + (e && e.message ? e.message : String(e)));
+            }
+        }
+
+        function applyFormat(editorId, command) {
+            var editor = document.getElementById(editorId);
+            if (!editor) return;
+            editor.focus();
+            document.execCommand(command, false, null);
+            
+            // Update button states
+            var toolbar = editor.previousElementSibling;
+            if (toolbar && toolbar.classList.contains('rich-toolbar')) {
+                var btns = toolbar.querySelectorAll('.rich-btn');
+                btns.forEach(function(btn) {
+                    var cmd = btn.getAttribute('onclick');
+                    if (cmd && cmd.indexOf('applyFormat') !== -1) {
+                        var part = cmd.split("'")[3];
+                        if (part && document.queryCommandState(part)) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    }
+                });
+            }
+        }
+
+        function addLinkToEditor(editorId) {
+            var url = prompt("Enter URL:", "https://");
+            if (url) {
+                var editor = document.getElementById(editorId);
+                if (!editor) return;
+                editor.focus();
+                document.execCommand("createLink", false, url);
+            }
+        }
+
+        function handleSideQuestFiles(input) {
+            if (input.files && input.files.length > 0) {
+                var container = input.closest('.rich-editor');
+                var fileList = container.querySelector('.rich-file-list');
+                if (!fileList) {
+                    fileList = document.createElement('div');
+                    fileList.className = 'rich-file-list px-4 py-2 border-t border-gray-100 flex flex-wrap gap-2';
+                    container.appendChild(fileList);
+                }
+                
+                Array.from(input.files).forEach(function(file) {
+                    var item = document.createElement('div');
+                    item.className = 'flex items-center gap-2 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600 border border-gray-200';
+                    item.innerHTML = '<i class="bi bi-file-earmark"></i> <span>' + file.name + '</span><button type="button" class="text-gray-400 hover:text-red-500" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>';
+                    fileList.appendChild(item);
+                });
             }
         }
 
