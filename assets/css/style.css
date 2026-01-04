@@ -452,13 +452,13 @@ body {
     -webkit-box-shadow: 0px 0px 4px 2px rgba(114, 4, 207, 0.75);
 }.border-dlg-yellow{ border: 1px solid #f1ac15; box-shadow: 0px 7px 9px -6px rgba(114, 4, 207, 1); }
 .btn-dlg-purple {
-    background: linear-gradient(to top, #e503e1 22%, #5f24ef 100%);
+    background: linear-gradient(to top,  #8c5eff 22%, #5f24ef 100%);
     box-shadow: 0px 5px 16px -6px rgba(114, 4, 207, 1);
-    -webkit-box-shadow: 0px 5px 16px -6px rgba(114, 4, 207, 1);
-    color: black; border: none; transition: 0.3s;
+    -webkit-box-shadow: 0px 5px 16px -6px rgb(169, 64, 255);
+    color: white; border: none; transition: 0.3s;
 }
 .btn-dlg-purple:hover {
-    background: linear-gradient(to top,#5f24ef 22%, #e503e1 100%);
+    background: linear-gradient(to top,#5f24ef 22%, #8c5eff 100%);
     box-shadow: 0px 0px 4px 2px rgba(114, 4, 207, 0.75);
     -webkit-box-shadow: 0px 0px 4px 2px rgba(114, 4, 207, 0.75);
 }

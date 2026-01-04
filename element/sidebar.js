@@ -124,7 +124,7 @@ export function renderSidebar(target) {
                         <div class="filter-label">Project</div>
                     </a>
                     <a href="#" class="filter-card" id="reportFilterCard">
-                        <div class="filter-top"><div class="filter-icon" style="background-color: var(--dlg-green);"><i class="bi bi-calendar-event-fill"></i></div><div class="filter-count" id="projectTasksTotalCount">0</div></div>
+                        <div class="filter-top"><div class="filter-icon" style="background-color: var(--dlg-green);"><i class="bi bi-calendar-event-fill"></i></div><div class="filter-count" id="reportPendingApprovalCount">0</div></div>
                         <div class="filter-label">Report</div>
                     </a>
                     <a href="#" class="filter-card">
@@ -189,6 +189,114 @@ export function renderSidebar(target) {
             </div>
         </div>
         `;
+
+    async function refreshReportPendingApprovalCount(attempt) {
+        var countEl = document.getElementById('reportPendingApprovalCount');
+        if (!countEl) return;
+        var w = window;
+        if (!w || !w.db || !w.collection || !w.getDocs) {
+            var nextAttempt = typeof attempt === 'number' ? attempt + 1 : 1;
+            if (nextAttempt <= 30) {
+                setTimeout(function () { refreshReportPendingApprovalCount(nextAttempt); }, 500);
+            }
+            return;
+        }
+        try {
+            function timeKey(v) {
+                if (!v) return '';
+                if (v.toDate && typeof v.toDate === 'function') {
+                    var d = v.toDate();
+                    if (!isNaN(d.getTime())) return d.toISOString();
+                    return '';
+                }
+                if (typeof v === 'number') {
+                    var d2 = new Date(v);
+                    if (!isNaN(d2.getTime())) return d2.toISOString();
+                    return '';
+                }
+                return String(v);
+            }
+            var tasksSnap = await w.getDocs(w.collection(w.db, 'tasks'));
+            var completeIds = [];
+            var completeSet = {};
+            tasksSnap.forEach(function (docSnap) {
+                var data = docSnap.data() || {};
+                var archived = !!(data.archived || data.is_archived);
+                if (archived) return;
+                var statusRaw = '';
+                if (typeof data.status === 'string') statusRaw = data.status;
+                else if (data.status && typeof data.status === 'object') statusRaw = data.status.name || data.status.label || '';
+                var normStatus = String(statusRaw || '').trim().toLowerCase().replace(/[\s_]/g, '');
+                var isComplete = normStatus === 'complete' || normStatus === 'done';
+                if (data.task_status) {
+                    var tsRaw = '';
+                    if (typeof data.task_status === 'string') {
+                        tsRaw = data.task_status;
+                    } else if (typeof data.task_status === 'object' && (data.task_status.name || data.task_status.label)) {
+                        tsRaw = data.task_status.name || data.task_status.label || '';
+                    }
+                    var normTaskStatus = String(tsRaw || '').trim().toLowerCase().replace(/[\s_]/g, '');
+                    if (normTaskStatus === 'complete' || normTaskStatus === 'done') {
+                        isComplete = true;
+                    }
+                }
+                if (!isComplete) return;
+                completeIds.push(docSnap.id);
+                completeSet[docSnap.id] = true;
+            });
+
+            var latestByTaskId = {};
+            try {
+                var rootSnap = await w.getDocs(w.collection(w.db, 'quest_reports'));
+                rootSnap.forEach(function (repSnap) {
+                    var rdataRoot = repSnap.data() || {};
+                    var taskIdRoot = rdataRoot.taskId || rdataRoot.task_id || '';
+                    if (!taskIdRoot) return;
+                    if (!completeSet[taskIdRoot]) return;
+                    var prevRoot = latestByTaskId[taskIdRoot];
+                    var prevTimeRoot = prevRoot ? String(prevRoot._time || '') : '';
+                    var currTimeRoot = timeKey(rdataRoot.submittedAt || rdataRoot.createdAt || rdataRoot.timestamp || '');
+                    if (!prevRoot || currTimeRoot > prevTimeRoot) {
+                        latestByTaskId[taskIdRoot] = { data: rdataRoot, _time: currTimeRoot };
+                    }
+                });
+            } catch (eRoot) {}
+
+            for (var i = 0; i < completeIds.length; i++) {
+                var taskId = completeIds[i];
+                if (latestByTaskId[taskId]) continue;
+                try {
+                    var repSnap0 = await w.getDocs(w.collection(w.db, 'tasks', taskId, 'reports'));
+                    repSnap0.forEach(function (docRep) {
+                        var rdata = docRep.data() || {};
+                        var prev = latestByTaskId[taskId];
+                        var prevTime = prev ? String(prev._time || '') : '';
+                        var currTime = timeKey(rdata.submittedAt || rdata.createdAt || rdata.timestamp || '');
+                        if (!prev || currTime > prevTime) {
+                            latestByTaskId[taskId] = { data: rdata, _time: currTime };
+                        }
+                    });
+                } catch (eSub) {}
+            }
+
+            var pendingCount = 0;
+            for (var j = 0; j < completeIds.length; j++) {
+                var tid = completeIds[j];
+                var entry = latestByTaskId[tid];
+                if (!entry || !entry.data) continue;
+                var appr = entry.data.approval_status || entry.data.approvalStatus || '';
+                appr = String(appr || '').toLowerCase();
+                if (appr !== 'approved') {
+                    pendingCount++;
+                }
+            }
+            countEl.innerText = String(pendingCount);
+        } catch (e) {
+            countEl.innerText = '0';
+        }
+    }
+
+    refreshReportPendingApprovalCount(0);
 
     const questCard = target.querySelector('.smart-filters-grid .filter-card');
     if (questCard) {
@@ -4311,6 +4419,7 @@ export function renderSidebar(target) {
     if (reportCard) {
         reportCard.addEventListener('click', (e) => {
             e.preventDefault();
+            refreshReportPendingApprovalCount(0);
             const modalEl = document.getElementById('reportBoardModal');
             const frame = document.getElementById('reportBoardFrame');
             window.closeReportBoardModal = function () {
@@ -4483,11 +4592,11 @@ export function renderSidebar(target) {
                 <input id="reportSearchInput" type="text" class="form-control ps-5 rounded-3 border-light shadow-sm" style="width: 280px; font-size: 13px;" placeholder="Search Report Quest">
             </div>
             <select id="reportPeriodSelect" class="form-select rounded-3 border-light shadow-sm" style="width: 150px; font-size: 13px;">
-                <option value="all">All Period</option>
+                <option value="all" selected>All Period</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
-                <option value="3month" selected>3 Month</option>
+                <option value="3month">3 Month</option>
                 <option value="6month">6 Month</option>
                 <option value="yearly">Yearly</option>
             </select>
@@ -4537,9 +4646,16 @@ export function renderSidebar(target) {
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg">
             <div class="modal-header bg-light">
-                <div class="flex-grow-1">
+                <h6 class="modal-title fw-bold mb-0">Report Details</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-start gap-3">
-                        <h6 class="modal-title fw-bold mb-0">Report Details</h6>
+                        <div>
+                            <label class="stat-label mb-1">Team Member</label>
+                            <div id="mUser" class="fw-bold text-primary"></div>
+                        </div>
                         <div class="d-flex align-items-start gap-3">
                             <div class="text-end">
                                 <div class="stat-label mb-1">Assigned</div>
@@ -4551,13 +4667,6 @@ export function renderSidebar(target) {
                             </div>
                         </div>
                     </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label class="stat-label mb-1">Team Member</label>
-                    <div id="mUser" class="fw-bold text-primary"></div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6">
@@ -4655,6 +4764,20 @@ export function renderSidebar(target) {
         return { name: u.name || u.email || uid, photo: u.photo || '' };
     }
 
+    function formatNameWords(name, maxWords) {
+        var s = String(name || '').trim().replace(/\s+/g, ' ');
+        if (!s) return '';
+        var words = s.split(' ');
+        var limit = typeof maxWords === 'number' && maxWords > 0 ? maxWords : words.length;
+        return words.slice(0, limit).join(' ');
+    }
+
+    function firstNameOf(fullName) {
+        var s = String(fullName || '').trim().replace(/\s+/g, ' ');
+        if (!s) return '';
+        return s.split(' ')[0];
+    }
+
     function renderAvatarPile(uids, max) {
         var ids = Array.isArray(uids) ? uids.filter(Boolean) : [];
         if (ids.length === 0) return '<span class="text-muted">-</span>';
@@ -4681,11 +4804,30 @@ export function renderSidebar(target) {
             return (
                 '<div class="d-flex align-items-center">' +
                     '<img src="' + escapeAttr(src) + '" class="rounded-circle me-2 border" width="30" height="30" style="object-fit:cover;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name) + '">' +
-                    '<span class="fw-bold text-truncate-custom" data-bs-toggle="tooltip" title="' + escapeAttr(info.name) + '">' + info.name + '</span>' +
+                    '<span class="fw-bold text-truncate-custom" data-bs-toggle="tooltip" title="' + escapeAttr(info.name) + '">' + escapeAttr(formatNameWords(info.name, 3)) + '</span>' +
                 '</div>'
             );
         }
-        return renderAvatarPile(ids, 5);
+        var fullNames = [];
+        var shortNames = [];
+        for (var i = 0; i < ids.length; i++) {
+            var info2 = getUserDisplay(ids[i]);
+            var nm = info2 && info2.name ? info2.name : '';
+            if (nm) {
+                fullNames.push(nm);
+                shortNames.push(firstNameOf(nm));
+            }
+        }
+        var label = '';
+        if (shortNames.length) {
+            var shown = shortNames.slice(0, 2);
+            label = shown.join(', ');
+            if (shortNames.length > 2) label += ' +' + String(shortNames.length - 2);
+        }
+        var labelHtml = label
+            ? '<span class="fw-bold text-truncate-custom ms-2" data-bs-toggle="tooltip" title="' + escapeAttr(fullNames.join(', ')) + '">' + escapeAttr(label) + '</span>'
+            : '';
+        return '<div class="d-flex align-items-center">' + renderAvatarPile(ids, 5) + labelHtml + '</div>';
     }
 
     function renderNamedCollection(arr) {
@@ -5488,7 +5630,6 @@ export function renderSidebar(target) {
                 var tId0 = completeTaskIds[i0];
                 if (latestByTaskId[tId0]) continue;
                 var qt = taskQuestTypeById[tId0] || 'Side Quest';
-                if (qt === 'Side Quest') continue;
                 try {
                     var repSnap0 = await parentWin.getDocs(parentWin.collection(parentWin.db, 'tasks', tId0, 'reports'));
                     repSnap0.forEach(function (docRep) {
