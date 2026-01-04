@@ -4855,7 +4855,7 @@ export function renderSidebar(target) {
                 return (
                     '<div class="d-flex align-items-center">' +
                         '<img src="' + escapeAttr(info.photo) + '" class="rounded-circle me-2 border" width="30" height="30" style="object-fit:cover;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name) + '">' +
-                        '<span class="fw-bold text-truncate-custom flex-grow-1" style="min-width:0;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name) + '" data-user-text="' + escapeAttr(formatNameWords(info.name, 3)) + '"></span>' +
+                        '<span class="fw-bold text-truncate-custom flex-grow-1" style="min-width:0;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name) + '" data-user-text="' + escapeAttr(info.name) + '"></span>' +
                     '</div>'
                 );
             } else {
@@ -4863,7 +4863,7 @@ export function renderSidebar(target) {
                 return (
                     '<div class="d-flex align-items-center">' +
                         '<span class="d-inline-flex align-items-center justify-content-center rounded-circle border bg-secondary text-white me-2" style="width:30px;height:30px;font-size:12px;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name || ids[0]) + '">' + escapeAttr(ini) + '</span>' +
-                        '<span class="fw-bold text-truncate-custom flex-grow-1" style="min-width:0;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name || ids[0]) + '" data-user-text="' + escapeAttr(formatNameWords(info.name || ids[0], 3)) + '"></span>' +
+                        '<span class="fw-bold text-truncate-custom flex-grow-1" style="min-width:0;" data-bs-toggle="tooltip" title="' + escapeAttr(info.name || ids[0]) + '" data-user-text="' + escapeAttr(info.name || ids[0]) + '"></span>' +
                     '</div>'
                 );
             }
