@@ -1578,6 +1578,10 @@ export function renderSidebar(target) {
                 modal.classList.add('hidden');
             }
         }
+        if (typeof window !== 'undefined') {
+            window.openSideQuestDescription = openSideQuestDescription;
+            window.closeSideQuestDescModal = closeSideQuestDescModal;
+        }
 
         function switchTab(priority, element) {
             document.querySelectorAll('.nav-card').forEach(function (card) {
@@ -4784,9 +4788,13 @@ export function renderSidebar(target) {
     var detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
     var activeModalReportId = null;
     var pendingFeedbackFiles = [];
-    function loadReportUsers() {
+    function loadReportUsers(attempt) {
         var parentWin = window.parent;
         if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.getDocs) {
+            var nextAttempt = typeof attempt === 'number' ? attempt + 1 : 1;
+            if (nextAttempt <= 30) {
+                setTimeout(function () { loadReportUsers(nextAttempt); }, 500);
+            }
             return;
         }
         parentWin.getDocs(parentWin.collection(parentWin.db, 'users')).then(function (snap) {
@@ -4811,7 +4819,7 @@ export function renderSidebar(target) {
             console.error('Failed to load users for report board', e);
         });
     }
-    loadReportUsers();
+    loadReportUsers(0);
 
     function getParentUsers() {
         var w = window;
@@ -5756,11 +5764,15 @@ export function renderSidebar(target) {
         }
         return fallback || '';
     }
-    async function loadReportsFromTasks() {
+    async function loadReportsFromTasks(attempt) {
         var parentWin = window.parent;
         allReports = [];
         currentReports = [];
         if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.getDocs) {
+            var nextAttempt = typeof attempt === 'number' ? attempt + 1 : 1;
+            if (nextAttempt <= 30) {
+                setTimeout(function () { loadReportsFromTasks(nextAttempt); }, 500);
+            }
             updateStats();
             renderReports();
             return;
@@ -5817,8 +5829,6 @@ export function renderSidebar(target) {
 
             for (var i0 = 0; i0 < completeTaskIds.length; i0++) {
                 var tId0 = completeTaskIds[i0];
-                if (latestByTaskId[tId0]) continue;
-                var qt = taskQuestTypeById[tId0] || 'Side Quest';
                 try {
                     var repSnap0 = await parentWin.getDocs(parentWin.collection(parentWin.db, 'tasks', tId0, 'reports'));
                     repSnap0.forEach(function (docRep) {
@@ -5959,7 +5969,7 @@ export function renderSidebar(target) {
             });
         })(headerCells[h]);
     }
-    loadReportsFromTasks();
+    loadReportsFromTasks(0);
 </script>
 </body>
 </html>`;
@@ -7575,7 +7585,15 @@ export function renderSidebar(target) {
                                 if (questTasksById && questTasksById[taskId] && questTasksById[taskId].description) {
                                     fullHtml = String(questTasksById[taskId].description);
                                 }
-                                openSideQuestDescription(taskId, fullHtml);
+                                var fn = null;
+                                if (window.parent && typeof window.parent.openSideQuestDescription === 'function') {
+                                    fn = window.parent.openSideQuestDescription;
+                                } else if (typeof openSideQuestDescription === 'function') {
+                                    fn = openSideQuestDescription;
+                                }
+                                if (fn) {
+                                    fn(taskId, fullHtml);
+                                }
                             });
                         }
                     })();
