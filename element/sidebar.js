@@ -4551,7 +4551,7 @@ export function renderSidebar(target) {
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"tooltip\"]'));
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
@@ -4564,7 +4564,7 @@ export function renderSidebar(target) {
         if (type === 'Main Quest') badgeClass += 'badge-main';
         else if (type === 'Side Quest') badgeClass += 'badge-side';
         else badgeClass += 'badge-project';
-        document.getElementById('mType').innerHTML = '<span class=\"' + badgeClass + '\">' + type + '</span>';
+        document.getElementById('mType').innerHTML = '<span class="' + badgeClass + '">' + type + '</span>';
         detailModal.show();
     }
 
@@ -4589,6 +4589,14 @@ export function renderSidebar(target) {
         var dt = new Date(y, m, d);
         if (isNaN(dt.getTime())) return null;
         return dt;
+    }
+
+    function escapeAttr(s) {
+        return String(s || '').replace(/"/g, '&quot;');
+    }
+
+    function escapeJs(s) {
+        return String(s || '').replace(/'/g, "\\'");
     }
 
     function isWithinPeriod(dateStr, period) {
@@ -4709,25 +4717,25 @@ export function renderSidebar(target) {
                 '<td class="px-4">' +
                     '<div class="d-flex align-items-center">' +
                         '<img src="' + r2.avatar + '" class="rounded-circle me-2" width="30" height="30">' +
-                        '<span class="fw-bold text-truncate-custom" data-bs-toggle="tooltip" title="' + r2.user + '">' + r2.user + '</span>' +
+                        '<span class="fw-bold text-truncate-custom" data-bs-toggle="tooltip" title="' + escapeAttr(r2.user) + '">' + r2.user + '</span>' +
                     '</div>' +
                 '</td>' +
                 '<td><span class="text-muted small">' + r2.date + '</span></td>' +
-                '<td><span class="fw-medium text-truncate-custom" data-bs-toggle="tooltip" title="' + r2.task + '">' + r2.taskShort + '</span></td>' +
+                '<td><span class="fw-medium text-truncate-custom" data-bs-toggle="tooltip" title="' + escapeAttr(r2.task) + '">' + r2.taskShort + '</span></td>' +
                 '<td>' +
-                    '<div class="rich-text-preview text-truncate-custom" data-bs-toggle="tooltip" title="' + r2.reportPreviewFull + '">' +
+                    '<div class="rich-text-preview text-truncate-custom" data-bs-toggle="tooltip" title="' + escapeAttr(r2.reportPreviewFull) + '">' +
                         r2.reportPreview +
                     '</div>' +
                 '</td>' +
-                '<td><a href="' + r2.fileUrl + '" class="text-primary text-decoration-none small text-truncate-custom" data-bs-toggle="tooltip" title="' + r2.fileTitle + '">' +
+                '<td><a href="' + r2.fileUrl + '" class="text-primary text-decoration-none small text-truncate-custom" data-bs-toggle="tooltip" title="' + escapeAttr(r2.fileTitle) + '">' +
                     '<i class="' + r2.fileIconClass + ' me-1"></i> ' + r2.fileName +
                 '</a></td>' +
                 '<td>' +
                     '<div class="d-flex flex-column align-items-center gap-1" onclick="event.stopPropagation();">' +
                         '<div class="' + statusClass + '">' + statusLabel + '</div>' +
                         '<div class="d-flex justify-content-center gap-1">' +
-                            '<button class="btn btn-outline-danger btn-sm px-2 rounded-2" onclick="rejectReport(\'' + r2.id + '\')"><i class="fas fa-times"></i></button>' +
-                            '<button class="btn btn-teal btn-sm px-2 rounded-2" onclick="approveReport(\'' + r2.id + '\')">' + (st2 === 'approved' ? 'Approved' : 'Approve') + '</button>' +
+                            '<button class="btn btn-outline-danger btn-sm px-2 rounded-2" onclick="rejectReport(\'' + escapeJs(r2.id) + '\')"><i class="fas fa-times"></i></button>' +
+                            '<button class="btn btn-teal btn-sm px-2 rounded-2" onclick="approveReport(\'' + escapeJs(r2.id) + '\')">' + (st2 === 'approved' ? 'Approved' : 'Approve') + '</button>' +
                         '</div>' +
                     '</div>' +
                 '</td>';
@@ -4809,8 +4817,10 @@ export function renderSidebar(target) {
         try {
             var snap = await parentWin.getDocs(parentWin.collection(parentWin.db, 'tasks'));
             var tasks = [];
+            var tasksById = {};
             snap.forEach(function (docSnap) {
                 var data = docSnap.data() || {};
+                tasksById[docSnap.id] = data;
                 var rawType = String(data.type || '');
                 var rawStatus = String(data.status || '');
                 var type = rawType.toLowerCase();
@@ -4826,6 +4836,13 @@ export function renderSidebar(target) {
                     isSideQuest = true;
                 }
                 if (!isSideQuest) return;
+                var isComplete = false;
+                if (normStatus === 'complete' || normStatus === 'done') isComplete = true;
+                if (data.task_status) {
+                    var ts = String(data.task_status).toLowerCase().replace(/[\s_]/g, '');
+                    if (ts === 'complete' || ts === 'done') isComplete = true;
+                }
+                if (!isComplete) return;
                 tasks.push({ id: docSnap.id, data: data });
             });
             var reports = [];
@@ -4934,6 +4951,131 @@ export function renderSidebar(target) {
                     notifyCount: notifyIds.length
                 };
                 reports.push(reportObj);
+            }
+            try {
+                var rootSnap = await parentWin.getDocs(parentWin.collection(parentWin.db, 'quest_reports'));
+                rootSnap.forEach(function (repSnap) {
+                    var rdata = repSnap.data() || {};
+                    var taskId = rdata.taskId || rdata.task_id || '';
+                    if (!taskId) return;
+                    var exists = false;
+                    for (var i = 0; i < reports.length; i++) {
+                        if (reports[i].id === taskId) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (exists) return;
+                    var data = tasksById[taskId] || {};
+                    var rawType = String(data.type || '');
+                    var rawStatus = String(data.status || '');
+                    var type = rawType.toLowerCase();
+                    var status = rawStatus.toLowerCase();
+                    var normType = type.replace(/[\s_]/g, '');
+                    var normStatus = status.replace(/[\s_]/g, '');
+                    var isSideQuest = false;
+                    if (normType === 'sidequest' || type === 'side-quest') {
+                        isSideQuest = true;
+                    } else if (normStatus === 'sidequest') {
+                        isSideQuest = true;
+                    } else if (data.task_status) {
+                        isSideQuest = true;
+                    }
+                    if (!isSideQuest) return;
+                    var isComplete2 = false;
+                    if (normStatus === 'complete' || normStatus === 'done') isComplete2 = true;
+                    if (data.task_status) {
+                        var ts2 = String(data.task_status).toLowerCase().replace(/[\s_]/g, '');
+                        if (ts2 === 'complete' || ts2 === 'done') isComplete2 = true;
+                    }
+                    if (!isComplete2) return;
+                    var assignRaw = data.assign_to || data.assignTo || [];
+                    var assignIds = [];
+                    if (Array.isArray(assignRaw)) {
+                        assignIds = assignRaw.slice();
+                    } else if (assignRaw) {
+                        assignIds = [assignRaw];
+                    }
+                    var notifyRaw = data.notify_to || data.notifyTo || [];
+                    var notifyIds = [];
+                    if (Array.isArray(notifyRaw)) {
+                        notifyIds = notifyRaw.slice();
+                    } else if (notifyRaw) {
+                        notifyIds = [notifyRaw];
+                    }
+                    var parentUsers = parentWin.questUsersById || {};
+                    var displayName = 'Unassigned';
+                    var avatarUrl = '';
+                    if (assignIds.length > 0) {
+                        var firstId2 = assignIds[0];
+                        var u2 = parentUsers[firstId2];
+                        if (u2) {
+                            displayName = u2.name || u2.email || firstId2;
+                            avatarUrl = u2.photo || '';
+                        } else {
+                            displayName = firstId2;
+                        }
+                    }
+                    if (!avatarUrl) {
+                        avatarUrl = 'https://i.pravatar.cc/150?u=' + encodeURIComponent(displayName);
+                    }
+                    var title2 = data.title || 'Untitled Side Quest';
+                    var dueDate2 = data.due_date || data.dueDate || '';
+                    var reportHtml2 = rdata.content || '';
+                    var tmpDiv2 = document.createElement('div');
+                    tmpDiv2.innerHTML = reportHtml2;
+                    var reportText2 = (tmpDiv2.textContent || tmpDiv2.innerText || '').trim();
+                    var previewMax2 = 140;
+                    var previewText2 = reportText2;
+                    if (previewText2.length > previewMax2) {
+                        previewText2 = previewText2.substring(0, previewMax2);
+                        previewText2 = previewText2.replace(/\s+\S*$/, '');
+                        previewText2 += '...';
+                    }
+                    var filesArr2 = Array.isArray(rdata.files) ? rdata.files : [];
+                    var fileName2 = '';
+                    var fileTitle2 = '';
+                    var fileUrl2 = '#';
+                    var fileIconClass2 = 'far fa-file';
+                    if (filesArr2.length > 0) {
+                        var f2 = filesArr2[0];
+                        fileName2 = f2.name || 'Attachment';
+                        fileTitle2 = f2.name || '';
+                        fileUrl2 = f2.url || '#';
+                        var ttype2 = String(f2.type || '').toLowerCase();
+                        if (ttype2.indexOf('pdf') !== -1) {
+                            fileIconClass2 = 'far fa-file-pdf';
+                        } else if (ttype2.indexOf('zip') !== -1 || ttype2.indexOf('rar') !== -1 || ttype2.indexOf('7z') !== -1) {
+                            fileIconClass2 = 'far fa-file-archive';
+                        } else if (ttype2.indexOf('image/') === 0) {
+                            fileIconClass2 = 'far fa-file-image';
+                        }
+                        if (filesArr2.length > 1) {
+                            fileName2 += ' (+' + String(filesArr2.length - 1) + ')';
+                        }
+                    }
+                    reports.push({
+                        id: taskId,
+                        user: displayName,
+                        avatar: avatarUrl,
+                        questType: 'Side Quest',
+                        date: dueDate2,
+                        task: title2,
+                        taskShort: title2.length > 20 ? title2.substring(0, 17) + '...' : title2,
+                        reportPreview: previewText2,
+                        reportPreviewFull: reportText2,
+                        reportFull: reportHtml2,
+                        fileName: fileName2,
+                        fileTitle: fileTitle2,
+                        fileUrl: fileUrl2,
+                        fileIconClass: fileIconClass2,
+                        status: 'pending',
+                        notifyTo: notifyIds,
+                        notifyCount: notifyIds.length
+                    });
+                });
+            } catch (eRoot) {
+                console.error('Failed to load quest_reports', eRoot);
             }
             allReports = reports;
             currentReports = reports.slice();
