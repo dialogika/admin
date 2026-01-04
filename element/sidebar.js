@@ -3780,6 +3780,12 @@ export function renderSidebar(target) {
                         });
                     }
                 }
+                if (typeof renderReports === 'function') {
+                    renderReports();
+                }
+                if (typeof updateActiveReportModalUsers === 'function') {
+                    updateActiveReportModalUsers();
+                }
             } catch (e) {
                 console.error('Failed to load users for quest', e);
                 if (assignList) {
@@ -4753,6 +4759,9 @@ export function renderSidebar(target) {
     var pendingFeedbackFiles = [];
 
     function getParentUsers() {
+        if (typeof questUsersById !== 'undefined') {
+            return questUsersById;
+        }
         var parentWin = window.parent;
         return parentWin && parentWin.questUsersById ? parentWin.questUsersById : {};
     }
@@ -5043,6 +5052,48 @@ export function renderSidebar(target) {
         }
         if (!found) return;
         openModalForReport(found, 'view');
+    }
+
+    function updateActiveReportModalUsers() {
+        if (!activeModalReportId) return;
+        var modalEl = document.getElementById('detailModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+
+        var found = null;
+        if (typeof allReports !== 'undefined' && Array.isArray(allReports)) {
+            for (var i = 0; i < allReports.length; i++) {
+                if (allReports[i].id === activeModalReportId) {
+                    found = allReports[i];
+                    break;
+                }
+            }
+        }
+        if (!found) return;
+
+        var mUser = document.getElementById('mUser');
+        if (mUser) {
+            var ids = Array.isArray(found.assignees) ? found.assignees.filter(Boolean) : [];
+            if (ids.length === 0) {
+                mUser.innerText = '-';
+            } else if (ids.length === 1) {
+                mUser.innerText = getUserDisplay(ids[0]).name;
+            } else {
+                var names = [];
+                for (var i = 0; i < ids.length; i++) names.push(getUserDisplay(ids[i]).name);
+                mUser.innerText = names.join(', ');
+            }
+        }
+
+        var mAssign = document.getElementById('mAssignAvatars');
+        if (mAssign) mAssign.innerHTML = renderAvatarPile(found.assignees, 6);
+
+        var mNotify = document.getElementById('mNotifyAvatars');
+        if (mNotify) mNotify.innerHTML = renderAvatarPile(found.notifyTo, 6);
+
+        var tooltipEls = [].slice.call(document.querySelectorAll('#detailModal [data-bs-toggle="tooltip"]'));
+        tooltipEls.forEach(function (el) {
+            bootstrap.Tooltip.getOrCreateInstance(el);
+        });
     }
 
     function renderReports() {
@@ -7713,6 +7764,12 @@ export function renderSidebar(target) {
                             renderNotify(filteredN);
                         });
                     }
+                }
+                if (typeof renderReports === 'function') {
+                    renderReports();
+                }
+                if (typeof updateActiveReportModalUsers === 'function') {
+                    updateActiveReportModalUsers();
                 }
             }).catch(function (e) {
                 console.error('Failed to load users for side quest', e);
