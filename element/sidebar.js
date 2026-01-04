@@ -4756,9 +4756,34 @@ export function renderSidebar(target) {
     var detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
     var activeModalReportId = null;
     var pendingFeedbackFiles = [];
-    if (typeof loadQuestUsers === 'function') {
-        loadQuestUsers();
+    function loadReportUsers() {
+        var parentWin = window.parent;
+        if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.getDocs) {
+            return;
+        }
+        parentWin.getDocs(parentWin.collection(parentWin.db, 'users')).then(function (snap) {
+            var map = {};
+            snap.forEach(function (docSnap) {
+                var u = docSnap.data() || {};
+                map[docSnap.id] = {
+                    uid: docSnap.id,
+                    name: u.name || u.email || docSnap.id,
+                    email: u.email || '',
+                    photo: u.photo || ''
+                };
+            });
+            window.reportUsersById = map;
+            if (typeof renderReports === 'function') {
+                renderReports();
+            }
+            if (typeof updateActiveReportModalUsers === 'function') {
+                updateActiveReportModalUsers();
+            }
+        }).catch(function (e) {
+            console.error('Failed to load users for report board', e);
+        });
     }
+    loadReportUsers();
 
     function getParentUsers() {
         var w = window;
