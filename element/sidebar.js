@@ -411,6 +411,7 @@ export function renderSidebar(target) {
     <title>Quest Board - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/assets/css/style.css">
@@ -6269,6 +6270,7 @@ export function renderSidebar(target) {
     <title>Side Quest - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/assets/css/style.css">
@@ -6669,6 +6671,49 @@ export function renderSidebar(target) {
             <div id="sideQuestLowList" class="space-y-3"></div>
         </div>
     </div>
+    
+    <div class="modal fade" id="sideQuestDetailModal" tabindex="-1" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sideQuestDetailTitle"><b>Side Quest Detail</b></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1"><i>Description</i></div>
+                        <div id="sideQuestDetailDescription" class="border rounded p-2 bg-light" style="max-height: 260px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="small text-muted">Start Date</div>
+                            <div id="sideQuestDetailStart" class="fw-semibold mb-2">-</div>
+                            <div class="small text-muted">Due Date</div>
+                            <div id="sideQuestDetailDue" class="fw-semibold mb-2">-</div>
+                            <div class="small text-muted">Task Point</div>
+                            <div id="sideQuestDetailPoints" class="fw-semibold mb-2">-</div>
+                            <div class="small text-muted">Priority</div>
+                            <div id="sideQuestDetailPriority" class="fw-semibold mb-2">-</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Assign to</div>
+                            <div id="sideQuestDetailAssign" class="fw-semibold mb-2">-</div>
+                            <div class="small text-muted">Report to</div>
+                            <div id="sideQuestDetailNotify" class="fw-semibold mb-2">-</div>
+                            <div class="small text-muted">Departments</div>
+                            <div id="sideQuestDetailDepartments" class="fw-semibold mb-2">-</div>
+                            <div class="small text-muted">Positions</div>
+                            <div id="sideQuestDetailPositions" class="fw-semibold mb-2">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         if (window.lucide && window.lucide.createIcons) {
             window.lucide.createIcons();
@@ -7044,6 +7089,147 @@ export function renderSidebar(target) {
                     alert('Gagal menghapus quest.');
                 });
             }
+        }
+
+        function getSideQuestTaskById(taskId) {
+            if (!taskId) return null;
+            if (questTasksById && questTasksById[taskId]) {
+                return questTasksById[taskId];
+            }
+            if (window.questTasksById && window.questTasksById[taskId]) {
+                return window.questTasksById[taskId];
+            }
+            if (window.parent && window.parent.questTasksById && window.parent.questTasksById[taskId]) {
+                return window.parent.questTasksById[taskId];
+            }
+            return null;
+        }
+
+        function openSideQuestDetailModal(taskId, descHtmlOverride) {
+            var data = getSideQuestTaskById(taskId);
+            if (!data) {
+                alert('Data Side Quest tidak ditemukan.');
+                return;
+            }
+
+            var modalEl = document.getElementById('sideQuestDetailModal');
+            if (!modalEl || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                alert('Modal tidak tersedia.');
+                return;
+            }
+
+            var titleEl = document.getElementById('sideQuestDetailTitle');
+            var descEl = document.getElementById('sideQuestDetailDescription');
+            var startEl = document.getElementById('sideQuestDetailStart');
+            var dueEl = document.getElementById('sideQuestDetailDue');
+            var assignEl = document.getElementById('sideQuestDetailAssign');
+            var notifyEl = document.getElementById('sideQuestDetailNotify');
+            var deptEl = document.getElementById('sideQuestDetailDepartments');
+            var posEl = document.getElementById('sideQuestDetailPositions');
+            var pointsEl = document.getElementById('sideQuestDetailPoints');
+            var priorityEl = document.getElementById('sideQuestDetailPriority');
+
+            if (titleEl) {
+                titleEl.textContent = data.title || 'Untitled Side Quest';
+            }
+
+            var descHtml = typeof descHtmlOverride === 'string' && descHtmlOverride ? descHtmlOverride : (data.description || '');
+            if (descEl) {
+                if (descHtml) {
+                    descEl.innerHTML = descHtml;
+                } else {
+                    descEl.innerHTML = '<span class="text-muted">No description provided.</span>';
+                }
+            }
+
+            function formatDate(raw) {
+                if (!raw) return '-';
+                return String(raw);
+            }
+
+            if (startEl) {
+                startEl.textContent = formatDate(data.start_date || data.startDate || '');
+            }
+            if (dueEl) {
+                dueEl.textContent = formatDate(data.due_date || data.dueDate || '');
+            }
+
+            function mapUserList(value) {
+                var ids = [];
+                if (Array.isArray(value)) {
+                    ids = value.slice();
+                } else if (value) {
+                    ids = [value];
+                }
+                var names = [];
+                ids.forEach(function (uid) {
+                    var u = null;
+                    if (questUsersById && questUsersById[uid]) {
+                        u = questUsersById[uid];
+                    } else if (window.questUsersById && window.questUsersById[uid]) {
+                        u = window.questUsersById[uid];
+                    } else if (window.parent && window.parent.questUsersById && window.parent.questUsersById[uid]) {
+                        u = window.parent.questUsersById[uid];
+                    }
+                    if (u && (u.name || u.email)) {
+                        names.push(u.name || u.email);
+                    } else if (uid) {
+                        names.push(uid);
+                    }
+                });
+                if (!names.length) return '-';
+                return names.join(', ');
+            }
+
+            if (assignEl) {
+                assignEl.textContent = mapUserList(data.assign_to);
+            }
+            if (notifyEl) {
+                notifyEl.textContent = mapUserList(data.notify_to || data.notifyTo || []);
+            }
+
+            function mapCollectionItems(value) {
+                var items = Array.isArray(value) ? value : [];
+                var names = [];
+                items.forEach(function (item) {
+                    if (!item) return;
+                    if (typeof item === 'string') {
+                        names.push(item);
+                    } else if (item.name) {
+                        names.push(item.name);
+                    }
+                });
+                if (!names.length) return '-';
+                return names.join(', ');
+            }
+
+            if (deptEl) {
+                deptEl.textContent = mapCollectionItems(data.departments || []);
+            }
+            if (posEl) {
+                posEl.textContent = mapCollectionItems(data.positions || []);
+            }
+
+            if (pointsEl) {
+                var pts = 0;
+                if (typeof data.points === 'number') {
+                    pts = data.points;
+                } else if (data.points) {
+                    var parsed = parseFloat(String(data.points));
+                    if (!isNaN(parsed)) {
+                        pts = parsed;
+                    }
+                }
+                pointsEl.textContent = pts ? String(pts) : '-';
+            }
+
+            if (priorityEl) {
+                var p = String(data.priority || 'normal').toLowerCase();
+                priorityEl.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+            }
+
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         }
 
         function switchTab(priority, element) {
@@ -7878,26 +8064,19 @@ export function renderSidebar(target) {
                                 if (evt && evt.stopPropagation) {
                                     evt.stopPropagation();
                                 }
-                                console.log('More button clicked for taskId:', taskId);
-                                
                                 var fullHtml = '';
-                                // Try finding full description from different possible stores
                                 var stores = [
                                     typeof questTasksById !== 'undefined' ? questTasksById : null,
                                     window.questTasksById,
                                     typeof window !== 'undefined' && window.parent ? window.parent.questTasksById : null
                                 ];
-                                
                                 for (var i = 0; i < stores.length; i++) {
                                     if (stores[i] && stores[i][taskId] && (stores[i][taskId].description || stores[i][taskId].desc)) {
                                         fullHtml = String(stores[i][taskId].description || stores[i][taskId].desc);
-                                        console.log('Found fullHtml from store index ' + i);
                                         break;
                                     }
                                 }
-
                                 if (!fullHtml) {
-                                    console.log('fullHtml not found in stores, using DOM fallback');
                                     var p = moreBtn.closest('p');
                                     if (p) {
                                         var pClone = p.cloneNode(true);
@@ -7906,56 +8085,7 @@ export function renderSidebar(target) {
                                         fullHtml = pClone.innerHTML;
                                     }
                                 }
-                                
-                                // Find the open function with more robust checking
-                                var fn = null;
-                                
-                                // Check multiple possible locations for the function
-                                var functionSources = [
-                                    function() { return typeof window !== 'undefined' && window.openSideQuestDescription ? window.openSideQuestDescription : null; },
-                                    function() { return typeof openSideQuestDescription !== 'undefined' ? openSideQuestDescription : null; },
-                                    function() { return typeof window !== 'undefined' && window.parent && window.parent.openSideQuestDescription ? window.parent.openSideQuestDescription : null; },
-                                    function() { return typeof window !== 'undefined' && window.top && window.top.openSideQuestDescription ? window.top.openSideQuestDescription : null; }
-                                ];
-                                
-                                for (var j = 0; j < functionSources.length; j++) {
-                                    var candidateFn = functionSources[j]();
-                                    if (candidateFn && typeof candidateFn === 'function') {
-                                        fn = candidateFn;
-                                        break;
-                                    }
-                                }
-                                
-                                if (fn) {
-                                    console.log('Calling openSideQuestDescription with fullHtml length:', fullHtml.length);
-                                    fn(taskId, fullHtml);
-                                } else {
-                                    console.error('Function openSideQuestDescription not found in any scope');
-                                    // Fallback: try to access modal from parent window
-                                    var parentModal = null;
-                                    var parentBody = null;
-                                    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-                                        parentModal = window.parent.document.getElementById('sideQuestDescModal');
-                                        parentBody = window.parent.document.getElementById('sideQuestDescModalBody');
-                                    }
-                                    if (!parentModal && typeof window !== 'undefined' && window.top && window.top !== window) {
-                                        try {
-                                            parentModal = window.top.document.getElementById('sideQuestDescModal');
-                                            parentBody = window.top.document.getElementById('sideQuestDescModalBody');
-                                        } catch (e) {
-                                            console.warn('Access to top window blocked', e);
-                                        }
-                                    }
-                                    if (parentModal && parentBody) {
-                                        parentBody.innerHTML = fullHtml || 'No description available.';
-                                        parentModal.classList.remove('hidden');
-                                    } else {
-                                        // Last resort: alert with plain text
-                                        if (fullHtml) {
-                                            alert(fullHtml.replace(/<[^>]*>/g, ''));
-                                        }
-                                    }
-                                }
+                                openSideQuestDetailModal(taskId, fullHtml);
                             });
                         }
                     })();
