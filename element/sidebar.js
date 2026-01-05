@@ -1403,7 +1403,7 @@ export function renderSidebar(target) {
             }
 
             var parentWin = window.parent;
-            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.addDoc || !parentWin.doc) {
+            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.addDoc || !parentWin.doc || !parentWin.updateDoc) {
                 alert('Database connection not available.');
                 return;
             }
@@ -1764,6 +1764,8 @@ export function renderSidebar(target) {
                 }
             }
         }
+        window.openSideQuestDescription = openSideQuestDescription;
+        window.closeSideQuestDescModal = closeSideQuestDescModal;
 
         function closeSideQuestDescModal() {
             var modal = document.getElementById('sideQuestDescModal');
@@ -6147,6 +6149,9 @@ export function renderSidebar(target) {
                     
                     // Now fetch from sub-collection tasks/{taskId}/reports
                     var repSnap0 = await parentWin.getDocs(parentWin.collection(parentWin.db, 'tasks', tId0, 'reports'));
+                    if (!repSnap0.empty) {
+                        console.log('Found ' + repSnap0.size + ' sub-collection reports for taskId:', tId0);
+                    }
                     repSnap0.forEach(function (docRep) {
                         var rdata = docRep.data() || {};
                         var prev = latestByTaskId[tId0];
@@ -6959,7 +6964,7 @@ export function renderSidebar(target) {
             }
             
             var parentWin = window.parent;
-            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.addDoc || !parentWin.doc) {
+            if (!parentWin || !parentWin.db || !parentWin.collection || !parentWin.addDoc || !parentWin.doc || !parentWin.updateDoc) {
                 alert('Database connection not available.');
                 return;
             }
@@ -7003,10 +7008,22 @@ export function renderSidebar(target) {
                 
                 // Update task document to indicate a report exists
                 try {
-                    await parentWin.updateDoc(parentWin.doc(parentWin.db, 'tasks', taskId), {
+                    var taskPatch = {
                         hasReport: true,
                         lastReportAt: new Date().toISOString()
-                    });
+                    };
+                    // Ensure we pass a plain object to parentWin.updateDoc
+                    var taskPayload = {};
+                    if (parentWin.JSON && parentWin.JSON.stringify && parentWin.JSON.parse) {
+                        try {
+                            taskPayload = parentWin.JSON.parse(parentWin.JSON.stringify(taskPatch));
+                        } catch (err) {
+                            taskPayload = { hasReport: true, lastReportAt: taskPatch.lastReportAt };
+                        }
+                    } else {
+                        taskPayload = { hasReport: true, lastReportAt: taskPatch.lastReportAt };
+                    }
+                    await parentWin.updateDoc(parentWin.doc(parentWin.db, 'tasks', taskId), taskPayload);
                 } catch (eTask) {
                     console.warn('Failed to update task with report flag', eTask);
                 }
@@ -8742,10 +8759,16 @@ export function renderSidebar(target) {
         loadSideQuestUsersForForm();
         loadSideQuestDepartments();
         loadSideQuestPositions();
+        
+        // Expose functions to global scope within iframe
+        window.loadSideQuestUsersForForm = loadSideQuestUsersForForm;
+        window.loadSideQuestDepartments = loadSideQuestDepartments;
+        window.loadSideQuestPositions = loadSideQuestPositions;
         if (typeof loadSideQuestTasks === 'function') {
+            window.loadSideQuestTasks = loadSideQuestTasks;
             loadSideQuestTasks();
         } else if (window.parent && typeof window.parent.loadSideQuestTasks === 'function') {
-            window.parent.loadSideQuestTasks();
+            loadSideQuestTasks();
         }
     </script>
 </body>
