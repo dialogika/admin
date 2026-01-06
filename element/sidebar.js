@@ -182,14 +182,7 @@ export function renderSidebar(target) {
                         <div class="filter-top"><div class="filter-icon" style="background-color: var(--dlg-green);"><i class="bi bi-calendar-event-fill"></i></div><div class="filter-count" id="reportPendingApprovalCount">0</div></div>
                         <div class="filter-label">Report</div>
                     </a>
-                    <a href="javascript:void(0)" class="filter-card" onclick="alert('Under Development')">
-                        <div class="filter-top"><div class="filter-icon bg-icon-orange"><i class="bi bi-flag-fill"></i></div><div class="filter-count">21</div></div>
-                        <div class="filter-label">Files</div>
-                    </a>
-                    <a href="javascript:void(0)" class="filter-card" onclick="alert('Under Development')">
-                        <div class="filter-top"><div class="filter-icon bg-icon-red"><i class="bi bi-calendar-check-fill"></i></div><div class="filter-count">30</div></div>
-                        <div class="filter-label">Reminder</div>
-                    </a>
+                    
                 </div>
 
                 <!-- Navigation Links -->
@@ -222,8 +215,8 @@ export function renderSidebar(target) {
             <div class="pending-widget" style="background-color: #1c83e368; color:#fff;margin-bottom: -17px;">
                 <div class="fire-icon-wrapper shadow-purple"><i class="bi bi-fire fire-icon"></i></div>
                 <h6 class="fw-bold" style="color:#0B2B6A; margin-bottom: 5px;">Pending Reports</h6>
-                <p class="small text-muted mb-3">You have 5 approvals waiting.</p>
-                <button class="btn-review btn-dlg-blue shadow-none" style="margin-bottom:7px;">Review Now</button>
+                <p class="small text-muted mb-3">You have <span id="reportPendingApprovalCount">0</span> reports waiting.</p>
+                <button class="btn-review btn-dlg-blue shadow-none" style="margin-bottom:14px;">Review Now</button>
                 
                 <!-- COPYRIGHT (Muncul hanya saat scroll mentok bawah) -->
                 <div class="sidebarCopyright fw-semibold" style="font-size: 12px;">
