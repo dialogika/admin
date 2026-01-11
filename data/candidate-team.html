@@ -273,6 +273,12 @@
                                             <textarea rows="3" class="form-control" id="teamDescription" placeholder="Ceritakan secara singkat pengalaman dan latar belakang..."></textarea>
                                         </div>
                                         <div class="col-12">
+                                            <label class="form-label small">Position</label>
+                                            <select class="form-select" id="teamPosition">
+                                                <option value="">Pilih posisi</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
                                             <label class="form-label small">Alamat Lengkap</label>
                                             <textarea rows="2" class="form-control" id="teamAddress" placeholder="Masukkan alamat domisili..."></textarea>
                                         </div>
@@ -452,6 +458,7 @@
 
         const teamPhotoInput = document.getElementById("teamPhoto");
         const teamResumeInput = document.getElementById("teamResume");
+        const teamPositionSelect = document.getElementById("teamPosition");
 
         function escapeHtml(str) {
             return (str || "").toString()
@@ -460,6 +467,32 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        async function loadTeamPositions() {
+            if (!teamPositionSelect) return;
+            try {
+                teamPositionSelect.innerHTML = '<option value="">Pilih posisi</option>';
+                const snap = await getDocs(collection(db, "positions"));
+                if (snap.empty) return;
+                const options = [];
+                snap.forEach(docSnap => {
+                    const data = docSnap.data() || {};
+                    const name = (data.name || "").toString().trim();
+                    if (!name) return;
+                    options.push({ id: docSnap.id, name });
+                });
+                options
+                    .sort((a, b) => a.name.localeCompare(b.name, "id"))
+                    .forEach(item => {
+                        const opt = document.createElement("option");
+                        opt.value = item.id;
+                        opt.textContent = item.name;
+                        teamPositionSelect.appendChild(opt);
+                    });
+            } catch (e) {
+                console.error("Failed to load team positions", e);
+            }
         }
 
         function formatCreatedDate(raw) {
@@ -1024,6 +1057,15 @@
             const instagram = instagramInput ? (instagramInput.value || "").trim() : "";
             const linkedin = linkedinInput ? (linkedinInput.value || "").trim() : "";
 
+            let positionId = "";
+            let positionName = "";
+            if (teamPositionSelect) {
+                positionId = teamPositionSelect.value || "";
+                if (teamPositionSelect.selectedIndex > -1) {
+                    positionName = teamPositionSelect.options[teamPositionSelect.selectedIndex].text || "";
+                }
+            }
+
             if (!fullName) {
                 alert("Nama lengkap wajib diisi.");
                 return;
@@ -1065,6 +1107,8 @@
                     role_id: ROLE_ID,
                     role_name: ROLE_NAME
                 },
+                position_id: positionId || null,
+                position_name: positionName || null,
                 role_id: ROLE_ID,
                 role_name: ROLE_NAME,
                 recruitment_status: {
@@ -1202,6 +1246,7 @@
                 window.location.href = "../index.html";
                 return;
             }
+            loadTeamPositions();
             loadTeamCandidates();
         });
     </script>
