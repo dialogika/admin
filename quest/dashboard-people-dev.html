@@ -283,15 +283,15 @@
                     <button class="bg-white p-2 rounded-lg border border-slate-200 hover:shadow-sm">
                         <i data-lucide="bell" class="w-5 h-5 text-slate-600"></i>
                     </button>
-                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold flex items-center gap-2 transition">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>Input Data</span>
+                    <button id="btnMainMenu" class="btn-dlg-blue text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold flex items-center gap-2 transition">
+                        <i data-lucide="menu" class="w-4 h-4"></i>
+                        <span>Menu</span>
                     </button>
                 </div>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500 stats-clickable" onclick="window.location.href='../data/intern-presence.html'">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                             <i data-lucide="user-check"></i>
@@ -302,7 +302,7 @@
                     <h3 id="attendancePresentPercent" class="text-3xl font-black mt-1 text-emerald-600">94.8%</h3>
                 </div>
 
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-rose-500">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-rose-500 stats-clickable" onclick="window.location.href='../data/intern-presence.html'">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-2 bg-rose-50 text-rose-600 rounded-lg">
                             <i data-lucide="user-x"></i>
@@ -503,11 +503,27 @@
                         <button class="text-3xl hover:scale-125 transition">😊</button>
                         <button class="text-3xl shadow-xl rounded-full p-2 bg-yellow-50">😍</button>
                     </div>
-                    <textarea class="w-full text-sm p-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4" placeholder="Apa yang bisa ditingkatkan hari ini?" rows="2"></textarea>
-                    <button class="px-8 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition">Submit Feedback</button>
+                    <textarea class="w-full text-sm p-4 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0B2B6A] mb-4" placeholder="Apa yang bisa ditingkatkan hari ini?" rows="2"></textarea>
+                    <button class="btn-dlg-blue text-white px-8 py-3 rounded-xl text-sm font-bold hover:bg-[#0B2B6A] transition">Submit Feedback</button>
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="mainMenuOverlay" class="menu-overlay"></div>
+    <div id="mainMenuContainer" class="menu-container">
+        <div id="mainMenuCloseBtn" class="close-btn">
+            <i data-lucide="x"></i>
+        </div>
+        <div class="menu-header">
+            <h2>Menu</h2>
+        </div>
+        <div class="menu-grid">
+            <a href="../data/intern-presence.html" class="menu-item">
+                <i data-lucide="clipboard-list"></i>
+                <span>Intern Presence</span>
+            </a>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -619,6 +635,39 @@
     </script>
     <script>
         lucide.createIcons();
+
+        const mainMenuOverlay = document.getElementById('mainMenuOverlay');
+        const mainMenuContainer = document.getElementById('mainMenuContainer');
+        const mainMenuButton = document.getElementById('btnMainMenu');
+        const mainMenuCloseBtn = document.getElementById('mainMenuCloseBtn');
+
+        function openMainMenu() {
+            if (mainMenuOverlay) {
+                mainMenuOverlay.classList.add('active');
+            }
+            if (mainMenuContainer) {
+                mainMenuContainer.classList.add('active');
+            }
+        }
+
+        function closeMainMenu() {
+            if (mainMenuOverlay) {
+                mainMenuOverlay.classList.remove('active');
+            }
+            if (mainMenuContainer) {
+                mainMenuContainer.classList.remove('active');
+            }
+        }
+
+        if (mainMenuButton) {
+            mainMenuButton.addEventListener('click', openMainMenu);
+        }
+        if (mainMenuOverlay) {
+            mainMenuOverlay.addEventListener('click', closeMainMenu);
+        }
+        if (mainMenuCloseBtn) {
+            mainMenuCloseBtn.addEventListener('click', closeMainMenu);
+        }
 
         function switchTab(type) {
             const btnWeekly = document.getElementById('btn-weekly');

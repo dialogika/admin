@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internship Excellence Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .gradient-text { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-gradient { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); transition: all 0.3s ease; }
+        .btn-gradient:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 w-full glass px-6 py-4 mb-8">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                    <span class="text-white font-bold text-xl">I</span>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-800">Elite<span class="text-indigo-600">Intern</span></span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+                <a href="#" class="hover:text-indigo-600 transition">Beranda</a>
+                <a href="#" class="hover:text-indigo-600 transition">Panduan Izin</a>
+                <a href="#" class="hover:text-indigo-600 transition">Bantuan</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-semibold text-slate-800">Alexander Putra</p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest">UI Designer Intern</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Alexander+Putra&background=4F46E5&color=fff" class="w-10 h-10 rounded-full ring-2 ring-indigo-50 ring-offset-2">
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 pb-20">
+        <!-- Hero Header -->
+        <header class="mb-12 text-center md:text-left">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-2">Pusat Perizinan Mandiri</h1>
+            <p class="text-slate-500 max-w-2xl">Kelola izin kehadiranmu dengan mudah. Pastikan pengajuan dilakukan minimal H-1 untuk keperluan kampus yang terencana.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Form -->
+            <div class="lg:col-span-7">
+                <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/60 border border-slate-100">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-2 h-8 bg-indigo-600 rounded-full"></div>
+                        <h2 class="text-xl font-bold text-slate-800">Buat Pengajuan Baru</h2>
+                    </div>
+
+                    <form class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-slate-700 ml-1">Kategori Urusan</label>
+                                <select class="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition text-slate-700 font-medium">
+                                    <option>Urusan Kampus (Sidang/Bimbingan)</option>
+                                    <option>Sakit (Medical Leave)</option>
+                                    <option>Keperluan Mendesak</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-slate-700 ml-1">Jenis Izin</label>
+                                <select class="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition text-slate-700 font-medium">
+                                    <option>Izin Penuh (Harian)</option>
+                                    <option>Setengah Hari (Datang Terlambat)</option>
+                                    <option>Setengah Hari (Pulang Awal)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-slate-700 ml-1">Mulai Tanggal</label>
+                                <input type="date" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition text-slate-700 font-medium">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-semibold text-slate-700 ml-1">Selesai Tanggal</label>
+                                <input type="date" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition text-slate-700 font-medium">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-slate-700 ml-1">Alasan Detail</label>
+                            <textarea rows="4" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 transition text-slate-700 font-medium placeholder:text-slate-400" placeholder="Jelaskan secara detail alasan perizinan Anda..."></textarea>
+                        </div>
+
+                        <div class="p-6 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50 text-center">
+                            <input type="file" id="file-upload" class="hidden">
+                            <label for="file-upload" class="cursor-pointer">
+                                <svg class="w-8 h-8 text-indigo-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                <p class="text-sm font-medium text-slate-600">Klik untuk upload bukti dokumen (PDF/JPG)</p>
+                                <p class="text-xs text-slate-400 mt-1">Opsional: Surat undangan kampus atau surat keterangan sakit</p>
+                            </label>
+                        </div>
+
+                        <button class="w-full btn-gradient py-4 rounded-2xl text-white font-bold text-lg shadow-lg shadow-indigo-100 uppercase tracking-wider">
+                            Kirim Permohonan Izin
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: History & Stats -->
+            <div class="lg:col-span-5 space-y-8">
+                
+                <!-- Simple Stats -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-indigo-600 p-6 rounded-3xl text-white shadow-lg shadow-indigo-200">
+                        <p class="text-indigo-100 text-xs font-semibold uppercase tracking-wider">Izin Bulan Ini</p>
+                        <h3 class="text-3xl font-bold mt-1">02</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100">
+                        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Sisa Kuota</p>
+                        <h3 class="text-3xl font-bold mt-1 text-slate-800">10</h3>
+                    </div>
+                </div>
+
+                <!-- History Card -->
+                <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
+                    <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800">Riwayat Terakhir</h3>
+                        <a href="#" class="text-xs font-bold text-indigo-600 hover:underline">Lihat Semua</a>
+                    </div>
+                    
+                    <div class="divide-y divide-slate-50">
+                        <!-- List Item 1 -->
+                        <div class="p-6 flex items-center justify-between hover:bg-slate-50 transition">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800">Bimbingan Skripsi</p>
+                                    <p class="text-xs text-slate-500">14 Jan 2024 • 1 Hari</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase">Pending</span>
+                        </div>
+
+                        <!-- List Item 2 -->
+                        <div class="p-6 flex items-center justify-between hover:bg-slate-50 transition">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800">Sakit Flu</p>
+                                    <p class="text-xs text-slate-500">02 Jan 2024 • 2 Hari</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase">Approved</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips Card -->
+                <div class="bg-indigo-900 rounded-3xl p-6 text-white relative overflow-hidden shadow-xl shadow-indigo-200">
+                    <div class="relative z-10">
+                        <h4 class="font-bold mb-2">Penting!</h4>
+                        <p class="text-xs text-indigo-200 leading-relaxed">Pastikan kamu sudah berdiskusi dengan mentor tim sebelum mengajukan izin agar jadwal proyek tetap terpantau.</p>
+                    </div>
+                    <div class="absolute -right-4 -bottom-4 opacity-20">
+                        <svg class="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
