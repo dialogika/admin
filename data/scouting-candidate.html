@@ -515,12 +515,14 @@
                             <div class="col-md-3">
                                 <select id="candidateStatusFilter" class="form-select border-0 bg-light rounded-4 w-100 shadow-none py-2 px-3 fw-bold" style="font-size: 13px;">
                                     <option value="">Semua status</option>
-                                    <option value="screening">Screening</option>
+                                    <option value="radar">Radar</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="respond">Respond</option>
                                     <option value="interview">Interview</option>
-                                    <option value="microteaching">Microteaching</option>
+                                    <option value="ojt">On Job Test</option>
                                     <option value="decision">Decision</option>
-                                    <option value="accepted">Accept</option>
-                                    <option value="rejected">Reject</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="accepted">Accepted</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -753,25 +755,28 @@
 
         function applyCandidateFilters() {
             const term = (searchInput?.value || "").toLowerCase();
-            const statusValue = statusFilter ? (statusFilter.value || "").toLowerCase() : "";
+            const filterRaw = statusFilter ? (statusFilter.value || "").toLowerCase() : "";
             const sortValue = sortSelect?.value || "none";
+            const filterKey = (filterRaw === "radar" ? "none"
+                : filterRaw === "respond" ? "replied"
+                : filterRaw);
 
             const gridItems = Array.from(document.querySelectorAll('.candidate-item'));
             const listRows = Array.from(document.querySelectorAll('.candidate-row'));
 
             gridItems.forEach(item => {
                 const text = item.innerText.toLowerCase();
-                const itemStatus = (item.dataset.status || "").toLowerCase();
+                const itemPhase = (item.dataset.phase || "").toLowerCase();
                 const matchesSearch = text.includes(term);
-                const matchesStatus = !statusValue || itemStatus === statusValue;
+                const matchesStatus = !filterRaw || itemPhase === filterKey || (filterRaw === "radar" && (item.dataset.status || "").toLowerCase() === "screening");
                 item.style.display = matchesSearch && matchesStatus ? "" : "none";
             });
 
             listRows.forEach(row => {
                 const text = row.innerText.toLowerCase();
-                const rowStatus = (row.dataset.status || "").toLowerCase();
+                const rowPhase = (row.dataset.phase || "").toLowerCase();
                 const matchesSearch = text.includes(term);
-                const matchesStatus = !statusValue || rowStatus === statusValue;
+                const matchesStatus = !filterRaw || rowPhase === filterKey || (filterRaw === "radar" && (row.dataset.status || "").toLowerCase() === "screening");
                 row.style.display = matchesSearch && matchesStatus ? "" : "none";
             });
 
@@ -911,8 +916,14 @@
                 const mapped = mapToFilterStatus(newStatus);
                 const gridItem = document.querySelector('.candidate-item[data-talent-id="' + talentId + '"]');
                 const listRow = document.querySelector('.candidate-row[data-talent-id="' + talentId + '"]');
-                if (gridItem) gridItem.dataset.status = mapped;
-                if (listRow) listRow.dataset.status = mapped;
+                if (gridItem) {
+                    gridItem.dataset.status = mapped;
+                    gridItem.dataset.phase = newStatus;
+                }
+                if (listRow) {
+                    listRow.dataset.status = mapped;
+                    listRow.dataset.phase = newStatus;
+                }
                 if (window.updateTalentStatus) {
                     try { window.updateTalentStatus(talentId, newStatus, ""); } catch (e) {}
                 }
@@ -1386,7 +1397,7 @@
                 : "";
 
             const gridHtml =
-                '<div class="col-12 col-md-6 col-lg-4 candidate-item" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '">' +
+                '<div class="col-12 col-md-6 col-lg-4 candidate-item" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '" data-phase="' + selectValue + '">' +
                     '<div class="candidate-card">' +
                         '<div class="img-wrapper">' +
                             '<img src="' + avatarUrl + '" class="candidate-img" alt="Kandidat">' +
@@ -1422,7 +1433,7 @@
                 '</div>';
 
             const listHtml =
-                '<tr class="candidate-row" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '">' +
+                '<tr class="candidate-row" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '" data-phase="' + selectValue + '">' +
                     '<td class="ps-4">' +
                         '<div class="d-flex align-items-center">' +
                             '<img src="' + avatarUrl + '" class="list-img">' +
