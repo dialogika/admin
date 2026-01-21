@@ -84,7 +84,7 @@
                 </div>
 
                 <div class="space-y-1">
-                    <label class="block text-[11px] font-black text-slate-400 uppercase mb-2 tracking-widest">Kode Referral (Chat Admin)</label>
+                    <label class="block text-[11px] font-black text-slate-400 uppercase mb-2 tracking-widest">Kode Referral <a href="https://api.whatsapp.com/send?phone=6285162992597&text=Kak%2C%20aku%20mau%20payment%2C%20tapi%20referralnya%20expired%2C%20boleh%20minta%20lagi" target="_blank">(Chat Admin)</a></label>
                     <div class="relative">
                         <input type="text" id="referralCode" class="w-full p-4 pr-24 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-medium outline-none focus:border-blue-500 transition-all" placeholder="Masukkan kode referral jika ada">
                         <button type="button" onclick="checkReferral()" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl uppercase tracking-widest">Check</button>
@@ -93,15 +93,15 @@
                 </div>
 
                 <!-- 2. PAYMENT TYPE -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="w-full">
                         <label class="block text-[11px] font-black text-slate-400 uppercase mb-2 tracking-widest">Tipe Pembayaran</label>
                         <select id="paymentType" onchange="handlePaymentTypeChange()" class="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-lg outline-none focus:border-blue-500 transition-all">
                             <option value="full">Lunas (Full Payment)</option>
                             <option value="dp">DP (Down Payment)</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="w-full">
                         <label class="block text-[11px] font-black text-slate-400 uppercase mb-2 tracking-widest">Nominal Bayar</label>
                         <input type="text" id="amountPaid" value="2500000" readonly
                             oninput="handleAmountInputChange()"
@@ -151,7 +151,7 @@
                     <div id="uploadArea" class="upload-area relative border-2 border-dashed border-slate-200 rounded-2xl p-8 h-64 transition-all group">
                         <input type="file" id="fileUpload" accept="image/*,.pdf" onchange="handleFileUpload()" 
                             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                        <div id="uploadPlaceholder" class="text-center">
+                        <div id="uploadPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                             <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                                 <i data-lucide="upload-cloud" class="text-blue-600 w-6 h-6"></i>
                             </div>
@@ -457,6 +457,7 @@
 
         let countdownInterval = null;
         let countdownSeconds = 0;
+        let invoiceExpired = false;
         let uploadedProofDataUrl = "";
         let uploadedProofUrl = "";
         let uploadedProofName = "";
@@ -579,13 +580,11 @@
                 btnText.innerText = "CONFIRM DEAL NOW";
                 mainBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[1.5rem] text-lg shadow-xl shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3";
                 handleBankChange();
-                startCountdown(invoiceSettings.deadlineMinutes || 30);
             } else if(method === 'Cash') {
                 sectionTransfer.classList.add('hidden');
                 sectionCash.classList.remove('hidden');
                 btnText.innerText = "SCHEDULE THIS MEETING";
                 mainBtn.className = "w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-5 rounded-[1.5rem] text-lg shadow-xl shadow-amber-200 active:scale-[0.98] transition-all flex items-center justify-center gap-3";
-                clearCountdown();
             }
 
             updateConfirmButtonState();
@@ -596,6 +595,12 @@
             const mainBtn = document.getElementById('mainBtn');
             const fileInput = document.getElementById('fileUpload');
             if (!methodEl || !mainBtn || !fileInput) return;
+
+            if (invoiceExpired) {
+                mainBtn.disabled = true;
+                mainBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                return;
+            }
 
             const method = methodEl.value;
             if (method === 'Transfer Bank') {
@@ -809,31 +814,68 @@
             updatePriceFieldsAfterBasePriceChange();
         }
 
-        function startCountdown(minutes) {
+        function setInvoiceExpiredUI() {
+            invoiceExpired = true;
+            clearCountdown();
+            const timerEl = document.getElementById('countdownTimer');
+            if (timerEl) {
+                timerEl.textContent = "00:00";
+            }
+
+            const mainBtn = document.getElementById('mainBtn');
+            const btnText = document.getElementById('btnText');
+            if (mainBtn) {
+                mainBtn.disabled = true;
+                mainBtn.classList.add('opacity-60', 'cursor-not-allowed');
+            }
+            if (btnText) {
+                btnText.innerText = "INVOICE EXPIRED";
+            }
+
+            const toDisableIds = [
+                "referralCode",
+                "paymentType",
+                "amountPaid",
+                "paymentMethod",
+                "bankOption",
+                "fileUpload"
+            ];
+            toDisableIds.forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                }
+            });
+        }
+
+        function startCountdownFromTotalSeconds(totalSeconds) {
             const timerEl = document.getElementById('countdownTimer');
             if (!timerEl) return;
 
-            countdownSeconds = minutes * 60;
+            countdownSeconds = Math.max(parseInt(totalSeconds, 10) || 0, 0);
             clearCountdown();
 
-            const updateCountdownDisplay = () => {
+            const updateCountdownDisplay = function () {
                 if (!timerEl) return;
                 const m = String(Math.floor(countdownSeconds / 60)).padStart(2, '0');
                 const s = String(countdownSeconds % 60).padStart(2, '0');
-                timerEl.textContent = `${m}:${s}`;
+                timerEl.textContent = m + ":" + s;
             };
 
             updateCountdownDisplay();
 
-            countdownInterval = setInterval(() => {
+            countdownInterval = setInterval(function () {
                 countdownSeconds--;
                 if (countdownSeconds <= 0) {
-                    clearCountdown();
-                    timerEl.textContent = "00:00";
+                    setInvoiceExpiredUI();
                     return;
                 }
                 updateCountdownDisplay();
             }, 1000);
+        }
+
+        function startCountdown(minutes) {
+            startCountdownFromTotalSeconds((parseInt(minutes, 10) || 0) * 60);
         }
 
         function clearCountdown() {
@@ -841,6 +883,28 @@
                 clearInterval(countdownInterval);
                 countdownInterval = null;
             }
+        }
+
+        function initCountdownFromInvoice() {
+            const timerEl = document.getElementById('countdownTimer');
+            if (!timerEl) return;
+
+            const deadlineMinutes = typeof invoiceSettings.deadlineMinutes === "number" ? invoiceSettings.deadlineMinutes : 0;
+            const startedAtMs = typeof invoiceSettings.startedAtMs === "number" ? invoiceSettings.startedAtMs : 0;
+            if (!deadlineMinutes || !startedAtMs) {
+                timerEl.textContent = "00:00";
+                return;
+            }
+
+            const expiryMs = startedAtMs + deadlineMinutes * 60 * 1000;
+            const now = Date.now();
+            if (now >= expiryMs) {
+                setInvoiceExpiredUI();
+                return;
+            }
+
+            const remainingSeconds = Math.floor((expiryMs - now) / 1000);
+            startCountdownFromTotalSeconds(remainingSeconds);
         }
 
         async function uploadFileToStorage(file, folder) {
@@ -984,6 +1048,9 @@
 
         // Logic 4: Submission
         async function submitDeal() {
+            if (invoiceExpired) {
+                return;
+            }
             const method = document.getElementById('paymentMethod').value;
             const amountInputEl = document.getElementById('amountPaid');
             const amount = parseFormattedNumber(amountInputEl.value);
@@ -1033,7 +1100,8 @@
                             originalBasePrice: originalBasePrice,
                             finalBasePrice: basePrice,
                             discountAmount: appliedReferralDiscount,
-                            transferProofUrl: uploadedProofUrl || ""
+                            transferProofUrl: uploadedProofUrl || "",
+                            verificationStatus: "not_verified"
                         };
                         if (window.dlgInvoiceSetDoc) {
                             await window.dlgInvoiceSetDoc(ref, payload, { merge: true });
@@ -1088,6 +1156,16 @@
                 const snap = await window.dlgInvoiceGetDoc(ref);
                 if (!snap.exists()) return;
                 const d = snap.data() || {};
+                let startedAtMs = typeof d.startedAtMs === "number" ? d.startedAtMs : 0;
+                const deadlineMinutesFromDoc = typeof d.deadlineMinutes === "number" ? d.deadlineMinutes : invoiceSettings.deadlineMinutes;
+                if (!startedAtMs && deadlineMinutesFromDoc > 0 && window.dlgInvoiceSetDoc) {
+                    try {
+                        const nowMs = Date.now();
+                        await window.dlgInvoiceSetDoc(ref, { startedAtMs: nowMs }, { merge: true });
+                        startedAtMs = nowMs;
+                    } catch (e) {
+                    }
+                }
                 const merged = Object.assign({}, invoiceSettings, {
                     leadName: d.leadName || invoiceSettings.leadName,
                     className: d.className || invoiceSettings.className,
@@ -1097,7 +1175,8 @@
                     seatsLeft: typeof d.seatsLeft === "number" ? d.seatsLeft : invoiceSettings.seatsLeft,
                     deadlineMinutes: typeof d.deadlineMinutes === "number" ? d.deadlineMinutes : invoiceSettings.deadlineMinutes,
                     basePrice: typeof d.basePrice === "number" ? d.basePrice : invoiceSettings.basePrice,
-                    dpPercent: typeof d.dpPercent === "number" ? d.dpPercent : invoiceSettings.dpPercent
+                    dpPercent: typeof d.dpPercent === "number" ? d.dpPercent : invoiceSettings.dpPercent,
+                    startedAtMs: startedAtMs
                 });
                 invoiceSettings = merged;
                 basePrice = invoiceSettings.basePrice || 2500000;
@@ -1120,6 +1199,7 @@
             updateConfirmButtonState();
             await initBankAndReferralConfig();
             await tryLoadInvoiceFromFirestore();
+            initCountdownFromInvoice();
             handleMethodChange();
             handleBankChange();
             setupUploadPreviewModal();
