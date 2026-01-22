@@ -339,18 +339,22 @@
 
         async function loadReferralsForInvoice() {
             try {
-                const raw = localStorage.getItem(STORAGE_KEY_REFERRALS);
-                if (!raw) {
-                    // Coba muat dari Firestore jika localStorage kosong
-                    if (window.dlgInvoiceDb && window.dlgInvoiceDoc && window.dlgInvoiceGetDoc) {
-                        const docRef = window.dlgInvoiceDoc(window.dlgInvoiceDb, "settings", "referrals");
-                        const docSnap = await window.dlgInvoiceGetDoc(docRef);
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            const referrals = data.referrals || [];
-                            return Array.isArray(referrals) ? referrals : [];
+                if (window.dlgInvoiceDb && window.dlgInvoiceDoc && window.dlgInvoiceGetDoc) {
+                    const docRef = window.dlgInvoiceDoc(window.dlgInvoiceDb, "settings", "referrals");
+                    const docSnap = await window.dlgInvoiceGetDoc(docRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const referrals = data.referrals || [];
+                        if (Array.isArray(referrals) && referrals.length) {
+                            try {
+                                localStorage.setItem(STORAGE_KEY_REFERRALS, JSON.stringify(referrals));
+                            } catch (e) {}
+                            return referrals;
                         }
                     }
+                }
+                const raw = localStorage.getItem(STORAGE_KEY_REFERRALS);
+                if (!raw) {
                     return [];
                 }
                 const parsed = raw ? JSON.parse(raw) : [];
@@ -735,7 +739,9 @@
                 return;
             }
 
-            const currentProductName = (invoiceSettings && invoiceSettings.className ? String(invoiceSettings.className).trim() : "").toLowerCase();
+            const currentProductName = (invoiceSettings && invoiceSettings.productName
+                ? String(invoiceSettings.productName).trim().toLowerCase()
+                : "");
             const allowedProducts = Array.isArray(found.productNames) ? found.productNames.map(function (n) { return String(n || "").trim().toLowerCase(); }) : [];
             if (allowedProducts.length && currentProductName) {
                 const isAllowed = allowedProducts.indexOf(currentProductName) !== -1;
