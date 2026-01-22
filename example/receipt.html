@@ -72,7 +72,7 @@
                         </div>
                     </header>
 
-                    <div class="p-4 bg-slate-900 rounded-2xl text-white">
+                    <div class="p-4 bg-[#0b2b6a] rounded-2xl text-white" style="box-shadow: 0px 7px 9px -6px rgba(114, 4, 207, 1);">
                         <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em]">Kelas Yang Diambil</p>
                         <div class="mt-2 flex items-center justify-between gap-4">
                             <div>
@@ -260,12 +260,15 @@
             const emptySection = document.getElementById('receiptEmptySection');
 
             if (!data) {
+                document.title = "Receipt Pembayaran | Dialogika";
                 if (proofSection) proofSection.classList.add('hidden');
                 if (emptySection) emptySection.classList.remove('hidden');
                 return;
             }
 
-            if (leadEl) leadEl.textContent = data.leadName || 'Nama Peserta';
+            const leadName = data.leadName || 'Nama Peserta';
+            if (leadEl) leadEl.textContent = leadName;
+            document.title = leadName + " | Receipt Pembayaran | Dialogika";
             if (invoiceEl) invoiceEl.textContent = data.invoiceNumber || '-';
             if (classEl) classEl.textContent = data.className || 'Nama Kelas';
             if (methodLabelEl) methodLabelEl.textContent = data.paymentMethod || 'Transfer Bank';

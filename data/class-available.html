@@ -135,13 +135,13 @@
                     <template x-for="item in filteredClasses" :key="item.id">
                         <div 
                             class="row-transition bg-white border border-slate-200 rounded-[24px] p-2 flex items-center shadow-sm hover:shadow-xl hover:border-indigo-200 group"
-                            :class="item.current_joined >= item.max_seat ? 'opacity-50 grayscale bg-slate-50' : ''"
+                            :class="(isBatchClosed(item) || item.current_joined >= item.max_seat) ? 'opacity-50 grayscale bg-slate-50' : ''"
                         >
                             <div class="w-32 h-24 flex flex-col items-center justify-center rounded-[20px] transition group-hover:scale-105"
                                 :class="{
-                                    'bg-emerald-50 text-emerald-600': (item.max_seat - item.current_joined) > 2,
-                                    'bg-rose-50 text-rose-600': (item.max_seat - item.current_joined) <= 2 && (item.max_seat - item.current_joined) > 0,
-                                    'bg-slate-100 text-slate-400': (item.max_seat - item.current_joined) <= 0
+                                    'bg-emerald-50 text-emerald-600': (item.max_seat - item.current_joined) > 2 && !isBatchClosed(item),
+                                    'bg-rose-50 text-rose-600': (item.max_seat - item.current_joined) <= 2 && (item.max_seat - item.current_joined) > 0 && !isBatchClosed(item),
+                                    'bg-slate-100 text-slate-400': (item.max_seat - item.current_joined) <= 0 || isBatchClosed(item)
                                 }">
                                 <span class="mono text-5xl leading-none font-bold" x-text="item.max_seat - item.current_joined"></span>
                                 <span class="text-[10px] font-black uppercase mt-1 tracking-widest">Seats</span>
@@ -158,6 +158,10 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                         <span x-text="item.mentor_name"></span>
                                     </div>
+                                </div>
+                                <div class="mt-1 text-[11px] font-semibold text-slate-400 flex items-center gap-1.5" x-show="item.product_name || item.product_id">
+                                    <span class="uppercase tracking-[0.16em]">Product</span>
+                                    <span class="mono text-[10px] text-slate-500" x-text="item.product_name || item.product_id"></span>
                                 </div>
                             </div>
 
@@ -187,16 +191,22 @@
                             </div>
 
                             <div class="w-32 pr-8 text-right">
-                                <template x-if="(item.max_seat - item.current_joined) <= 0">
+                                <template x-if="isBatchClosed(item)">
+                                    <div class="flex flex-col items-end uppercase leading-tight">
+                                        <span class="text-[10px] font-black text-slate-400 tracking-[0.15em]">Closed</span>
+                                        <span class="text-[11px] font-black text-slate-500 tracking-widest">Kelas Ditutup</span>
+                                    </div>
+                                </template>
+                                <template x-if="!isBatchClosed(item) && (item.max_seat - item.current_joined) <= 0">
                                     <div class="text-xs font-black text-slate-400 uppercase tracking-widest leading-tight">Sold Out</div>
                                 </template>
-                                <template x-if="(item.max_seat - item.current_joined) > 0 && (item.max_seat - item.current_joined) <= 2">
+                                <template x-if="!isBatchClosed(item) && (item.max_seat - item.current_joined) > 0 && (item.max_seat - item.current_joined) <= 2">
                                     <div class="flex flex-col items-end uppercase leading-tight">
                                         <span class="text-[10px] font-black text-rose-500 tracking-[0.15em] animate-pulse italic">Hot Alert</span>
                                         <span class="text-[11px] font-black text-slate-800 tracking-widest">Hampir Habis</span>
                                     </div>
                                 </template>
-                                <template x-if="(item.max_seat - item.current_joined) > 2">
+                                <template x-if="!isBatchClosed(item) && (item.max_seat - item.current_joined) > 2">
                                     <div class="flex flex-col items-end uppercase leading-tight">
                                         <span class="text-[10px] font-black text-emerald-500 tracking-[0.15em]">Ready to Sell</span>
                                         <span class="text-[11px] font-black text-slate-800 tracking-widest">Open Batch</span>
@@ -216,38 +226,73 @@
                     </template>
                 </div>
 
-                <!-- Edit Capacity Modal -->
+                <!-- Edit Batch Modal -->
                 <div class="modal fade" id="editCapacityModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Edit Capacity</h5>
+                                <h5 class="modal-title">Edit Batch</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label">Pilih Class</label>
-                                    <select class="form-select">
-                                        <option selected disabled>Pilih class yang ingin diubah kapasitasnya</option>
-                                        <template x-for="item in classes" :key="'edit-'+item.id">
-                                            <option :value="item.id" x-text="item.name"></option>
-                                        </template>
-                                    </select>
-                                </div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Max Seat</label>
-                                        <input type="number" class="form-control" min="1" placeholder="Masukkan kapasitas maksimal">
+                                        <label class="form-label">Nama Class</label>
+                                        <input type="text" class="form-control" x-model="editBatchName">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Currently Joined</label>
-                                        <input type="number" class="form-control" min="0" placeholder="Jumlah peserta saat ini" disabled>
+                                        <label class="form-label">Product</label>
+                                        <select class="form-select" x-model="editBatchProductId">
+                                            <option value="">Pilih product</option>
+                                            <template x-for="p in products" :key="'edit-product-'+p.id">
+                                                <option :value="p.productId" x-text="p.name || p.productId"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Type</label>
+                                        <select class="form-select" x-model="editBatchType">
+                                            <option value="Offline">Offline</option>
+                                            <option value="Online">Online</option>
+                                            <option value="Private">Private</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Max Seat</label>
+                                        <input type="number" class="form-control" min="1" x-model.number="editBatchMaxSeat">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Mentor</label>
+                                        <input type="text" class="form-control" x-model="editBatchMentor">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="datetime-local" class="form-control" x-model="editBatchStartDate">
                                     </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary">Save Changes</button>
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                <button type="button" class="btn btn-primary" @click="confirmEditBatch()">Simpan</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Batch Modal -->
+                <div class="modal fade" id="deleteBatchModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Konfirmasi Hapus Batch</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p x-text="selectedBatch ? `Apakah Anda yakin ingin menghapus batch '${selectedBatch.name}'?` : 'Apakah Anda yakin ingin menghapus batch ini?'"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                <button type="button" class="btn btn-danger" @click="confirmDeleteBatch()">Hapus</button>
                             </div>
                         </div>
                     </div>
@@ -266,6 +311,15 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Nama Class</label>
                                         <input type="text" class="form-control" placeholder="Contoh: First Class Offline - Jakarta" x-model="newBatchName">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Product</label>
+                                        <select class="form-select" x-model="newBatchProductId">
+                                            <option value="">Pilih product</option>
+                                            <template x-for="p in products" :key="p.id">
+                                                <option :value="p.productId" x-text="p.name || p.productId"></option>
+                                            </template>
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">Type</label>
@@ -308,7 +362,7 @@
         import { renderSidebar } from "../element/sidebar.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDyzzEYbJkkl-N8snrQf14qvj8De4YliV0",
@@ -330,6 +384,7 @@
         window.addDoc = addDoc;
         window.deleteDoc = deleteDoc;
         window.doc = doc;
+        window.updateDoc = updateDoc;
 
         const topbarTarget = document.getElementById("topbarContainer");
         if (topbarTarget) {
@@ -371,11 +426,21 @@
                 filterStatus: "All",
                 loading: false,
                 newBatchName: "",
+                newBatchProductId: "",
                 newBatchType: "Offline",
                 newBatchMaxSeat: 1,
                 newBatchMentor: "",
                 newBatchStartDate: "",
+                selectedBatch: null,
+                editBatchId: null,
+                editBatchName: "",
+                editBatchProductId: "",
+                editBatchType: "Offline",
+                editBatchMaxSeat: 1,
+                editBatchMentor: "",
+                editBatchStartDate: "",
                 classes: [],
+                products: [],
                 async init() {
                     // Tunggu Firebase siap (polling 10x @ 500ms)
                     let attempts = 0;
@@ -395,11 +460,9 @@
                     this.loading = true;
                     try {
                         console.log("Memulai pengambilan data Firestore...");
-                        // Coba ambil data dari Firestore
                         const snap = await window.getDocs(window.collection(window.db, "class_availability"));
                         console.log("Data Firestore berhasil diambil. Jumlah dokumen:", snap.size);
                         
-                        // Jika berhasil tapi kosong
                         if (snap.empty) {
                             console.warn("Firestore terhubung tapi collection 'class_availability' kosong.");
                         }
@@ -408,26 +471,26 @@
                         let idx = 1;
                         snap.forEach(function (docSnap) {
                             const d = docSnap.data() || {};
-                            console.log("Loaded doc:", d); // Debug log
+                            console.log("Loaded doc:", d);
                             items.push({
-                                id: d.id || idx++, // Gunakan ID dari doc jika ada, atau sequence
-                                docId: docSnap.id, // Simpan ID dokumen asli
+                                id: d.id || idx++,
+                                docId: docSnap.id,
                                 name: d.name || "Unnamed Class",
                                 type: d.type || "Offline",
                                 max_seat: Number(d.max_seat || 0),
                                 current_joined: Number(d.current_joined || 0),
                                 start_date: d.start_date || "Flexible",
-                                mentor_name: d.mentor_name || "Unknown"
+                                mentor_name: d.mentor_name || "Unknown",
+                                product_id: d.productId || d.product_id || null,
+                                product_name: d.productName || d.product_name || null
                             });
                         });
                         this.classes = items;
 
+                        await this.loadProducts();
                     } catch (e) {
                         console.error("Gagal memuat class_availability dari Firestore (Network Error/Aborted):", e);
-                        // JIKA GAGAL (karena ERR_ABORTED di preview), GUNAKAN DATA DUMMY/FALLBACK
                         this.useFallbackData();
-                        
-                        // Beri info ke user bahwa ini data dummy
                         console.log("Menggunakan data fallback/local karena koneksi Firestore terputus.");
                     } finally {
                         this.loading = false;
@@ -443,6 +506,30 @@
                         { id: 4, name: "Advanced Presentation - Online", type: "Online", max_seat: 12, current_joined: 4, start_date: "15 Nov 2023", mentor_name: "Coach Aris" },
                         { id: 5, name: "Kids Public Speaking - Offline", type: "Offline", max_seat: 7, current_joined: 2, start_date: "20 Nov 2023", mentor_name: "Coach Susi" }
                     ];
+                },
+                async loadProducts() {
+                    if (!(window.db && window.collection && window.getDocs)) {
+                        this.products = [];
+                        return;
+                    }
+                    try {
+                        const snap = await window.getDocs(window.collection(window.db, "products"));
+                        const list = [];
+                        snap.forEach((docSnap) => {
+                            const d = docSnap.data() || {};
+                            const id = docSnap.id;
+                            list.push({
+                                id,
+                                productId: d.productId || id,
+                                name: d.name || d.internalName || id
+                            });
+                        });
+                        this.products = list;
+                        console.log("Loaded products for batch dropdown:", list.length);
+                    } catch (e) {
+                        console.error("Gagal memuat products untuk dropdown batch:", e);
+                        this.products = [];
+                    }
                 },
                 formatDate(dateStr) {
                     if (!dateStr || dateStr === 'Flexible') return dateStr;
@@ -472,22 +559,54 @@
                         return dateStr;
                     }
                 },
-                updateJoined(id, delta) {
+                isBatchClosed(item) {
+                    if (!item || !item.start_date || item.start_date === 'Flexible') return false;
+                    try {
+                        const date = new Date(item.start_date);
+                        if (isNaN(date.getTime())) return false;
+                        const now = new Date();
+                        return date.getTime() < now.getTime();
+                    } catch (e) {
+                        return false;
+                    }
+                },
+                async updateJoined(id, delta) {
                     const cls = this.classes.find(c => c.id === id);
-                    if (cls) {
-                        const nextVal = cls.current_joined + delta;
-                        if (nextVal >= 0 && nextVal <= cls.max_seat) {
-                            cls.current_joined = nextVal;
+                    if (!cls) return;
+                    const nextVal = cls.current_joined + delta;
+                    if (nextVal < 0 || nextVal > cls.max_seat) return;
+                    cls.current_joined = nextVal;
+
+                    if (cls.docId && window.db && window.doc && window.updateDoc) {
+                        try {
+                            await window.updateDoc(
+                                window.doc(window.db, "class_availability", cls.docId),
+                                { current_joined: cls.current_joined }
+                            );
+                        } catch (e) {
+                            console.error("Gagal mengupdate current_joined di Firestore:", e);
                         }
                     }
                 },
                 async deleteBatch(item) {
-                    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) return;
-                    
+                    this.selectedBatch = item;
+                    const modalEl = document.getElementById("deleteBatchModal");
+                    if (modalEl && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                    }
+                },
+                async confirmDeleteBatch() {
+                    if (!this.selectedBatch) return;
+                    const item = this.selectedBatch;
+
+                    const modalEl = document.getElementById("deleteBatchModal");
+                    if (modalEl && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    }
+
                     try {
-                        // Optimistic UI update
                         this.classes = this.classes.filter(c => c.id !== item.id);
-                        
+
                         if (item.docId && window.db && window.deleteDoc && window.doc) {
                             await window.deleteDoc(window.doc(window.db, "class_availability", item.docId));
                             console.log("Deleted doc:", item.docId);
@@ -497,16 +616,98 @@
                     } catch (e) {
                         console.error("Error deleting batch:", e);
                         alert("Gagal menghapus data dari server.");
-                        // Revert UI if needed (omitted for simplicity)
+                    } finally {
+                        this.selectedBatch = null;
                     }
                 },
                 editBatch(item) {
-                    // Placeholder for edit functionality
-                    console.log("Edit requested for:", item);
-                    alert("Fitur Edit akan segera hadir!\nID: " + item.id + "\nName: " + item.name);
+                    this.selectedBatch = item;
+                    this.editBatchId = item.id;
+                    this.editBatchName = item.name || "";
+                    this.editBatchProductId = item.product_id || "";
+                    this.editBatchType = item.type || "Offline";
+                    this.editBatchMaxSeat = Number(item.max_seat || 1);
+                    this.editBatchMentor = item.mentor_name || "";
+                    this.editBatchStartDate = item.start_date && item.start_date !== "Flexible" ? item.start_date : "";
+
+                    const modalEl = document.getElementById("editCapacityModal");
+                    if (modalEl && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                    }
+                },
+                async confirmEditBatch() {
+                    if (!this.selectedBatch) return;
+
+                    const name = (this.editBatchName || "").trim();
+                    const productId = (this.editBatchProductId || "").trim();
+                    const type = this.editBatchType || "Offline";
+                    const maxSeat = Number(this.editBatchMaxSeat) || 0;
+                    const mentor = (this.editBatchMentor || "").trim();
+                    const startDate = (this.editBatchStartDate || "").trim() || "Flexible";
+
+                    if (!name || maxSeat <= 0) {
+                        alert("Nama class dan Max Seat wajib diisi.");
+                        return;
+                    }
+
+                    if (!productId) {
+                        alert("Product wajib dipilih.");
+                        return;
+                    }
+
+                    const productRef = this.products.find(p => p.productId === productId);
+
+                    this.selectedBatch.name = name;
+                    this.selectedBatch.type = type;
+                    this.selectedBatch.max_seat = maxSeat;
+                    if (this.selectedBatch.current_joined > maxSeat) {
+                        this.selectedBatch.current_joined = maxSeat;
+                    }
+                    this.selectedBatch.start_date = startDate;
+                    this.selectedBatch.mentor_name = mentor || "Unknown";
+                    this.selectedBatch.product_id = productId;
+                    this.selectedBatch.product_name = productRef ? productRef.name : null;
+
+                    if (this.selectedBatch.docId && window.db && window.doc && window.updateDoc) {
+                        try {
+                            await window.updateDoc(
+                                window.doc(window.db, "class_availability", this.selectedBatch.docId),
+                                {
+                                    name: this.selectedBatch.name,
+                                    type: this.selectedBatch.type,
+                                    max_seat: this.selectedBatch.max_seat,
+                                    current_joined: this.selectedBatch.current_joined,
+                                    start_date: this.selectedBatch.start_date,
+                                    mentor_name: this.selectedBatch.mentor_name,
+                                    productId: this.selectedBatch.product_id,
+                                    productName: this.selectedBatch.product_name
+                                }
+                            );
+                        } catch (e) {
+                            console.error("Gagal mengupdate batch di Firestore:", e);
+                            alert("Perubahan gagal disimpan ke server.\nCek console untuk detail error.");
+                        }
+                    } else {
+                        console.warn("Update batch diabaikan (docId atau Firebase belum siap).");
+                    }
+
+                    const modalEl = document.getElementById("editCapacityModal");
+                    if (modalEl && typeof bootstrap !== "undefined" && bootstrap.Modal) {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    }
+
+                    this.editBatchId = null;
+                    this.editBatchName = "";
+                    this.editBatchProductId = "";
+                    this.editBatchType = "Offline";
+                    this.editBatchMaxSeat = 1;
+                    this.editBatchMentor = "";
+                    this.editBatchStartDate = "";
+                    this.selectedBatch = null;
                 },
                 async addBatch() {
                     const name = (this.newBatchName || "").trim();
+                    const productId = (this.newBatchProductId || "").trim();
                     const type = this.newBatchType || "Offline";
                     const maxSeat = Number(this.newBatchMaxSeat) || 0;
                     const mentor = (this.newBatchMentor || "").trim();
@@ -517,9 +718,16 @@
                         return;
                     }
 
+                    if (!productId) {
+                        alert("Product wajib dipilih.");
+                        return;
+                    }
+
                     const nextId = this.classes.length
                         ? Math.max.apply(null, this.classes.map(c => Number(c.id) || 0)) + 1
                         : 1;
+
+                    const productRef = this.products.find(p => p.productId === productId);
 
                     const newItem = {
                         id: nextId,
@@ -528,7 +736,9 @@
                         max_seat: maxSeat,
                         current_joined: 0,
                         start_date: startDate,
-                        mentor_name: mentor || "Unknown"
+                        mentor_name: mentor || "Unknown",
+                        product_id: productId,
+                        product_name: productRef ? productRef.name : null
                     };
 
                     this.classes.push(newItem);
@@ -544,6 +754,8 @@
                                     current_joined: newItem.current_joined,
                                     start_date: newItem.start_date,
                                     mentor_name: newItem.mentor_name,
+                                    productId: newItem.product_id,
+                                    productName: newItem.product_name,
                                     created_at: new Date()
                                 }
                             );
@@ -556,6 +768,7 @@
                     }
 
                     this.newBatchName = "";
+                    this.newBatchProductId = "";
                     this.newBatchType = "Offline";
                     this.newBatchMaxSeat = 1;
                     this.newBatchMentor = "";
