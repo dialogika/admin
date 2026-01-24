@@ -1689,7 +1689,12 @@
 
                 let avatarUrl = currentAvatarUrl || null;
                 if (imageFile) {
-                    avatarUrl = await uploadCandidateImage(imageFile);
+                    try {
+                        avatarUrl = await uploadCandidateImage(imageFile);
+                    } catch (uploadErr) {
+                        console.error(uploadErr);
+                        alert('Upload foto gagal. Data kandidat akan disimpan tanpa foto.');
+                    }
                 }
 
                 const payload = {
