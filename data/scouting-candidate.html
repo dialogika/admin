@@ -152,6 +152,9 @@
             border-radius: 8px;
             padding: 6px 12px;
             border: 1px solid #e2e8f0;
+            display: inline-block;
+            min-width: 160px;
+            white-space: nowrap;
         }
 
         .status-not-contacted { background-color: #f1f5f9; color: #475569; }
@@ -627,6 +630,7 @@
                                         <th class="ps-4">Nama Kandidat</th>
                                         <th>Channel</th>
                                         <th>Status</th>
+                                        <th>Due</th>
                                         <th>Assign</th>
                                         <th class="text-center">Action</th>
                                     </tr>
@@ -654,6 +658,9 @@
                                                 <option>Belum Dihubungi</option>
                                                 <option selected>Menunggu Balasan</option>
                                             </select>
+                                        </td>
+                                        <td style="max-width:220px">
+                                            <input type="datetime-local" class="form-control form-control-sm due-input" value="">
                                         </td>
                                         <td><span class="assign-badge">Sarah Johnson</span></td>
                                         <td class="text-center">
@@ -690,6 +697,9 @@
                                                 <option selected>Membalas (Tertarik)</option>
                                                 <option>Menolak</option>
                                             </select>
+                                        </td>
+                                        <td style="max-width:220px">
+                                            <input type="datetime-local" class="form-control form-control-sm due-input" value="">
                                         </td>
                                         <td><span class="assign-badge">Budi Doremi</span></td>
                                         <td class="text-center">
@@ -731,18 +741,20 @@
 
         function mapToFilterStatus(status) {
             const v = normalizeStatus(status);
+            if (v === "radar" || v === "none" || v === "screening") return "radar";
+            if (v === "contacted") return "contacted";
+            if (v === "replied" || v === "respond") return "replied";
             if (v === "interview") return "interview";
-            if (v === "ojt" || v === "microteaching") return "microteaching";
+            if (v === "ojt" || v === "microteaching") return "ojt";
             if (v === "decision") return "decision";
             if (v === "accepted" || v === "accept") return "accepted";
             if (v === "rejected" || v === "reject") return "rejected";
-            if (v === "screening" || v === "contacted" || v === "replied" || v === "none" || v === "radar") return "screening";
             return "";
         }
 
         function mapToSelectStatus(status) {
             const v = normalizeStatus(status);
-            if (v === "radar" || v === "none" || v === "screening") return "none";
+            if (v === "radar" || v === "none" || v === "screening") return "radar";
             if (v === "contacted") return "contacted";
             if (v === "replied" || v === "respond") return "replied";
             if (v === "interview") return "interview";
@@ -750,16 +762,41 @@
             if (v === "decision") return "decision";
             if (v === "rejected" || v === "reject") return "rejected";
             if (v === "accepted" || v === "accept") return "accepted";
-            return "none";
+            return "radar";
+        }
+
+        function isoToDatetimeLocal(iso) {
+            if (!iso) return "";
+            try {
+                const d = new Date(iso);
+                const pad = (n) => String(n).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                const mm = pad(d.getMonth() + 1);
+                const dd = pad(d.getDate());
+                const hh = pad(d.getHours());
+                const mi = pad(d.getMinutes());
+                return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+            } catch (_) {
+                return "";
+            }
+        }
+
+        function datetimeLocalToIso(val) {
+            if (!val) return "";
+            try {
+                const d = new Date(val);
+                return d.toISOString();
+            } catch (_) {
+                return "";
+            }
         }
 
         function applyCandidateFilters() {
             const term = (searchInput?.value || "").toLowerCase();
             const filterRaw = statusFilter ? (statusFilter.value || "").toLowerCase() : "";
             const sortValue = sortSelect?.value || "none";
-            const filterKey = (filterRaw === "radar" ? "none"
-                : filterRaw === "respond" ? "replied"
-                : filterRaw);
+            const phaseKey = mapToSelectStatus(filterRaw);
+            const filterRawKey = normalizeStatus(filterRaw);
 
             const gridItems = Array.from(document.querySelectorAll('.candidate-item'));
             const listRows = Array.from(document.querySelectorAll('.candidate-row'));
@@ -768,7 +805,7 @@
                 const text = item.innerText.toLowerCase();
                 const itemPhase = (item.dataset.phase || "").toLowerCase();
                 const matchesSearch = text.includes(term);
-                const matchesStatus = !filterRaw || itemPhase === filterKey || (filterRaw === "radar" && (item.dataset.status || "").toLowerCase() === "screening");
+                const matchesStatus = !filterRawKey || itemPhase === phaseKey;
                 item.style.display = matchesSearch && matchesStatus ? "" : "none";
             });
 
@@ -776,7 +813,7 @@
                 const text = row.innerText.toLowerCase();
                 const rowPhase = (row.dataset.phase || "").toLowerCase();
                 const matchesSearch = text.includes(term);
-                const matchesStatus = !filterRaw || rowPhase === filterKey || (filterRaw === "radar" && (row.dataset.status || "").toLowerCase() === "screening");
+                const matchesStatus = !filterRawKey || rowPhase === phaseKey;
                 row.style.display = matchesSearch && matchesStatus ? "" : "none";
             });
 
@@ -904,31 +941,53 @@
                 (card && card.dataset && card.dataset.talentId) ||
                 null;
             const newStatus = select.value || "none";
+            if (newStatus === "none") {
+                // Backward compatibility: treat "none" as "radar"
+                select.value = "radar";
+            }
+            const finalStatus = select.value || "radar";
             if (talentId) {
                 const gridSelect = document.querySelector('.candidate-item[data-talent-id="' + talentId + '"] .status-select');
                 const listSelect = document.querySelector('.candidate-row[data-talent-id="' + talentId + '"] .status-select');
                 if (gridSelect && gridSelect !== select) {
-                    gridSelect.value = newStatus;
+                    gridSelect.value = finalStatus;
                 }
                 if (listSelect && listSelect !== select) {
-                    listSelect.value = newStatus;
+                    listSelect.value = finalStatus;
                 }
-                const mapped = mapToFilterStatus(newStatus);
+                const mapped = mapToFilterStatus(finalStatus);
                 const gridItem = document.querySelector('.candidate-item[data-talent-id="' + talentId + '"]');
                 const listRow = document.querySelector('.candidate-row[data-talent-id="' + talentId + '"]');
                 if (gridItem) {
                     gridItem.dataset.status = mapped;
-                    gridItem.dataset.phase = newStatus;
+                    gridItem.dataset.phase = finalStatus;
                 }
                 if (listRow) {
                     listRow.dataset.status = mapped;
-                    listRow.dataset.phase = newStatus;
+                    listRow.dataset.phase = finalStatus;
                 }
                 if (window.updateTalentStatus) {
-                    try { window.updateTalentStatus(talentId, newStatus, ""); } catch (e) {}
+                    try { window.updateTalentStatus(talentId, finalStatus, ""); } catch (e) {}
                 }
                 applyCandidateFilters();
             }
+        });
+        document.addEventListener('change', async (e) => {
+            const input = e.target.closest('.due-input');
+            if (!input) return;
+            const row = input.closest('.candidate-row');
+            const card = input.closest('.candidate-item') || input.closest('.col-12.col-md-6.col-lg-4');
+            const talentId = (row && row.dataset && row.dataset.talentId) ||
+                (card && card.dataset && card.dataset.talentId) ||
+                null;
+            const val = input.value || "";
+            const iso = datetimeLocalToIso(val);
+            if (row) row.dataset.dueDate = iso;
+            if (card) card.dataset.dueDate = iso;
+            if (talentId && window.updateTalentDueDate) {
+                try { await window.updateTalentDueDate(talentId, iso, ""); } catch (_) {}
+            }
+            applyCandidateFilters();
         });
     </script>
 
@@ -1059,6 +1118,21 @@
                     status: newStatus,
                     date: nowIso
                 }),
+                logs: arrayUnion(logEntry)
+            });
+        }
+
+        async function updateTalentDueDate(talentId, dueIso, actorName) {
+            const ref = doc(db, "talents", talentId);
+            const nowIso = new Date().toISOString();
+            const logEntry = {
+                action: "due_set",
+                due: dueIso || null,
+                by: actorName || null,
+                date: nowIso
+            };
+            await updateDoc(ref, {
+                "scouting_info.interview_due": dueIso || null,
                 logs: arrayUnion(logEntry)
             });
         }
@@ -1219,6 +1293,7 @@
                 const avatarUrl = basic.avatar_url || null;
                 const channelType = scouting.channel_type || "linkedin";
                 const channelUrl = scouting.channel_url || "#";
+                const dueDateIso = scouting.interview_due || "";
                 const assignedTo = Array.isArray(scouting.assigned_to) ? scouting.assigned_to.filter(Boolean) : [];
                 let assignLabel = "";
                 if (assignedTo.length > 0) {
@@ -1238,7 +1313,8 @@
                     assignLabel,
                     assignAvatarHtml,
                     talentId: docSnap.id,
-                    status: recruitment.current || "radar"
+                    status: recruitment.current || "radar",
+                    dueDate: dueDateIso
                 });
                 found += 1;
             });
@@ -1374,8 +1450,10 @@
             const currentStatus = params.status || "";
             const filterStatus = mapToFilterStatus(currentStatus);
             const selectValue = mapToSelectStatus(currentStatus);
+            const dueIso = params.dueDate || "";
+            const dueLocalVal = isoToDatetimeLocal(dueIso);
             let statusOptionsHtml = "";
-            statusOptionsHtml += '<option value="none"' + (selectValue === "none" ? ' selected' : '') + '>Radar</option>';
+            statusOptionsHtml += '<option value="radar"' + (selectValue === "radar" ? ' selected' : '') + '>Radar</option>';
             statusOptionsHtml += '<option value="contacted"' + (selectValue === "contacted" ? ' selected' : '') + '>Contacted</option>';
             statusOptionsHtml += '<option value="replied"' + (selectValue === "replied" ? ' selected' : '') + '>Respond</option>';
             statusOptionsHtml += '<option value="interview"' + (selectValue === "interview" ? ' selected' : '') + '>Interview</option>';
@@ -1403,7 +1481,7 @@
                 : "";
 
             const gridHtml =
-                '<div class="col-12 col-md-6 col-lg-4 candidate-item" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '" data-phase="' + selectValue + '">' +
+                '<div class="col-12 col-md-6 col-lg-4 candidate-item" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '" data-phase="' + selectValue + '" data-due-date="' + (dueIso || '') + '">' +
                     '<div class="candidate-card">' +
                         '<div class="img-wrapper">' +
                             '<img src="' + avatarUrl + '" class="candidate-img" alt="Kandidat">' +
@@ -1439,7 +1517,7 @@
                 '</div>';
 
             const listHtml =
-                '<tr class="candidate-row" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '" data-phase="' + selectValue + '">' +
+                '<tr class="candidate-row" data-name="' + name + '" data-talent-id="' + talentId + '" data-status="' + filterStatus + '" data-phase="' + selectValue + '" data-due-date="' + (dueIso || '') + '">' +
                     '<td class="ps-4">' +
                         '<div class="d-flex align-items-center">' +
                             '<img src="' + avatarUrl + '" class="list-img">' +
@@ -1458,6 +1536,9 @@
                         '<select class="form-select status-select status-waiting">' +
                             statusOptionsHtml +
                         '</select>' +
+                    '</td>' +
+                    '<td style="max-width:220px">' +
+                        '<input type="datetime-local" class="form-control form-control-sm due-input" value="' + (dueLocalVal || '') + '">' +
                     '</td>' +
                     '<td>' + (assignAvatarHtml || (assignLabel ? '<span class="assign-badge" data-bs-toggle="tooltip" title="' + assignLabel + '">' + assignLabel + '</span>' : '')) + '</td>' +
                     '<td class="text-center">' +
@@ -1795,12 +1876,14 @@
             await loadCandidateRoles();
             await loadCandidatePositions();
             await loadTalents();
+            applyCandidateFilters();
         }
 
         initScoutingPage();
 
         window.createTalent = createTalent;
         window.updateTalentStatus = updateTalentStatus;
+        window.updateTalentDueDate = updateTalentDueDate;
         window.addTalentLog = addTalentLog;
     </script>
 </body>
