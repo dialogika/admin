@@ -640,6 +640,7 @@
             getDocs,
             addDoc,
             updateDoc,
+            deleteDoc,
             arrayUnion
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import {
@@ -1276,10 +1277,15 @@
                                     ? '<a href="' + resumeUrl + '" target="_blank" class="text-slate-400 hover:text-blue-600 text-decoration-none"><i class="fa-solid fa-file-pdf"></i> CV</a>'
                                     : '') +
                             '</div>' +
-                            '<button type="button" class="text-blue-600 hover:text-blue-800 text-sm fw-bold d-flex align-items-center gap-1 border-0 bg-transparent mentor-view-btn">' +
-                                '<span>Detail</span>' +
-                                '<i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>' +
-                            '</button>' +
+                            '<div class="d-flex gap-2">' +
+                                '<button type="button" class="text-blue-600 hover:text-blue-800 text-sm fw-bold d-flex align-items-center gap-1 border-0 bg-transparent mentor-view-btn">' +
+                                    '<span>Detail</span>' +
+                                    '<i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i>' +
+                                '</button>' +
+                                '<button type="button" class="text-danger hover:text-red-800 text-sm fw-bold d-flex align-items-center gap-1 border-0 bg-transparent mentor-delete-btn" title="Hapus">' +
+                                    '<i class="fa-solid fa-trash"></i>' +
+                                '</button>' +
+                            '</div>' +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -1576,6 +1582,52 @@
                     console.error(err);
                     alert("Gagal memuat detail kandidat.");
                 }
+            }
+        });
+
+        async function deleteMentorCandidate(talentId, mentorName) {
+            if (!talentId) return;
+            
+            const confirmMessage = `Apakah Anda yakin ingin menghapus data mentor "${mentorName}"?\n\nData yang dihapus tidak dapat dikembalikan.`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            try {
+                const ref = doc(db, "talents", talentId);
+                await deleteDoc(ref);
+                
+                // Remove from UI
+                const card = document.querySelector('.mentor-item[data-talent-id="' + talentId + '"]');
+                const row = document.querySelector('.mentor-row[data-talent-id="' + talentId + '"]');
+                
+                if (card) {
+                    card.remove();
+                }
+                if (row) {
+                    row.remove();
+                }
+                
+                alert("Data mentor berhasil dihapus.");
+            } catch (e) {
+                console.error("Failed to delete mentor candidate", e);
+                alert("Gagal menghapus data. Silakan coba lagi.");
+            }
+        }
+
+        document.addEventListener("click", async (e) => {
+            const deleteBtn = e.target.closest(".mentor-delete-btn");
+            if (deleteBtn) {
+                const row = deleteBtn.closest(".mentor-row");
+                const card = deleteBtn.closest(".mentor-item");
+                const el = row || card;
+                const talentId = el && el.dataset ? el.dataset.talentId : null;
+                const mentorName = el && el.dataset ? el.dataset.name : "mentor ini";
+                
+                if (!talentId) return;
+                
+                await deleteMentorCandidate(talentId, mentorName);
             }
         });
 
