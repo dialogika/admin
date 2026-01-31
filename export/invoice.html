@@ -37,9 +37,9 @@
                     <div>
                         <h2 class="font-bold text-lg" id="className">Public Speaking Playbook</h2>
                         <div class="mt-1 flex flex-wrap items-center gap-2">
-                            <span id="badgeBatch" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-slate-800 text-slate-100 uppercase tracking-widest">Batch 42</span>
-                            <span id="badgeType" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-slate-800 text-slate-100 uppercase tracking-widest">Offline</span>
-                            <span id="badgeLocation" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-slate-800 text-slate-100 uppercase tracking-widest">Jakarta</span>
+                            <span id="badgeBatch" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-green-700 text-slate-100 uppercase tracking-widest">Batch 42</span>
+                            <span id="badgeType" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-green-700 text-slate-100 uppercase tracking-widest">Offline</span>
+                            <span id="badgeLocation" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-green-700 text-slate-100 uppercase tracking-widest">Jakarta</span>
                         </div>
                         <div class="mt-1">
                             <span id="seatLeftLabel" class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-500 uppercase tracking-widest">
@@ -668,9 +668,9 @@
                     const desc = String(item.description || "").trim();
                     const label = order ? order + ". " + title : title;
                     if (desc) {
-                        return "<li><span class=\"font-semibold\">" + escapeHtml(label) + "</span><br><span class=\"text-[12px] text-slate-500\">" + escapeHtml(desc) + "</span></li>";
+                        return "<li><span class=\"font-semibold\">" + label + "</span><br><span class=\"text-[12px] text-slate-500\">" + desc + "</span></li>";
                     }
-                    return "<li><span class=\"font-semibold\">" + escapeHtml(label) + "</span></li>";
+                    return "<li><span class=\"font-semibold\">" + label + "</span></li>";
                 }).join("");
                 if (materials.length) {
                     curriculumBlock.classList.remove('hidden');
@@ -680,16 +680,16 @@
             }
             if (featuresBlock && featuresList) {
                 featuresList.innerHTML = features.map(function (feat) {
-                    const label = String(feat && feat.label ? feat.label : "").trim() || "-";
-                    const type = String(feat && feat.type ? feat.type : "").toLowerCase();
+                    const label = String(feat.label || "").trim() || "-";
+                    const type = String(feat.type || "").toLowerCase();
                     let valueLabel = "";
                     if (type === "boolean") {
-                        valueLabel = feat && feat.value ? "Ya" : "Tidak";
+                        valueLabel = feat.value ? "Ya" : "Tidak";
                     } else {
-                        valueLabel = String(feat && feat.value ? feat.value : "").trim();
+                        valueLabel = String(feat.value || "").trim();
                     }
                     if (!valueLabel) valueLabel = "-";
-                    return "<li class=\"flex justify-between gap-4\"><span class=\"font-semibold\">" + escapeHtml(label) + "</span><span class=\"text-[12px] text-slate-600\">" + escapeHtml(valueLabel) + "</span></li>";
+                    return "<li class=\"flex justify-between gap-4\"><span class=\"font-semibold\">" + label + "</span><span class=\"text-[12px] text-slate-600\">" + valueLabel + "</span></li>";
                 }).join("");
                 if (features.length) {
                     featuresBlock.classList.remove('hidden');
@@ -700,7 +700,7 @@
             if (specsBlock && specsList) {
                 specsList.innerHTML = specifications.map(function (spec) {
                     const text = String(spec || "").trim();
-                    return "<li>" + escapeHtml(text) + "</li>";
+                    return "<li>" + text + "</li>";
                 }).join("");
                 if (specifications.length) {
                     specsBlock.classList.remove('hidden');

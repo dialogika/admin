@@ -1576,8 +1576,8 @@
                             <div class="d-flex align-items-center gap-3">
                                 <img class="stats-modal-photo" src="${photo}" alt="">
                                 <div>
-                                    <div class="fw-bold">${r.firstName}${getRoleBadgeHtml(r.roleLabel)}</div>
-                                    <div class="text-muted-custom small">${r.position} • ${formatLongDate(r.dateObj)}</div>
+                                    <div class="fw-bold">${r.firstName}${r.roleBadge}</div>
+                                    <div class="text-muted-custom small">${r.displayPosition} • ${formatLongDate(r.dateObj)}</div>
                                 </div>
                             </div>
                         </div>
@@ -1603,12 +1603,37 @@
                     if (!(interviewDate instanceof Date) || isNaN(interviewDate.getTime())) return;
                     if (interviewDate < min) return;
                     const d = getTalentDisplay(data, item.id);
+                    const roleLabel = getRoleLabelFromTalent(data);
+                    const roleLabelNormalized = normalizeCompact(roleLabel);
+                    
+                    // Extract position from scouting_info to match scouting-candidate.html structure
+                    const scouting = (data && data.scouting_info) || {};
+                    const basic = (data && data.basic_info) || {};
+                    const positionFromScouting = scouting.position_name || scouting.position || "";
+                    
+                    // Determine display position based on role
+                    let displayPosition = positionFromScouting || d.position || "-";
+                    let roleBadge = "";
+                    
+                    if (roleLabelNormalized === "internship") {
+                        displayPosition = positionFromScouting || "Internship";
+                        roleBadge = `<span class="badge bg-primary-subtle text-primary fw-normal ms-2">Intern</span>`;
+                    } else if (roleLabelNormalized === "mentor") {
+                        // For mentor, try to get region/area from data
+                        const mentorRegion = data.region || data.area || basic.region || basic.area || scouting.region || scouting.area || positionFromScouting || "-";
+                        displayPosition = mentorRegion;
+                        roleBadge = `<span class="badge bg-warning-subtle text-warning fw-normal ms-2">Mentor</span>`;
+                    } else {
+                        roleBadge = getRoleBadgeHtml(roleLabel);
+                    }
+                    
                     list.push({
                         id: item.id,
                         photo: d.photo,
                         firstName: getFirstName(d.name),
-                        roleLabel: getRoleLabelFromTalent(data),
-                        position: d.position || "-",
+                        roleLabel: roleLabel,
+                        displayPosition: displayPosition,
+                        roleBadge: roleBadge,
                         dateObj: interviewDate
                     });
                 });

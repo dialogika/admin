@@ -506,7 +506,7 @@
                                 <button type="button" id="btnOpenDiscountCalculator" class="w-full py-3 mb-3 bg-white border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center gap-2 text-sm text-slate-700">
                                     <i class="fa-solid fa-calculator text-blue-600"></i> Kalkulator Discount
                                 </button>
-                                <button id="btnSaveReferral" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 flex items-center justify-center gap-2">
+                                <button id="btnSaveReferral" class="w-full py-4 bg-[linear-gradient(to_bottom,#006a4e_5%,#003f2e_100%)] text-white rounded-2xl font-bold hover:bg-[linear-gradient(to_bottom,#003f2e_10%,#006a4e_95%)] transition-all shadow-sm shadow-emerald-700 flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-floppy-disk"></i> Simpan / Update Referral
                                 </button>
                                 <button id="btnClearReferralForm" class="w-full mt-4 text-xs font-bold text-slate-400 hover:text-red-400 transition-colors uppercase tracking-widest">
@@ -1993,6 +1993,23 @@
                         const maxSeat = Number(d.max_seat || 0);
                         const currentJoined = Number(d.current_joined || 0);
                         const seatsLeft = maxSeat - currentJoined;
+                        const startRaw = d.start_date || "";
+                        let isClosed = false;
+                        if (startRaw && startRaw !== "Flexible") {
+                            try {
+                                const dateObj = new Date(startRaw);
+                                if (!isNaN(dateObj.getTime())) {
+                                    const now = new Date();
+                                    if (dateObj.getTime() < now.getTime()) {
+                                        isClosed = true;
+                                    }
+                                }
+                            } catch (e) {
+                            }
+                        }
+                        if (!(seatsLeft > 0) || isClosed) {
+                            return;
+                        }
                         classes.push({
                             id: docSnap.id,
                             name: d.name || "Unnamed Class",

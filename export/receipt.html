@@ -179,9 +179,9 @@
                             <p>Terima kasih telah mempercayai Dialogika.</p>
                             <p>Admin kami akan menghubungi Anda setelah pembayaran terverifikasi.</p>
                         </div>
-                        <a href="invoice.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 text-[11px] font-black uppercase tracking-[0.25em] text-slate-700 hover:bg-slate-50">
+                        <a id="fillBiodataLink" href="enrollment.html" class="inline-flex items-center bg-[linear-gradient(to_bottom,#0f61a8_5%,#0b2b6a_100%)] gap-2 px-4 py-2 rounded-full border border-slate-200 text-[11px] font-white uppercase tracking-[0.25em] text-white hover:bg-[linear-gradient(to_bottom,#0b2b6a_5%,#0f61a8_100%)]">
                             <i data-lucide="arrow-left" class="w-3 h-3"></i>
-                            Kembali
+                            Fill Biodata
                         </a>
                     </footer>
                 </div>
@@ -576,6 +576,14 @@
             const waBtn = document.getElementById('waConfirmBtn');
             if (waBtn) {
                 waBtn.addEventListener('click', openWhatsappConfirmation);
+            }
+            const fillLink = document.getElementById('fillBiodataLink');
+            if (fillLink) {
+                let target = "enrollment.html";
+                if (invoiceIdFromUrl) {
+                    target += "?invoiceId=" + encodeURIComponent(invoiceIdFromUrl);
+                }
+                fillLink.href = target;
             }
         })();
     </script>
